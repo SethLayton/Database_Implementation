@@ -1,0 +1,10 @@
+10mbdb/
+1gbdb/
+.vscode/
+*.tar.gz
+Project2/.nfs0000000000222cd300003e95
+Project1/
+*.o
+*.bin
+Project2/f_path
+Project2/test.out
