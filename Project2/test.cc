@@ -2,6 +2,8 @@
 #include "BigQ.h"
 #include <pthread.h>
 #include <cstring>
+#include <chrono>
+#include <thread>
 
 void *producer (void *arg) {
 
@@ -31,7 +33,6 @@ void *producer (void *arg) {
 }
 
 void *consumer (void *arg) {
-	
 	testutil *t = (testutil *) arg;
 
 	ComparisonEngine ceng;
@@ -55,7 +56,7 @@ void *consumer (void *arg) {
 		prev = last;
 		last = &rec[i%2];
 
-		if (prev && last) {
+		if (NULL != prev && NULL != last) {
 			if (ceng.Compare (prev, last, t->order) == 1) {
 				err++;
 			}
@@ -66,7 +67,7 @@ void *consumer (void *arg) {
 		if (t->print) {
 			last->Print (rel->schema ());
 		}
-		i++;
+		i++; 
 	}
 
 	cout << " consumer: removed " << i << " recs from the pipe\n";
@@ -87,8 +88,6 @@ void *consumer (void *arg) {
 
 int gtest1 () {  
 
-	try
-	{
 		relation *rel_ptr[] = {n, r, c, p, ps, o, li, s};
 
 		for (int i = 0; i < 8; i++){
@@ -105,25 +104,21 @@ int gtest1 () {
 			dbfile.Close ();
 		}
 		return 0;
-	}
-	catch(const std::exception& e)
-	{
-		return 1;
-	}
 }
 
 void test1 (int option, int runlen) {
 
 	// sort order for records
-	OrderMaker sortorder;
+	OrderMaker sortorder (rel->schema());
 	char string10[] = "(r_regionkey > 0)";
-	rel->get_sort_order (sortorder, string10);
-
+	// rel->get_sort_order (sortorder, string10);
+	//rel->get_sort_order (sortorder);
+	
 	int buffsz = 100; // pipe cache size
 	Pipe input (buffsz);
 	Pipe output (buffsz);
 
-	// thread to dump data into the input pipe (for BigQ's consumption)
+	// thread to dump data i nto the input pipe (for BigQ's consumption)
 	pthread_t thread1;
 	pthread_create (&thread1, NULL, producer, (void *)&input);
 
@@ -136,7 +131,7 @@ void test1 (int option, int runlen) {
 	else if (option == 3) {
 		tutil.write = true;
 	}
-	//pthread_create (&thread2, NULL, consumer, (void *)&tutil);
+	pthread_create (&thread2, NULL, consumer, (void *)&tutil);
 
 	BigQ bq (input, output, sortorder, runlen);
 
@@ -182,4 +177,5 @@ int main (int argc, char *argv[]) {
 	test1 (tindx, runlen);
 
 	cleanup ();
+	
 }

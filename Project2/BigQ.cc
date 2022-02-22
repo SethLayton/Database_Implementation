@@ -3,8 +3,29 @@
 #include "ComparisonEngine.h"
 #include "Defs.h"
 #include <algorithm>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void segfault_sigaction(int signal, siginfo_t *si, void *arg)
+{
+    printf("Caught segfault at address %p\n", si->si_addr);
+    exit(0);
+}
 
 BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
+	
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = segfault_sigaction;
+	sa.sa_flags   = SA_SIGINFO;
+
+	sigaction(SIGSEGV, &sa, NULL);
+
+
 	//create our file that stores all the runs
 	myFile.Open(0, "f_path");
 	//set sort order for use in the comparison function later on
@@ -17,10 +38,10 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 	pthread_create(&threads, NULL, ts, (void *) &bqutil);    
 	//clean up the thread
 	pthread_join(threads, NULL);
-	pthread_exit (NULL);
+	out.ShutDown();	
+	//pthread_exit (NULL);
 
-    // finally shut down the outpipe
-	out.ShutDown ();
+
 }
 
 BigQ::~BigQ () {
@@ -48,17 +69,16 @@ void *BigQ::DoWork(void *arg) {
 		int count = 0;
 		//read in a record from the input pipe
 		while (b->inpipe->Remove (&myRec)) {
-			//get the size of that record in bytes	
+			count++;
+			//get the size of that record in bytes
 			char *bytes = myRec.GetBits();
 			int recBytes = ((int *)bytes)[0];
 			//update the total size of the vector
 			curSizeInBytes = curSizeInBytes + recBytes;
 			//the vector is now full with enough records to fill up a run
 			if (curSizeInBytes > maxRunBytes) {
-				//sort the vector
-				
+				//sort the vector				
 				std::sort(records.begin(),records.end(),comparator);
-
 				//write the records from the vector to pages, and the pages to the file
 				for (auto & currRec : records) {				
 					//write record to page (returns 0 if page is full)
@@ -89,9 +109,7 @@ void *BigQ::DoWork(void *arg) {
 			}	
 			// //add the record to the vector for future sorting			
 			records.push_back(myRec);
-			count ++;
-			
-
+			myRec.SetNull();
 		}
 		if (records.size() > 0){			
 			std::sort(records.begin(),records.end(),comparator);
@@ -116,88 +134,116 @@ void *BigQ::DoWork(void *arg) {
 			}	
 			records.clear();	
 		}
-		//quick check to make sure nothing is going awry with the number of pages
-		if (pageCount > b->runlength){
-			cerr << "Too many pages for the runlength. Pages: " << pageCount << " runlength: " << b->runlength << endl; 
-		}
+
+		cout << "total removed from pipe " << count << endl;
 
 		//now we need to sort all the runs
 		//This is "Phase 2" of the TPMMS algo
 		FinalSort(b);
 
-		//close the thread
+		cout << "Shutting down the output pipe" << endl;
+		//shutdown the out pipe
+		b->outpipe->ShutDown();	
+		cout << "ending thread" << endl;
+		pthread_exit(NULL);
 		
 	}
 	catch(const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
+		pthread_exit(NULL);
 	}
-	pthread_exit(NULL);
+	
+	
 }
 
-void BigQ::FinalSort(bigqutil *b)
-{
-	cout << "final sort called" << endl;
+void BigQ::FinalSort(bigqutil *b) {
+	cout << "final sort called" << endl; 
 	//get the total number of runs in the file
 	//this is based on the length of the file and specified run length
 	off_t totalPages = myFile.GetLength() - 1;
-	long totalRuns = ceil(totalPages / b->runlength);
+	int totalRuns = int(ceil(double(totalPages) / double(b->runlength)));
+	//int totalRuns = ceil(totalPages / b->runlength);
 	//init the queue
-	std::priority_queue<Record,std::vector<Record>,Compare> queue;
+	std::priority_queue<Record,std::vector<Record>,Compare> queue(b->order);  
 	//set the number of pages in each run
 	int offset = b->runlength;
-	//create vector to hold a page from each run 
-	std::vector<Page> myPages;
+	//create vector to hold a page from each run
+	Page myPagez[totalRuns];
+	Record PQ[totalRuns];
+	int ci[totalRuns] = { 0 };
+	ComparisonEngine c;		
 	
-	cout << "totalRuns = " << totalRuns << " offset = " << offset << endl;
-	
-	//We loop through a page of each run and read that
-	//into our page vector and then we those are exhausted
-	//we move onto the next page from each run
-	for (int i = 0; i < offset; i=i++){	
+	int failedPages = 0;
+	int count = 0;
+	int cc = 0;
+	Record tempRecord;
+	for (int j = 0; j < totalRuns; j++) {
+		int t = offset * j;
 
-		//grab a page from each of the runs
-		//want to make sure we arent trying to access a page
-		//that doesnt exist
-		Page tempPage;			
-		for (int j = 0; j < totalRuns; j++) {
-			int t = (i * offset) + j;
-			cout << "t = " << t << endl;
-			if (t <= totalPages) {
-				myFile.GetPage(&tempPage,t);
-				myPages.push_back(tempPage);
-			}
+		if (t < totalPages) {
+			myFile.GetPage(&myPagez[count],t);
+			int res = myPagez[count].GetFirst(&tempRecord);
+			PQ[j].Consume(&tempRecord);
+			count++;			
+		}
+	}
+	tempRecord.SetNull();
+	int true_min = 0;
+	while (failedPages < totalPages) {
+		int index_min = true_min;
+		cout << "\tindex_min: " << index_min << endl;
+		cout << "\ttotal runs: " << totalRuns << endl;
+		for (int i=index_min + 1; i<totalRuns; i++) {
+			cout << "i: " << i << endl;
+			cout << " ci[i]: " << ci[i] << endl;
+			if (ci[i] < offset) {			
+				if (c.Compare(&PQ[i], &PQ[index_min], b->order) < 1) {
+					index_min = i;
+				}	
+			}			
 		}
 
-		//Now loop through the n=totalRuns pages
-		//and continuously grab the first record
-		//from each page and insert that into the queue
-		//continue doing this until all pages have no records
-		int cont = 0;
-		while (cont < totalRuns) {
-			for (int k = 0; k < totalRuns; k++) {
-				Record tempRecord;
-				int res = myPages[k].GetFirst(&tempRecord);
-				if (res == 0) {
-					cont++;
+		b->outpipe->Insert(&PQ[index_min]);
+		cc++;
+		cout << cc << " total pages: " << totalPages << " failed pages: " << failedPages <<  endl;
+		int res = myPagez[index_min].GetFirst(&tempRecord);
+		cout << "\t res: " << res << endl;
+		cout << "\t index_min: " << index_min << endl;
+		cout << "\t ci[index_min]: " << ci[index_min] << endl;
+		if (res == 0) {
+			failedPages++;
+			if (failedPages != totalPages) {						
+				
+				ci[index_min]++;
+				if (ci[index_min] < offset) {
+					int newPage = (index_min * offset) + ci[index_min];	
+					myFile.GetPage(&myPagez[index_min],newPage);
+					tempRecord.SetNull();
+					myPagez[index_min].GetFirst(&tempRecord);
+					PQ[index_min].Consume(&tempRecord);	
+				}							
+								
+				for (int k = 0; k < totalRuns; k++) {
+					cout << k << endl;
+					if (ci[k] < offset) {
+						true_min=k;
+						cout << "true min: " << true_min  << endl;
+						break;
+						
+					}
 				}
-				else {
-					queue.push(tempRecord);
-				}					
-			}		
+			}			
 		}
-		//now we move back to the top of the loop
-		//and grab the next page in each run and do this again
+		else {
+			PQ[index_min].Consume(&tempRecord);
+		}
+		
 	}
-
-	//Start inserting the sorted elements from the queue into the pipe
-	while (!queue.empty()) {
-		Record temp = queue.top();
-		queue.pop();
-		b->outpipe->Insert(&temp);
-	}
-	//shutdown the out pipe
-	b->outpipe->ShutDown();	
+	
+	cout << "finished putting into pipe" << endl;
+	cout << "testing again" << endl;
+	return;
 }
 
 

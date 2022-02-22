@@ -48,7 +48,6 @@ void Pipe :: Insert (Record *insertMe) {
 	// there is, then do the insertion
 	if (lastSlot - firstSlot < totSpace) {
 		buffered [lastSlot % totSpace].Consume (insertMe);
-
 	// if there is not, then we need to wait until the consumer
 	// frees up some space in the pipeline
 	} else {
@@ -68,15 +67,14 @@ void Pipe :: Insert (Record *insertMe) {
 }
 
 
+
 int Pipe :: Remove (Record *removeMe) {
 	 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
-
 	// next, see if there is anything in the pipeline; if
 	// there is, then do the removal
 	if (lastSlot != firstSlot) {
-		
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
 
 	// if there is not, then we need to wait until the producer
@@ -100,7 +98,6 @@ int Pipe :: Remove (Record *removeMe) {
 			pthread_mutex_unlock (&pipeMutex);
 			return 0;
 		}
-
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
 	}
 	
@@ -115,7 +112,6 @@ int Pipe :: Remove (Record *removeMe) {
 	pthread_mutex_unlock (&pipeMutex);
 	return 1;
 }
-
 
 void Pipe :: ShutDown () {
 

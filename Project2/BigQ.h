@@ -40,26 +40,20 @@ class BigQ {
 			}
 			Compare() {}
 			bool operator() (Record r1, Record r2) {
+				Schema ms("catalog", "region");
+				//cout << "comparing records:" << endl;
+				//r1.Print(&ms);
+				//r2.Print(&ms);
 				ComparisonEngine c;
 				int res = c.Compare(&r1, &r2, so);
-				return (res < 0);
+				if (res <= 0) {
+					//cout << "first record is smaller" << endl;
+				}
+				return (res <= 0);
 			}
 	};
 
-	// class CompareP {
-	// 	private:
-	// 		OrderMaker* so;
-	// 	public:
-	// 		CompareP(OrderMaker *sort){
-	// 			so = sort;
-	// 		}
-	// 		CompareP() {}
-	// 		bool operator() (Record r1, Record r2) {
-	// 			ComparisonEngine c;
-	// 			int res = c.Compare(&r1, &r2, so);
-	// 			return (res <= 0);
-	// 		}
-	// };
+	
 };
 
 

@@ -15,7 +15,7 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 
 	char *left_bits = left->GetBits();
 	char *right_bits = right->GetBits();
-
+	// cout << "num atts: " << orderUs->numAtts << endl;
 	for (int i = 0; i < orderUs->numAtts; i++) {
 		val1 = left_bits + ((int *) left_bits)[orderUs->whichAtts[i] + 1];
 		val2 = right_bits + ((int *) right_bits)[orderUs->whichAtts[i] + 1];
@@ -140,7 +140,6 @@ int ComparisonEngine :: Compare (Record *left, OrderMaker *order_left, Record *r
 
 	return 0;
 }
-
 
 // Here we apply a CNF to a single record; this function either returns true or false
 // dpending upon wheter or not the CNF expression accepts the record

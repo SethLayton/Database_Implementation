@@ -127,22 +127,26 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 
 	// loop through all of the disjunctions in the CNF and find those
 	// that are acceptable for use in a sort ordering
+	cout << "------------" << numAnds << endl;
 	for (int i = 0; i < numAnds; i++) {
 		
 		// if we don't have a disjunction of length one, then it
 		// can't be acceptable for use with a sort ordering
 		if (orLens[i] != 1) {
+			cout << "we in here number 1" << endl;
 			continue;
 		}
 
 		// made it this far, so first verify that it is an equality check
 		if (orList[i][0].op != Equals) {
+			cout << "we in here number 2" << endl;
 			continue;
 		}
 
 		// now verify that it operates over atts from both tables
 		if (!((orList[i][0].operand1 == Left && orList[i][0].operand2 == Right) ||
 		      (orList[i][0].operand2 == Left && orList[i][0].operand1 == Right))) {
+				  cout << "we in here number 3" << endl;
 			continue;		
 		}
 
