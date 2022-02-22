@@ -236,7 +236,7 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *leftSchema,
 
 	// also as kind of a hack, the schema for the literal record is built up
 	// inside of a text file, where it will also be read from subsequently
-	FILE *outSchemaFile = fopen ("hkljdfgkSDFSDF", "w");
+	FILE *outSchemaFile  = fopen ("hkljdfgkSDFSDF", "w");
 	fprintf (outSchemaFile, "BEGIN\ntempSchema\nwherever\n");
 
 	// this tells us the size of the literal record

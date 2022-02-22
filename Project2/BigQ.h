@@ -33,23 +33,21 @@ class BigQ {
 
 	class Compare {
 		private:
-			OrderMaker* so;
+			OrderMaker so;
 		public:
 			Compare(OrderMaker *sort){
-				so = sort;
+				so = OrderMaker(*sort);
 			}
-			Compare() {}
+			Compare() {
+				
+			}
 			bool operator() (Record r1, Record r2) {
-				Schema ms("catalog", "region");
-				//cout << "comparing records:" << endl;
-				//r1.Print(&ms);
-				//r2.Print(&ms);
+				//Schema ms("catalog", "region");
 				ComparisonEngine c;
-				int res = c.Compare(&r1, &r2, so);
-				if (res <= 0) {
-					//cout << "first record is smaller" << endl;
+				int res = c.Compare(&r1, &r2, &so);
+				if (res < 0) {
 				}
-				return (res <= 0);
+				return (res < 0);
 			}
 	};
 
