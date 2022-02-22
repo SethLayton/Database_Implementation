@@ -130,8 +130,8 @@ void DBFile::Add (Record &rec) {
 
     //there could be a non full page in the file
     //load the last page from the file
-    if (!is_write) {        
-        myFile.GetPage(&myPage, file_length);
+    if (!is_write && file_length > 1) {        
+        myFile.GetPage(&myPage, file_length - 1);
     }
     
     is_write = true;

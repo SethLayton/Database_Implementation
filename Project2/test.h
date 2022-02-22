@@ -12,7 +12,7 @@ using namespace std;
 // make sure that the information below is correct
 
 const char *catalog_path = "catalog"; 
-const char *tpch_dir ="../1gbdb/"; // dir where dbgen tpch files (extension *.tbl) can be found
+const char *tpch_dir ="../10mbdb/"; // dir where dbgen tpch files (extension *.tbl) can be found
 const char *dbfile_dir = ""; 
 
 

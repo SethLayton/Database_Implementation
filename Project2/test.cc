@@ -75,7 +75,7 @@ void *consumer (void *arg) {
 	}
 
 	cout << " consumer: removed " << i << " recs from the pipe\n";
-
+ 
 	if (t->write) {
 		if (last) {
 			dbfile.Add (*last);
@@ -122,10 +122,10 @@ int gtest1 () {
 void test1 (int option, int runlen) {
 
 	// sort order for records
-	OrderMaker sortorder (rel->schema());
-	char string10[] = "(r_regionkey > 0)";
+	OrderMaker sortorder (rel->schema()); 
+	//char string10[] = "(r_regionkey > 0)";
 	// rel->get_sort_order (sortorder, string10);
-	//rel->get_sort_order (sortorder);
+	rel->get_sort_order (sortorder);
 	
 	int buffsz = 100; // pipe cache size
 	Pipe input (buffsz);
