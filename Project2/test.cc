@@ -73,7 +73,7 @@ void *consumer (void *arg) {
 		}
 		i++; 
 	}
-
+ 
 	cout << " consumer: removed " << i << " recs from the pipe\n";
  
 	if (t->write) {
