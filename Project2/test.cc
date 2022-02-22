@@ -6,6 +6,10 @@
 #include <thread>
 #include <bits/stdc++.h>
 #include <algorithm>
+#include <filesystem>
+#include <iostream>
+#include <sys/stat.h>
+#include <unistd.h>
 
 void *producer (void *arg) {
 
@@ -89,12 +93,20 @@ void *consumer (void *arg) {
 int gtest1 () {  
 
 		relation *rel_ptr[] = {n, r, c, p, ps, o, li, s};
-
+		struct stat buffer;   
+  		
 		for (int i = 0; i < 8; i++){
-			rel = rel_ptr[i];
 			DBFile dbfile;
-			cout << " DBFile will be created at " << rel->path () << endl;
-			dbfile.Create (rel->path(), heap, NULL);
+			rel = rel_ptr[i];
+			const std::string& name = rel->path ();
+			if (stat (name.c_str(), &buffer) == 0) { 
+				cout << " DBFile already exists. Loading. " << rel->path () << endl;
+			}
+			else {
+								
+				cout << " DBFile will be created at " << rel->path () << endl;
+				dbfile.Create (rel->path(), heap, NULL);				
+			}
 
 			char tbl_path[100]; // construct path of the tpch flat text file
 			sprintf (tbl_path, "%s%s.tbl", tpch_dir, rel->name()); 
@@ -102,6 +114,7 @@ int gtest1 () {
 
 			dbfile.Load (*(rel->schema ()), tbl_path);
 			dbfile.Close ();
+			
 		}
 		return 0;
 }

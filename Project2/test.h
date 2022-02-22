@@ -42,7 +42,7 @@ private:
 public:
 	relation (const char *_name, Schema *_schema, const char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
-		sprintf (rpath, "%s%s.bin", prefix, rname);
+		sprintf (rpath, "%s%s%s.bin",tpch_dir, prefix, rname);
 	}
 	const char* name () { return rname; }
 	const char* path () { return rpath; }
