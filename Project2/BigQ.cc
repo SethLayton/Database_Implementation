@@ -76,17 +76,17 @@ void *BigQ::DoWork(void *arg) {
 			curSizeInBytes = curSizeInBytes + recBytes;
 			//the vector is now full with enough records to fill up a run
 			if (curSizeInBytes > maxRunBytes) {
-				cout << "Total in run: ----------------------------------------------------------------------------------" << count << endl;
+				//cout << "Total in run: ----------------------------------------------------------------------------------" << records.size() << endl;
 				//sort the vector				
 				std::sort(records.begin(),records.end(),comparator);
 				//write the records from the vector to pages, and the pages to the file
-				int othercount = 0;
+				//int othercount = 0;
 				for (auto & currRec : records) {
-					if (count < 15000  && (othercount < 10 || othercount > records.size() - 10)) {
-						Schema ms("catalog", "lineitem");	
-						currRec.Print(&ms);	
-						othercount++;	
-					}	
+					// if (count < 15000  && (othercount < 5 || othercount > (records.size() - 5))) {
+					// 	Schema ms("catalog", "lineitem");	
+					// 	currRec.Print(&ms);	
+					// 	othercount++;	
+					// }	
 					//write record to page (returns 0 if page is full)
 					if (myPage.Append(&currRec) == 0) {
 						//if that page is full, write it to the file
@@ -98,25 +98,37 @@ void *BigQ::DoWork(void *arg) {
 						//add the record to the new empty page
 						myPage.Append(&currRec);				
 					} 
-				}	
-
-				//this is to handle residuals for any non full pages
-				//at the tail end of reading from the vector
-				if (myPage.GetNumRecs() > 0){
-					myFile.AddPage(&myPage, file_length);
-					file_length++;
-					myPage.EmptyItOut();
-					pageCount++;
-				}			
+				}
 				
 				//clear the vector and reset the current bytes for the next run
 				curSizeInBytes = recBytes;
 				records.clear();
+				if (pageCount % b->runlength == 0) {
+					Record temp;
+					while (myPage.GetFirst(&temp) != 0) {
+						records.push_back(temp);
+						char *bytes = temp.GetBits();
+						int recBytes = ((int *)bytes)[0];
+						curSizeInBytes = curSizeInBytes + recBytes;
+					}
+				}
+				else {
+					if (myPage.GetNumRecs() > 0){
+						myFile.AddPage(&myPage, file_length);
+						file_length++;
+						myPage.EmptyItOut();
+						pageCount++;
+					}			
+					//cout << "pages: " << pageCount << endl;	
+				}
+				
+				
 			}	
 			// //add the record to the vector for future sorting			
 			records.push_back(myRec);
 			myRec.SetNull();
 		}
+		//cout << "Total in run: ----------------------------------------------------------------------------------" << records.size() << endl;
 		if (records.size() > 0){			
 			std::sort(records.begin(),records.end(),comparator);
 			for (int i = 0; i < records.size(); i++) {		
@@ -140,17 +152,17 @@ void *BigQ::DoWork(void *arg) {
 			}	
 			records.clear();	
 		}
-
-		cout << "total removed from pipe " << count << endl;
+		// cout << "pages: " << pageCount << endl;
+		// cout << "total removed from pipe " << count << endl;
 
 		//now we need to sort all the runs
 		//This is "Phase 2" of the TPMMS algo
 		FinalSort(b);
 
-		cout << "Shutting down the output pipe" << endl;
+		//cout << "Shutting down the output pipe" << endl;
 		//shutdown the out pipe
 		b->outpipe->ShutDown();	
-		cout << "ending thread" << endl;
+		//cout << "ending thread" << endl;
 		pthread_exit(NULL);
 		
 	}
@@ -164,15 +176,15 @@ void *BigQ::DoWork(void *arg) {
 }
 
 void BigQ::FinalSort(bigqutil *b) {
-	b->order->Print();
-	cout << "final sort called" << endl; 
+	//b->order->Print();
+	//cout << "final sort called" << endl; 
 	//get the total number of runs in the file
 	//this is based on the length of the file and specified run length
 	off_t totalPages = myFile.GetLength() - 1;
 	int totalRuns = int(ceil(double(totalPages) / double(b->runlength)));
-	cout << "total pages: " << totalPages << endl;
-	cout << "total runs: " << totalRuns << endl;
-	cout << "run length: " << b->runlength << endl; 
+	// cout << "total pages: " << totalPages << endl;
+	// cout << "total runs: " << totalRuns << endl;
+	// cout << "run length: " << b->runlength << endl; 
 	//init the queue
 	std::priority_queue<Record,std::vector<Record>,Compare> queue(b->order);  
 	//set the number of pages in each run
@@ -181,6 +193,7 @@ void BigQ::FinalSort(bigqutil *b) {
 	Page myPagez[totalRuns];
 	Record PQ[totalRuns];
 	int ci[totalRuns] = { 0 };
+	int som[totalRuns] = {0};
 	ComparisonEngine c;		
 	
 	int failedPages = 0;
@@ -197,16 +210,36 @@ void BigQ::FinalSort(bigqutil *b) {
 			count++;			
 		}
 	}
+	// Schema ms("catalog", "lineitem");
+	// for (int u = 0; u < totalRuns; u++) {
+	// 	PQ[u].Print(&ms);
+	// 	cout << endl;
+	// }
 	tempRecord.SetNull();
 	int true_min = 0;
+	
 	while (failedPages < totalPages) {
 		int index_min = true_min;
 		// cout << "\tindex_min: " << index_min << endl;
 		// cout << "\ttotal runs: " << totalRuns << endl;
-
+		// if (cc == 5484 || cc == 5485) {
+				// cout << "\n\n\n\n------min: ";
+				// PQ[index_min].Print(&ms);
+				// cout << "ci[index_min]: " << ci[index_min] << endl;
+				// cout << "som[index_min]: " << som[index_min] << endl;
+				//cout << "som[index_min-1]: " << som[index_min-1] << endl;
+			// 	cout << endl;
+				
+			// }
 		for (int i=index_min + 1; i<totalRuns; i++) {
 			// cout << "i: " << i << endl;
 			// cout << " ci[i]: " << ci[i] << endl;
+			// if (cc == 5484 || cc == 5485) {
+			// 	cout << "i(" << i << "): ";
+			// 	PQ[i].Print(&ms);
+			// 	cout << endl;
+			// 	cout << "ci[i]: " << ci[i] << endl;
+			// }
 			if (ci[i] < offset) {
 					
 				if (c.Compare(&PQ[i], &PQ[index_min], b->order) < 0) {
@@ -214,12 +247,12 @@ void BigQ::FinalSort(bigqutil *b) {
 				}	
 			}			
 		}
-		Schema ms("catalog", "lineitem");
+		
 		// if (cc == 1214 || cc == 1215 || cc == 1216 || cc == 1217) {
 		// 	PQ[index_min].Print(&ms);
 		// }
 		b->outpipe->Insert(&PQ[index_min]);
-		
+		som[index_min]++;
 		cc++;
 		// cout << cc << " total pages: " << totalPages << " failed pages: " << failedPages <<  endl;
 		int res = myPagez[index_min].GetFirst(&tempRecord);
@@ -243,7 +276,7 @@ void BigQ::FinalSort(bigqutil *b) {
 					// cout << k << endl;
 					if (ci[k] < offset) {
 						true_min=k;
-						// cout << "true min: " << true_min  << endl;
+						//cout << "true min: " << true_min  << endl;
 						break;
 						
 					}
@@ -255,9 +288,14 @@ void BigQ::FinalSort(bigqutil *b) {
 		}
 		
 	}
-	
-	cout << "finished putting into pipe" << endl;
-	cout << "testing again" << endl;
+	// int total = 0;
+	// for (int g = 0; g < totalRuns; g ++) {
+	// 	total+= som[g];
+	// 	cout << "som[i]: " << som[g] << endl;
+	// } 
+	// cout << "total: " << total << endl;
+	// cout << "finished putting into pipe" << endl;
+	// cout << "testing again" << endl;
 	return;
 }
 

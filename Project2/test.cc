@@ -15,7 +15,7 @@ void *producer (void *arg) {
 	int counter = 0;
 
 	DBFile dbfile;
-	dbfile.Open (rel->path ());
+	dbfile.Open (rel->path ()); 
 	cout << " producer: opened DBFile " << rel->path () << endl;
 	dbfile.MoveFirst ();
 
@@ -36,7 +36,6 @@ void *producer (void *arg) {
 
 void *consumer (void *arg) {
 	testutil *t = (testutil *) arg;
-	t->order->Print();
 	ComparisonEngine ceng;
 
 	DBFile dbfile; 
@@ -53,7 +52,6 @@ void *consumer (void *arg) {
 
 	Record rec[2];
 	Record *last = NULL, *prev = NULL;
-	std::vector<int> test;
 	while (t->pipe->Remove (&rec[i%2])) {
 		prev = last;
 		last = &rec[i%2];
@@ -61,11 +59,6 @@ void *consumer (void *arg) {
 		if (NULL != prev && NULL != last) {
 			if (ceng.Compare (prev, last, t->order) == 1) {
 				err++;
-				test.push_back(i);
-				prev->Print(rel->schema());
-				last->Print(rel->schema());
-
-				cout << "-----------------------------------\n\n\n" << endl;
 			}
 			if (t->write) {
 				dbfile.Add (*prev);
@@ -89,9 +82,6 @@ void *consumer (void *arg) {
 	cerr << " consumer: " << (i - err) << " recs out of " << i << " recs in sorted order \n";
 	if (err) {
 		cerr << " consumer: " <<  err << " recs failed sorted order test \n" << endl;
-	}
-	for (int i =0; i < test.size(); i++) {
-		cout << "Record: " << test.at(i) << endl;
 	}
 	pthread_exit(NULL);
 }
