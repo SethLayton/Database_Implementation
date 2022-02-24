@@ -90,7 +90,7 @@ void *consumer (void *arg) {
 	pthread_exit(NULL);
 }
 
-int gtest1 () {  
+int initAllDBFiles () {  
 
 		relation *rel_ptr[] = {n, r, c, p, ps, o, li, s};
 		struct stat buffer;   
@@ -158,7 +158,7 @@ int main (int argc, char *argv[]) {
 	relation *rel_ptr[] = {n, r, c, p, ps, o, li}; 
 
 	cout << "loading all tables -> dbfiles" << endl;
-	gtest1();
+	initAllDBFiles();
 
 	int tindx = 0;
 	while (tindx < 1 || tindx > 3) {
