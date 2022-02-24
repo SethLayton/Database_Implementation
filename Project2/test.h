@@ -1,26 +1,24 @@
 #ifndef TEST_H
 #define TEST_H
 #include <stdio.h>
-#include <iostream>
 #include <stdlib.h>
+#include <iostream>
+#include <math.h>
+
 #include "Pipe.h"
 #include "DBFile.h"
 #include "Record.h"
-
 using namespace std;
 
 // make sure that the information below is correct
 
-const char *catalog_path = "catalog"; 
-const char *tpch_dir ="../1gbdb/"; // dir where dbgen tpch files (extension *.tbl) can be found
-const char *dbfile_dir = ""; 
+char *catalog_path = "catalog"; 
+char *dbfile_dir = ""; 
+char *tpch_dir ="/cise/tmp/dbi_sp11/DATA/1G/"; 
 
 
 extern "C" {
-	typedef struct yy_buffer_state * YY_BUFFER_STATE;
 	int yyparse(void);   // defined in y.tab.c
-	extern YY_BUFFER_STATE yy_scan_string(char * str);
-	extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 }
 
 extern struct AndList *final;
@@ -35,17 +33,17 @@ typedef struct {
 class relation {
 
 private:
-	const char *rname;
-	const char *prefix;
+	char *rname;
+	char *prefix;
 	char rpath[100]; 
 	Schema *rschema;
 public:
-	relation (const char *_name, Schema *_schema, const char *_prefix) :
+	relation (char *_name, Schema *_schema, char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
-		sprintf (rpath, "%s%s%s.bin",tpch_dir, prefix, rname);
+		sprintf (rpath, "%s%s.bin", prefix, rname);
 	}
-	const char* name () { return rname; }
-	const char* path () { return rpath; }
+	char* name () { return rname; }
+	char* path () { return rpath; }
 	Schema* schema () { return rschema;}
 	void info () {
 		cout << " relation info\n";
@@ -54,9 +52,9 @@ public:
 	}
 
 	void get_cnf (CNF &cnf_pred, Record &literal) {
-		cout << " Enter CNF predicate (when done press ctrl-D):\n\t";
+		cout << "\n enter CNF predicate (when done press ctrl-D):\n\t";
   		if (yyparse() != 0) {
-			cout << "Can't parse your CNF.\n";
+			cout << " Error: can't parse your CNF.\n";
 			exit (1);
 		}
 		cnf_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
@@ -64,31 +62,14 @@ public:
 	void get_sort_order (OrderMaker &sortorder) {
 		cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
   		if (yyparse() != 0) {
-			cout << "Can't parse your sort CNF.\n";
+			cout << " Error: can't parse your CNF.\n";
 			exit (1);
 		}
-		cout << " \n";
-		Record literal;
-		CNF sort_pred;
-		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
-		OrderMaker dummy;
-		//sort_pred.GetSortOrders (sortorder, dummy);
-	}
-
-	void get_sort_order (OrderMaker &sortorder, char* input_string) {		
-		YY_BUFFER_STATE buffer = yy_scan_string(input_string);
-		
-  		if (yyparse() != 0) {
-			std::cout << "Can't parse your CNF.\n";
-			exit (1);
-		}
-		cout << " \n";
 		Record literal;
 		CNF sort_pred;
 		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
 		OrderMaker dummy;
 		sort_pred.GetSortOrders (sortorder, dummy);
-		yy_delete_buffer(buffer);
 	}
 };
 
@@ -96,14 +77,14 @@ public:
 relation *rel;
 
 
-const char *supplier = "supplier"; 
-const char *partsupp = "partsupp"; 
-const char *part = "part"; 
-const char *nation = "nation"; 
-const char *customer = "customer"; 
-const char *orders = "orders"; 
-const char *region = "region"; 
-const char *lineitem = "lineitem"; 
+char *supplier = "supplier"; 
+char *partsupp = "partsupp"; 
+char *part = "part"; 
+char *nation = "nation"; 
+char *customer = "customer"; 
+char *orders = "orders"; 
+char *region = "region"; 
+char *lineitem = "lineitem"; 
 
 relation *s, *p, *ps, *n, *li, *r, *o, *c;
 
