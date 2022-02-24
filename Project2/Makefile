@@ -1,5 +1,5 @@
 
-CC = g++ -O2 -Wno-deprecated -no-pie -IProject2 
+CC = g++ -O2 -Wno-deprecated -no-pie
 
 tag = -i
 
