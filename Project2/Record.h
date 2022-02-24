@@ -29,7 +29,6 @@ friend class Page;
 
 private:
 	char *bits;
-	char * GetBits () const ;
 	void SetBits (char *bits);
 	void CopyBits(char *bits, int b_len);
 
