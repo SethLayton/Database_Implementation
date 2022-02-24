@@ -12,9 +12,9 @@ using namespace std;
 
 // make sure that the information below is correct
 
-char *catalog_path = "catalog"; 
-char *dbfile_dir = ""; 
-char *tpch_dir ="/cise/tmp/dbi_sp11/DATA/1G/"; 
+const char *catalog_path = "catalog"; 
+const char *dbfile_dir = ""; 
+const char *tpch_dir ="/cise/tmp/dbi_sp11/DATA/1G/"; 
 
 
 extern "C" {
@@ -33,17 +33,17 @@ typedef struct {
 class relation {
 
 private:
-	char *rname;
-	char *prefix;
+	const char *rname;
+	const char *prefix;
 	char rpath[100]; 
 	Schema *rschema;
 public:
-	relation (char *_name, Schema *_schema, char *_prefix) :
+	relation (const char *_name, Schema *_schema, const char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
 		sprintf (rpath, "%s%s.bin", prefix, rname);
 	}
-	char* name () { return rname; }
-	char* path () { return rpath; }
+	const char* name () { return rname; }
+	const char* path () { return rpath; }
 	Schema* schema () { return rschema;}
 	void info () {
 		cout << " relation info\n";
@@ -77,14 +77,14 @@ public:
 relation *rel;
 
 
-char *supplier = "supplier"; 
-char *partsupp = "partsupp"; 
-char *part = "part"; 
-char *nation = "nation"; 
-char *customer = "customer"; 
-char *orders = "orders"; 
-char *region = "region"; 
-char *lineitem = "lineitem"; 
+const char *supplier = "supplier"; 
+const char *partsupp = "partsupp"; 
+const char *part = "part"; 
+const char *nation = "nation"; 
+const char *customer = "customer"; 
+const char *orders = "orders"; 
+const char *region = "region"; 
+const char *lineitem = "lineitem"; 
 
 relation *s, *p, *ps, *n, *li, *r, *o, *c;
 
