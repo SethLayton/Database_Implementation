@@ -260,8 +260,6 @@ TEST(CUSTOMER, AccountBalance) {
 TEST(PARTSUPPLIER, PartKey) {
 	char* col = "(ps_partkey)";
 	EXPECT_EQ(1, test1(1, 1, 4, col));
-	// EXPECT_EQ(1, test1(1, 2, 4, col));
-	// EXPECT_EQ(1, test1(1, 3, 4, col));
 	EXPECT_EQ(1, test1(1, 4, 4, col));
 	
 }
@@ -269,88 +267,63 @@ TEST(PARTSUPPLIER, PartKey) {
 TEST(PARTSUPPLIER, SupplierKey) {
 	char* col = "(ps_suppkey)";
 	EXPECT_EQ(1, test1(1, 1, 4, col));
-	// EXPECT_EQ(1, test1(1, 2, 4, col));
-	// EXPECT_EQ(1, test1(1, 3, 4, col));
 	EXPECT_EQ(1, test1(1, 4, 4, col));
 }
 
 TEST(PARTSUPPLIER, AvailableQty) {
 	char* col = "(ps_availqty)";
 	EXPECT_EQ(1, test1(1, 1, 4, col));
-	// EXPECT_EQ(1, test1(1, 2, 4, col));
-	// EXPECT_EQ(1, test1(1, 3, 4, col));
 	EXPECT_EQ(1, test1(1, 4, 4, col));
 }
 
 TEST(SUPPLIER, SupplierKey) {
 	char* col = "(s_suppkey)";
 	EXPECT_EQ(1, test1(1, 1, 7, col));
-	// EXPECT_EQ(1, test1(1, 2, 7, col));
-	// EXPECT_EQ(1, test1(1, 3, 7, col));
 	EXPECT_EQ(1, test1(1, 4, 7, col));
 }
 
 TEST(SUPPLIER, Address) {
 	char* col = "(s_address)";
 	EXPECT_EQ(1, test1(1, 1, 7, col));
-	// EXPECT_EQ(1, test1(1, 2, 7, col));
-	// EXPECT_EQ(1, test1(1, 3, 7, col));
 	EXPECT_EQ(1, test1(1, 4, 7, col));
 }
 
 TEST(SUPPLIER, AccountBalance) {
 	char* col = "(s_acctbal)";
 	EXPECT_EQ(1, test1(1, 1, 7, col));
-	// EXPECT_EQ(1, test1(1, 2, 7, col));
-	// EXPECT_EQ(1, test1(1, 3, 7, col));
 	EXPECT_EQ(1, test1(1, 4, 7, col));
 }
 
 TEST(ORDER, OrderKey) {
 	char* col = "(o_orderkey)";
 	EXPECT_EQ(1, test1(1, 1, 5, col));
-	// EXPECT_EQ(1, test1(1, 2, 5, col));
-	// EXPECT_EQ(1, test1(1, 3, 5, col));
 	EXPECT_EQ(1, test1(1, 4, 5, col));
 }
 
 TEST(ORDER, OrderStatus) {
 	char* col = "(o_orderstatus)";
 	EXPECT_EQ(1, test1(1, 1, 5, col));
-	// EXPECT_EQ(1, test1(1, 2, 5, col));
-	// EXPECT_EQ(1, test1(1, 3, 5, col));
 	EXPECT_EQ(1, test1(1, 4, 5, col));
 }
 
 TEST(ORDER, TotalPrice) {
 	char* col = "(o_totalprice)";
 	EXPECT_EQ(1, test1(1, 1, 5, col));
-	// EXPECT_EQ(1, test1(1, 2, 5, col));
-	// EXPECT_EQ(1, test1(1, 3, 5, col));
 	EXPECT_EQ(1, test1(1, 4, 5, col));
 }
 
 TEST(LINEITEM, LineNumber) {
 	char* col = "(l_linenumber)";
-	//EXPECT_EQ(1, test1(1, 1, 6, col));
-	// EXPECT_EQ(1, test1(1, 2, 6, col));
 	EXPECT_EQ(1, test1(1, 3, 6, col));
-	//EXPECT_EQ(1, test1(1, 4, 6, col));
 }
 
 TEST(LINEITEM, Discount) {
 	char* col = "(l_discount)";
 	EXPECT_EQ(1, test1(1, 1, 6, col));
-	// EXPECT_EQ(1, test1(1, 2, 6, col));
-	// EXPECT_EQ(1, test1(1, 3, 6, col));
-	//EXPECT_EQ(1, test1(1, 4, 6, col));
 }
 
 TEST(LINEITEM, ShipMode) {
 	char* col = "(l_shipmode)";
-	//EXPECT_EQ(1, test1(1, 1, 6, col));
-	// EXPECT_EQ(1, test1(1, 2, 6, col));
-	// EXPECT_EQ(1, test1(1, 3, 6, col));
 	EXPECT_EQ(1, test1(1, 4, 6, col));
 }
 
