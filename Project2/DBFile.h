@@ -10,6 +10,8 @@
 
 typedef enum {heap, sorted, tree} fType;
 
+
+
 class GenericDBFile {
 protected:
 	TwoWayList <Record> *myRecs;
@@ -55,6 +57,11 @@ public:
 	int GetNext (Record &fetchme);
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal);
 	void CreateSubClass(fType inputType);
+
+	typedef struct {
+		int runlen;
+		OrderMaker *order;
+	}sortutil;
 
 };
 

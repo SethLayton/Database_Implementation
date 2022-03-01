@@ -63,7 +63,28 @@ void Comparison :: Print () {
 }
 
 
+std::ostream& operator<<(std::ostream& output_stream, const OrderMaker& order_maker)
+{
+	cout << "test: " << order_maker.numAtts << endl;
+  	output_stream << order_maker.numAtts << endl; //write out number of attributes in our current order maker (needed by the read in operator overload)
+	for (int i = 0; i < order_maker.numAtts; i++) { //loop through all our attributes 
+          output_stream << order_maker.whichAtts[i] << " "; //write out our attribute
+          output_stream << order_maker.whichTypes[i] << endl; //and write out the attribute type
+        }
+        return output_stream;
+}
 
+std::istream& operator>>(std::istream& input_stream, OrderMaker& order_maker)
+{
+  input_stream >> order_maker.numAtts; //read in the number of attributes from the file to define the for loop below
+	for (int i = 0; i < order_maker.numAtts; i++) { //loop that many times
+          input_stream >> order_maker.whichAtts[i]; //read in the attribute
+          int type;
+          input_stream >> type; //read in the type of the attribute
+          order_maker.whichTypes[i] = (Type)type; //cast the type correctly and store it
+        }
+        return input_stream;
+}
 
 OrderMaker :: OrderMaker() {
 	numAtts = 0;
@@ -143,7 +164,7 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 		// now verify that it operates over atts from both tables
 		if (!((orList[i][0].operand1 == Left && orList[i][0].operand2 == Right) ||
 		      (orList[i][0].operand2 == Left && orList[i][0].operand1 == Right))) {
-			continue;		
+			//continue;		
 		}
 
 		// since we are here, we have found a join attribute!!!

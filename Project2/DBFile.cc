@@ -45,6 +45,12 @@ int DBFile::Create (const char *f_path, fType f_type, void *startup) {
         mf.open(metafile, fstream::in | fstream::out | fstream::trunc); 
         //write out the type to the first line of the file
         mf << myType << endl;
+        if (myType == sorted) {
+            sortutil su = *((sortutil*)startup);
+            OrderMaker om = *(OrderMaker *)su.order;
+            mf << su.runlen << endl;
+            mf << om << endl;
+        }
         mf.close();
         
         //set up the virtual base class to be the right type of DBFile
@@ -69,6 +75,8 @@ int DBFile::Open (const char *f_path) {
     {
         //open the meta file
         int type;
+        int runlength = -1;
+        OrderMaker so;
         std::string metafile = f_path;
         metafile.append(".meta");
         ifstream mf;
@@ -78,6 +86,11 @@ int DBFile::Open (const char *f_path) {
         //read in the type from the first line of the fiel
         mf >> type;
         myType = (fType) type; //convert that value to a type
+        if (myType == sorted) {
+            mf >> runlength;
+            mf >> so;
+            so.Print();
+        }
         mf.close();
         //set up the virtual base class to be the right type of DBFile
         CreateSubClass(myType);

@@ -6,6 +6,7 @@
 #include "File.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
+#include <iostream>
 
 
 // This stores an individual comparison that is part of a CNF
@@ -50,6 +51,11 @@ class OrderMaker {
 
 public:
 	
+
+	// writes out an ordermaker
+	friend std::ostream& operator<<(std::ostream&, const OrderMaker&);
+	// reads into an ordermaker
+	friend std::istream& operator>>(std::istream&, OrderMaker&);
 	// creates an empty OrdermMaker
 	OrderMaker();
 

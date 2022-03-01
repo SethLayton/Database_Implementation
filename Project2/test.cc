@@ -1,6 +1,7 @@
 #include "test.h"
 #include "BigQ.h"
 #include <pthread.h>
+#include "DBFile.h"
 void test1 ();
 void test2 ();
 void test3 ();
@@ -26,22 +27,23 @@ int add_data (FILE *src, int numrecs, int &res) {
 // create a dbfile interactively
 void test1 () {
 
-
-	OrderMaker o;
-	rel->get_sort_order (o);
-
 	int runlen = 0;
 	while (runlen < 1) {
 		cout << "\t\n specify runlength:\n\t ";
 		cin >> runlen;
 	}
-	struct {OrderMaker *o; int l;} startup = {&o, runlen};
+
+	OrderMaker o;
+	rel->get_sort_order (o);
+	o.Print();
+	
+	DBFile::sortutil startup = {runlen, &o};
 
 	DBFile dbfile;
 	cout << "\n output to dbfile : " << rel->path () << endl;
 	dbfile.Create (rel->path(), sorted, &startup);
 	dbfile.Close ();
-
+	return;
 	char tbl_path[100];
 	sprintf (tbl_path, "%s%s.tbl", tpch_dir, rel->name()); 
 	cout << " input from file : " << tbl_path << endl;
@@ -81,7 +83,7 @@ void test2 () {
 	DBFile dbfile;
 	dbfile.Open (rel->path());
 	dbfile.MoveFirst ();
-
+	return;
 	Record temp;
 
 	int cnt = 0;
