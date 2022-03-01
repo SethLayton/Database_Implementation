@@ -14,7 +14,7 @@ using namespace std;
 
 const char *catalog_path = "catalog"; 
 const char *dbfile_dir = ""; 
-const char *tpch_dir ="/cise/tmp/dbi_sp11/DATA/1G/"; 
+const char *tpch_dir ="../1gbdb/"; 
 
 
 extern "C" {
@@ -40,7 +40,7 @@ private:
 public:
 	relation (const char *_name, Schema *_schema, const char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
-		sprintf (rpath, "%s%s.bin", prefix, rname);
+		sprintf (rpath, "%s%s%s.bin", tpch_dir, prefix, rname);		
 	}
 	const char* name () { return rname; }
 	const char* path () { return rpath; }
