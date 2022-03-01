@@ -56,7 +56,7 @@ public:
 	void Add (Record &addme);
 	int GetNext (Record &fetchme);
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal);
-	void CreateSubClass(fType inputType);
+	void CreateSubClass(fType inputType, int &runlength, OrderMaker &so);
 
 	typedef struct {
 		int runlen;

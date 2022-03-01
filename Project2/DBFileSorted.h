@@ -12,10 +12,12 @@
 
 class DBFileSorted : public GenericDBFile {
 private:
-
+    int runlen;
+    OrderMaker so;
 
 public:
-	DBFileSorted (): GenericDBFile() {}; 
+	DBFileSorted (): GenericDBFile() {};
+    DBFileSorted (int runlength, OrderMaker so);  
     int Create (const char *fpath, fType file_type, void *startup) override;
 	int Open (const char *fpath) override;
     void Load (Schema &myschema, const char *loadpath) override;

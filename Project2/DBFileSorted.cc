@@ -11,6 +11,12 @@
 #include <cstring>
 
 
+DBFileSorted::DBFileSorted(int runlength, OrderMaker om) {
+
+    runlen = runlength;
+    so = om;
+}
+
 int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
 
     try
@@ -19,8 +25,7 @@ int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
         //create the new file based on the passed in name
         myFile.Open(0, f_path);
         //set the current page index to 0
-        MoveFirst();
-        
+        MoveFirst();        
         //return success
         return 1;
     }
