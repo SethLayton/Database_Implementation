@@ -57,63 +57,13 @@ int DBFileSorted::Open (const char *f_path) {
     }    
 }
 
-void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
-
-    //bool to track if the page has content
-    //used to make sure we don't try and double write
-    //a page to the file and end up with an empty page at the end
-    bool has_contents = false;
-    //get the number of pages in the file
-    off_t page_counter = myFile.GetLength();
-    //empty out our current page
-    myPage.EmptyItOut();
-    //create a temporary record object to handle each read record
-    Record temp;
-    //open up the file we want to read records from
-    FILE *tableFile = fopen (loadpath, "r");
-    //do the actual record reading until the end of file
-    while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
-	{
-        //we've successfully grabbed a record
-        //add it to the current page
-        if (myPage.Append(&temp) == 0)
-		{
-            //our current page is full
-            //write this page out to the file
-			myFile.AddPage(&myPage, page_counter);
-            //empty out our current page
-			myPage.EmptyItOut();
-            //increment the total number of pages
-			page_counter++;
-            //add the record to the newly created page
-            myPage.Append(&temp);
-            //reset the page content check
-            has_contents = false;
-		}
-        //set the tracker to show there is content in the current page
-        has_contents = true;
-    }
-    //add our page to the file
-    //the above addpage call only gets hit if the page is full
-    //this will add the page to the file at the end if there are still records
-    if (has_contents){
-        myFile.AddPage(&myPage, page_counter);
-    }
-}
-
-
-
-void DBFileSorted::MoveFirst () {
-
-    //an index to the current page that we are reading from the overall file
-    //just reseting this index to 0
-    curr_page = 0;
-}
-
 int DBFileSorted::Close () {
 
     try
     {
+        if (is_write) {
+            MergeInternal();
+        }
         //empty our current page
         myPage.EmptyItOut();
         //close the file
@@ -128,52 +78,48 @@ int DBFileSorted::Close () {
     }
 }
 
+void DBFileSorted::MoveFirst () {
+
+    if (is_write) {
+        MergeInternal();
+    }
+    //an index to the current page that we are reading from the overall file
+    //just reseting this index to 0
+    curr_page = 0;
+}
+
+void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
+
+    is_write = true; //set current state to writing
+    if(bigQ == NULL) { //if bigQ isnt set up
+        bigQ = new BigQ(*input, *output, so, runlen);
+    }
+    Record temp;    
+    FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
+    //do the actual record reading until the end of file
+    while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
+	{
+        //we've successfully grabbed a record
+        //add it to the BigQ pipe        
+        input->Insert(&temp);
+    }
+}
+
 void DBFileSorted::Add (Record &rec) {
 
-    //get the number of pages in the file
-    off_t file_length = myFile.GetLength();
-
-    //there could be a non full page in the file
-    //load the last page from the file
-    if (!is_write && file_length > 1) {        
-        myFile.GetPage(&myPage, file_length - 1);
-    }
-    
-    is_write = true;
-    //write record to page (returns 0 if page is full)   
-    if (myPage.Append(&rec) == 0) {
-        //if that page is full, add it to the file
-        myFile.AddPage(&myPage, file_length);
-        //empty the page out
-        myPage.EmptyItOut();
-        //add the record to the new empty page
-        myPage.Append(&rec);
-    } 
-    
+    is_write = true; //set current state to writing
+    if(bigQ == NULL) { //if bigQ isnt set up
+        bigQ = new BigQ(*input, *output, so, runlen);
+    }      
+    input->Insert(&rec); //write the record to the pipe   
 }
 
 int DBFileSorted::GetNext (Record &fetchme) {
 
-    off_t file_length = myFile.GetLength();
-    //checking to see if we are swaping from a write to a read
-    //if we were writing we need to write the page out to the file
-    //and clear the page out, before we starting reading
-    //this might lead to a nonfull page at the end of the file
     if (is_write) {
-        myFile.AddPage(&myPage, file_length);
-        is_write = false;
-        myPage.EmptyItOut();
+        MergeInternal();
     }
-    //get the updated number of pages
-    file_length = myFile.GetLength();
-
-    if (!is_read) {
-        //set this to true. This helps monitor if this is a first read or not
-        //if this is a first read we need to read the current page from the file        
-        is_read = true;
-        //get page associated with the current location of our pointer "curr_page"
-        myFile.GetPage(&myPage, curr_page);
-    }
+    off_t file_length = myFile.GetLength();
     
     //read the first item from our current page
     if (myPage.GetFirst(&fetchme) == 0) {
@@ -200,6 +146,9 @@ int DBFileSorted::GetNext (Record &fetchme) {
 
 int DBFileSorted::GetNext (Record &fetchme, CNF &cnf, Record &literal) {
 
+    if (is_write) {
+        MergeInternal();
+    }
     //create our comparison engine object
     ComparisonEngine comp;
 
@@ -216,4 +165,61 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &cnf, Record &literal) {
     }
     //no matching records were found
     return 0;
+}
+
+void DBFileSorted::MergeInternal() {
+
+    is_write = false; //set the current state to reading
+    input->ShutDown(); //shut down the pipe
+    Record piperec; //create a record to hold records from the pipe
+    Record filerec; //create a record to hold records from the file   
+    ComparisonEngine ce; //init comp engine
+    File newMyFile; //create a new file used to store our merged records
+    Page newMyPage; //create a new temp page used to store our merged records
+    int page_counter = 0; //page counter for newMyFile
+    bool contReadFile = true; //exit condition for inner while loop
+    while (input->Remove (&piperec)) { //Coninuously read from the pipe     
+        while (contReadFile) { //read from the file as long as the file value is less than the pipe value
+            Record temp;
+            if (GetNext(filerec) != 0) { //read the first value from the file               
+                if (ce.Compare(&piperec, &filerec, &so) == 1) { //compare the file record with the pipe record
+                    //filerec is smallest
+                    temp = filerec;
+                    contReadFile = true; //continue reading from the file
+                }
+                else {
+                    //piperec is the smallest
+                    temp = piperec;
+                    contReadFile = false; //stop reading from the file and get the next pipe record
+                }
+            }
+            else {
+                //no data left in the file, continue reading from the pipe exclusively
+                temp = piperec;
+                contReadFile = false;
+            }
+            if (newMyPage.Append(&temp) == 0) //append the current smallest (between pipe and file) to our new temp page
+            {
+                //our current page is full
+                //write this page out to the file
+                newMyFile.AddPage(&newMyPage, page_counter);
+                //empty out our current page
+                newMyPage.EmptyItOut();
+                //increment the total number of pages
+                page_counter++;
+                //add the record to the newly created page
+                newMyPage.Append(&temp);
+            }
+            temp.SetNull(); //clear out the temp record just in case
+        }        
+    }
+    if (newMyPage.GetNumRecs() > 0) { //if our new temp page still has some records in it
+        newMyFile.AddPage(&newMyPage,page_counter); //add that page to the end of the file
+        newMyPage.EmptyItOut(); //clear out the page
+    }
+    myFile = newMyFile; //set our myFile to our newly created merged File
+    newMyFile.~File(); //destroy our temp File
+    myPage = newMyPage;
+    piperec.SetNull();
+    filerec.SetNull();
 }

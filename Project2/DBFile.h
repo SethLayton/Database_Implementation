@@ -37,13 +37,8 @@ public:
 
 class DBFile {
 private:
-	TwoWayList <Record> *myRecs;
-	Page myPage;
-	File myFile;
+
 	fType myType;
-	bool is_write = false;
-	bool is_read = false;
-	int curr_page = 0;
 	GenericDBFile *myInteralClass;
 
 public:
