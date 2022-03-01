@@ -15,10 +15,11 @@
 
 DBFile::DBFile () {}
 
-void DBFile::CreateSubClass(fType type) {
+void DBFile::CreateSubClass(fType type, int &runlength, OrderMaker &so) {
+    
     if (type == sorted) {
         cout << "Creating DBFileSorted" << endl;
-        myInteralClass = new DBFileSorted();
+        myInteralClass = new DBFileSorted(runlength, so);
     }
     else if (type == heap) {
         cout << "Creating DBFileHeap" << endl;
@@ -50,11 +51,17 @@ int DBFile::Create (const char *f_path, fType f_type, void *startup) {
             OrderMaker om = *(OrderMaker *)su.order;
             mf << su.runlen << endl;
             mf << om << endl;
+            CreateSubClass(myType, su.runlen, om);
+        }
+        else {
+            int run = -1;
+            OrderMaker om;
+            CreateSubClass(myType, run, om);
         }
         mf.close();
         
         //set up the virtual base class to be the right type of DBFile
-        CreateSubClass(myType);
+        
        
         return myInteralClass->Create(f_path,f_type,startup);
     }
@@ -89,11 +96,10 @@ int DBFile::Open (const char *f_path) {
         if (myType == sorted) {
             mf >> runlength;
             mf >> so;
-            so.Print();
         }
         mf.close();
         //set up the virtual base class to be the right type of DBFile
-        CreateSubClass(myType);
+        CreateSubClass(myType, runlength, so);
        
         return myInteralClass->Open(f_path);
     }
