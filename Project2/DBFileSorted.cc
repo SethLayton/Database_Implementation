@@ -144,27 +144,22 @@ int DBFileSorted::GetNext (Record &fetchme) {
     return 1;
 }
 
-int DBFileSorted::GetNext (Record &fetchme, CNF &cnf, Record &literal) {
+int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 
     if (is_write) {
         MergeInternal();
     }
-    //create our comparison engine object
-    ComparisonEngine comp;
+    
+    int numAtts = so.GetNumAtts();
+    int *whichAtts = so.GetWhichAtts();
 
-    //call the above GetNext function continually until a match is found
-    //since the test.cc function calls this CNF version of GetNext continually
-    //we only need to return one matching record each time as
-    //test.cc will keep calling until all the records are exhausted
-    while (GetNext(fetchme) == 1) {
-        //if we get a record back, make a comparison check
-        if (comp.Compare (&fetchme, &literal, &cnf)) {
-            //return success if there was a match            
-            return 1;
-        }
-    }
-    //no matching records were found
-    return 0;
+    for (int i = 0; i < numAtts; i++) { 
+		cout << whichAtts[i] << endl; 
+	}
+
+    Schema ms("catalog", "nation");
+    literal.Print(&ms);
+    return 1;
 }
 
 void DBFileSorted::MergeInternal() {
