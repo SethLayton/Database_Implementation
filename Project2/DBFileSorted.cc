@@ -92,6 +92,8 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 
     is_write = true; //set current state to writing
     if(bigQ == NULL) { //if bigQ isnt set up
+        input = new Pipe(pipeBufferSize);
+        output = new Pipe(pipeBufferSize);
         bigQ = new BigQ(*input, *output, so, runlen);
     }
     Record temp;    
@@ -109,6 +111,8 @@ void DBFileSorted::Add (Record &rec) {
 
     is_write = true; //set current state to writing
     if(bigQ == NULL) { //if bigQ isnt set up
+        input = new Pipe(pipeBufferSize);
+        output = new Pipe(pipeBufferSize);
         bigQ = new BigQ(*input, *output, so, runlen);
     }      
     input->Insert(&rec); //write the record to the pipe   

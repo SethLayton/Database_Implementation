@@ -42,7 +42,6 @@ class BigQ {
 				
 			}
 			bool operator() (Record r1, Record r2) {
-				//Schema ms("catalog", "region");
 				ComparisonEngine c;
 				int res = c.Compare(&r1, &r2, &so);
 				if (res < 0) {

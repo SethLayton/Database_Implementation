@@ -17,12 +17,12 @@ private:
     OrderMaker so;
     BigQ * bigQ;
     bool is_write;
-    Pipe * input = new Pipe(100);
-    Pipe * output = new Pipe (100);
+    Pipe * input; 
+    Pipe * output;
     int pipeBufferSize = 100;
 
 public:
-	DBFileSorted (): GenericDBFile() {};
+	DBFileSorted () {};
     DBFileSorted (int runlength, OrderMaker so);  
     int Create (const char *fpath, fType file_type, void *startup) override;
 	int Open (const char *fpath) override;
