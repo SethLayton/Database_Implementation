@@ -16,10 +16,12 @@ private:
     int runlen;
     OrderMaker so;
     BigQ * bigQ;
-    bool is_write;
-    Pipe * input; 
-    Pipe * output;
+    bool is_write = false;
+    bool is_read = false;
     int pipeBufferSize = 100;
+    Pipe * input = new Pipe(pipeBufferSize); 
+    Pipe * output = new Pipe(pipeBufferSize);
+    const char* f_name;    
 
 public:
 	DBFileSorted () {};

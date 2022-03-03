@@ -20,8 +20,7 @@ DBFileSorted::DBFileSorted(int runlength, OrderMaker om) {
 int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
 
     try
-    {
-        
+    {        
         //create the new file based on the passed in name
         myFile.Open(0, f_path);
         //set the current page index to 0
@@ -42,11 +41,14 @@ int DBFileSorted::Open (const char *f_path) {
     {        
         //open the file
         myFile.Open(1, f_path);
+        f_name = f_path;
         //emty our our current page
         myPage.EmptyItOut();
         //move the current page pointer to 0
         MoveFirst();
-        
+        if (myFile.GetLength() > 0) {
+            myFile.GetPage(&myPage, curr_page);
+        }
         //return success
         return 1;
     }
@@ -58,16 +60,18 @@ int DBFileSorted::Open (const char *f_path) {
 }
 
 int DBFileSorted::Close () {
-
+   
     try
     {
         if (is_write) {
             MergeInternal();
         }
+        is_read = true;
         //empty our current page
         myPage.EmptyItOut();
         //close the file
         myFile.Close();
+        f_name = "";
         //return success
         return 1;
     }
@@ -83,6 +87,7 @@ void DBFileSorted::MoveFirst () {
     if (is_write) {
         MergeInternal();
     }
+    is_read = true;
     //an index to the current page that we are reading from the overall file
     //just reseting this index to 0
     curr_page = 0;
@@ -91,31 +96,36 @@ void DBFileSorted::MoveFirst () {
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 
     is_write = true; //set current state to writing
-    if(bigQ == NULL) { //if bigQ isnt set up
-        input = new Pipe(pipeBufferSize);
-        output = new Pipe(pipeBufferSize);
-        bigQ = new BigQ(*input, *output, so, runlen);
+    if (is_read) {        
+        is_read = false;
+        if(bigQ == NULL) { //if bigQ isnt set up
+            bigQ = new BigQ(*input, *output, so, runlen);
+        }
     }
-    Record temp;    
-    FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
-    //do the actual record reading until the end of file
-    while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
-	{
-        //we've successfully grabbed a record
-        //add it to the BigQ pipe        
-        input->Insert(&temp);
-    }
+    else {
+        Record temp;    
+        FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
+        //do the actual record reading until the end of file
+        while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
+        {
+            //we've successfully grabbed a record
+            //add it to the BigQ pipe        
+            input->Insert(&temp);
+        }
+    }    
 }
 
 void DBFileSorted::Add (Record &rec) {
-
     is_write = true; //set current state to writing
-    if(bigQ == NULL) { //if bigQ isnt set up
-        input = new Pipe(pipeBufferSize);
-        output = new Pipe(pipeBufferSize);
-        bigQ = new BigQ(*input, *output, so, runlen);
-    }      
-    input->Insert(&rec); //write the record to the pipe   
+    if (is_read) {        
+        is_read = false;
+        if(bigQ == NULL) { //if bigQ isnt set up
+            bigQ = new BigQ(*input, *output, so, runlen);
+        }               
+    }
+    //else {
+    input->Insert(&rec); //write the record to the pipe  
+    //}
 }
 
 int DBFileSorted::GetNext (Record &fetchme) {
@@ -123,6 +133,7 @@ int DBFileSorted::GetNext (Record &fetchme) {
     if (is_write) {
         MergeInternal();
     }
+    is_read = true;
     off_t file_length = myFile.GetLength();
     
     //read the first item from our current page
@@ -153,7 +164,7 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     if (is_write) {
         MergeInternal();
     }
-    
+    is_read = true;
     int numAtts = so.GetNumAtts();
     int *whichAtts = so.GetWhichAtts();
 
@@ -167,20 +178,25 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 }
 
 void DBFileSorted::MergeInternal() {
-
+    
+    is_read = true;
     is_write = false; //set the current state to reading
     input->ShutDown(); //shut down the pipe
     Record piperec; //create a record to hold records from the pipe
     Record filerec; //create a record to hold records from the file   
     ComparisonEngine ce; //init comp engine
+    const char* tempFileName = "tempfileName_myFile";
     File newMyFile; //create a new file used to store our merged records
+    newMyFile.Open(0,tempFileName);
     Page newMyPage; //create a new temp page used to store our merged records
     int page_counter = 0; //page counter for newMyFile
     bool contReadFile = true; //exit condition for inner while loop
-    while (input->Remove (&piperec)) { //Coninuously read from the pipe     
-        while (contReadFile) { //read from the file as long as the file value is less than the pipe value
-            Record temp;
-            if (GetNext(filerec) != 0) { //read the first value from the file               
+    
+    while (output->Remove (&piperec)) { //Coninuously read from the pipe 
+        Record temp;    
+        while (contReadFile) { //read from the file as long as the file value is less than the pipe value            
+            int con = GetNext(filerec);
+            if (con != 0) { //read the first value from the file               
                 if (ce.Compare(&piperec, &filerec, &so) == 1) { //compare the file record with the pipe record
                     //filerec is smallest
                     temp = filerec;
@@ -195,6 +211,7 @@ void DBFileSorted::MergeInternal() {
             else {
                 //no data left in the file, continue reading from the pipe exclusively
                 temp = piperec;
+                piperec.SetNull();
                 contReadFile = false;
             }
             if (newMyPage.Append(&temp) == 0) //append the current smallest (between pipe and file) to our new temp page
@@ -210,15 +227,50 @@ void DBFileSorted::MergeInternal() {
                 newMyPage.Append(&temp);
             }
             temp.SetNull(); //clear out the temp record just in case
-        }        
+        } 
+        if (!piperec.isNull()){ 
+            if (newMyPage.Append(&piperec) == 0) //append the current smallest from pipe to our new temp page
+            {
+                //our current page is full
+                //write this page out to the file
+                newMyFile.AddPage(&newMyPage, page_counter);
+                //empty out our current page
+                newMyPage.EmptyItOut();
+                //increment the total number of pages
+                page_counter++;
+                //add the record to the newly created page
+                newMyPage.Append(&piperec);
+            }
+            piperec.SetNull(); //clear out the temp record just in case  
+        }
+        
+    }
+    Record temp;
+    while (GetNext(temp) != 0) {
+        if (newMyPage.Append(&temp) == 0) //append the current smallest in file to our new temp page
+        {
+            //our current page is full
+            //write this page out to the file
+            newMyFile.AddPage(&newMyPage, page_counter);
+            //empty out our current page
+            newMyPage.EmptyItOut();
+            //increment the total number of pages
+            page_counter++;
+            //add the record to the newly created page
+            newMyPage.Append(&temp);
+        }
+        temp.SetNull(); //clear out the temp record just in case
     }
     if (newMyPage.GetNumRecs() > 0) { //if our new temp page still has some records in it
         newMyFile.AddPage(&newMyPage,page_counter); //add that page to the end of the file
         newMyPage.EmptyItOut(); //clear out the page
-    }
+    } 
+    newMyFile.Close();
+    newMyFile.Open(1, tempFileName);
+    myFile.~File(); //clean our current file to prepare to be overwritten   
     myFile = newMyFile; //set our myFile to our newly created merged File
     newMyFile.~File(); //destroy our temp File
-    myPage = newMyPage;
-    piperec.SetNull();
-    filerec.SetNull();
+    remove(f_name);    
+    std::rename(tempFileName, f_name);
+    remove(tempFileName);
 }

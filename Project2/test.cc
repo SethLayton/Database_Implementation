@@ -3,24 +3,27 @@
 #include <pthread.h>
 #include "DBFile.h"
 #include "limits.h"
+#include <fstream>
 void test1 ();
 void test2 ();
 void test3 ();
 
 int add_data (FILE *src, int numrecs, int &res) {
+	
 	DBFile dbfile;
-	dbfile.Open (rel->path ());
+	dbfile.Open(rel->path ());
 	Record temp;
 
 	int proc = 0;
 	int xx = 20000;  
 	while ((res = temp.SuckNextRecord (rel->schema (), src)) && ++proc < numrecs) {
-		dbfile.Add (temp);
+		dbfile.Add(temp);
 		if (proc == xx) cerr << "\t ";
 		if (proc % xx == 0) cerr << ".";
 	}
 
-	dbfile.Close ();
+
+	dbfile.Close();
 	return proc;
 }
 
@@ -83,7 +86,6 @@ void test2 () {
 	DBFile dbfile;
 	dbfile.Open (rel->path());
 	dbfile.MoveFirst ();
-	return;
 	Record temp;
 
 	int cnt = 0;

@@ -18,11 +18,11 @@ DBFile::DBFile () {}
 void DBFile::CreateSubClass(fType type, int &runlength, OrderMaker &so) {
     
     if (type == sorted) {
-        cout << "Creating DBFileSorted" << endl;
+        //cout << "Creating DBFileSorted" << endl;
         myInteralClass = new DBFileSorted(runlength, so);
     }
     else if (type == heap) {
-        cout << "Creating DBFileHeap" << endl;
+        //cout << "Creating DBFileHeap" << endl;
         myInteralClass = new DBFileHeap();
     }
     else if (type == tree) {

@@ -11,14 +11,14 @@
 BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {	
 
 	myFile.Open(0, "f_path"); //create our file that stores all the runs
-	pthread_t threads; //create thread and initialize starting values
+	//create thread and initialize starting values
 	bigqutil bqutil = {&in, &out, &sortorder, runlen, this}; //pass the thread the bigqutil structure for all the information it needs
-	pthread_create(&threads, NULL, ts, (void *) &bqutil); //actually create the thread   
-	pthread_join(threads, NULL); //clean up the thread
-	out.ShutDown();	
+	pthread_create(&threads, NULL, ts, (void *) &bqutil); //actually create the thread
+	//pthread_join(threads, NULL);   
 }
 
 BigQ::~BigQ () {
+	pthread_exit(NULL);
 }
 
 //thread starter
@@ -29,17 +29,21 @@ void * ts(void *arg)
 }
 
 void *BigQ::DoWork(void *arg) {
+	cout << "do work called" << endl;
 	try
 	{	
 		bigqutil *b = (bigqutil *) arg;	//cast our passed structure	
 		Record myRec; //create a record to store read in records from the input pipe
 		std::vector<Record> records; //create a vector to store above records
+		cout << "??" << endl;
 		file_length = myFile.GetLength(); //get the current length of the file
+		cout << "??" << endl;
 		long curSizeInBytes = 0; //init a length variable for total bytes of a run read		
 		long maxRunBytes = b->runlength * PAGE_SIZE; //calculate how long a run can be in bytes
 		OrderMaker* tempOrder = b->order; //set our sort order
 		Compare comparator(tempOrder); //create the comparator used in the vector sort
 		//read in a record from the input pipe
+		cout << "??" << endl;
 		while (b->inpipe->Remove (&myRec)) {
 			
 			char *bytes = myRec.GetBits(); //get the size of that record in bytes
@@ -94,8 +98,17 @@ void *BigQ::DoWork(void *arg) {
 		}
 		//this block is only hit if we read all the information from the input
 		//pipe and it wasnt enough to fill an entire page
-		if (records.size() > 0){			
+		if (records.size() > 0){	
+			Schema ms("catalog", "nation");
+			cout << "pre sort" << endl;
+			for (auto & currRec : records) {
+				currRec.Print(&ms);
+			}
+			cout << "post sort" << endl;		
 			std::sort(records.begin(),records.end(),comparator); //sort our vector
+			for (auto & currRec : records) {
+				currRec.Print(&ms);
+			}
 			//write each record to the page
 			for (int i = 0; i < records.size(); i++) {	
 				//write record to page (returns 0 if page is full)			

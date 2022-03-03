@@ -23,7 +23,8 @@ class BigQ {
 		off_t file_length;
 		Page myPage;
 		static OrderMaker sortorder;
-		long pageCount = 0;		
+		long pageCount = 0;
+		pthread_t threads;		
 	public:
 		BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
 		~BigQ ();
