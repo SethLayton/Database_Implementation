@@ -21,10 +21,10 @@ class BigQ {
 		int currPage = 0;
 		File myFile;
 		off_t file_length;
-		Page myPage;
+		Page myPage;		
 		static OrderMaker sortorder;
 		long pageCount = 0;
-		pthread_t threads;		
+				
 	public:
 		BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
 		~BigQ ();
@@ -34,17 +34,17 @@ class BigQ {
 
 	class Compare {
 		private:
-			OrderMaker so;
+			OrderMaker *so;
 		public:
 			Compare(OrderMaker *sort){
-				so = OrderMaker(*sort);
+				so = sort;
 			}
 			Compare() {
 				
 			}
 			bool operator() (Record r1, Record r2) {
 				ComparisonEngine c;
-				int res = c.Compare(&r1, &r2, &so);
+				int res = c.Compare(&r1, &r2, so);
 				if (res < 0) {
 				}
 				return (res < 0);

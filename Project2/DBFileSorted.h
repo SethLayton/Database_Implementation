@@ -15,12 +15,12 @@ class DBFileSorted : public GenericDBFile {
 private:
     int runlen;
     OrderMaker so;
-    BigQ * bigQ;
+    BigQ * bigQ = NULL;
     bool is_write = false;
     bool is_read = false;
     int pipeBufferSize = 100;
-    Pipe * input = new Pipe(pipeBufferSize); 
-    Pipe * output = new Pipe(pipeBufferSize);
+    Pipe * input; 
+    Pipe * output;
     const char* f_name;    
 
 public:

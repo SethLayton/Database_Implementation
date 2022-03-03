@@ -12,9 +12,9 @@ private:
 	// these are used for data storage in the pipeline
 	Record *buffered;
 
-	int firstSlot;
-	int lastSlot;
-	int totSpace;
+	int firstSlot = 0;
+	int lastSlot = 0;
+	int totSpace = 0;
 
 	int done;
 

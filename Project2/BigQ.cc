@@ -9,10 +9,10 @@
 #include <string.h>
 
 BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {	
-
-	myFile.Open(0, "f_path"); //create our file that stores all the runs
+	
 	//create thread and initialize starting values
 	bigqutil bqutil = {&in, &out, &sortorder, runlen, this}; //pass the thread the bigqutil structure for all the information it needs
+	pthread_t threads;
 	pthread_create(&threads, NULL, ts, (void *) &bqutil); //actually create the thread
 	//pthread_join(threads, NULL);   
 }
@@ -27,25 +27,31 @@ void * ts(void *arg)
 	bigqutil *b = (bigqutil *) arg;
   	return reinterpret_cast<BigQ*>(b->context)->DoWork(arg);
 }
-
+ 
 void *BigQ::DoWork(void *arg) {
 	cout << "do work called" << endl;
 	try
 	{	
+		myFile.Open(0, "f_path"); //create our file that stores all the runs
 		bigqutil *b = (bigqutil *) arg;	//cast our passed structure	
 		Record myRec; //create a record to store read in records from the input pipe
 		std::vector<Record> records; //create a vector to store above records
 		cout << "??" << endl;
 		file_length = myFile.GetLength(); //get the current length of the file
 		cout << "??" << endl;
-		long curSizeInBytes = 0; //init a length variable for total bytes of a run read		
-		long maxRunBytes = b->runlength * PAGE_SIZE; //calculate how long a run can be in bytes
-		OrderMaker* tempOrder = b->order; //set our sort order
-		Compare comparator(tempOrder); //create the comparator used in the vector sort
+		long curSizeInBytes = 0; //init a length variable for total bytes of a run read
+		int rlen = b->runlength; 		
+		long maxRunBytes = rlen * PAGE_SIZE; //calculate how long a run can be in bytes
+		//OrderMaker tempOrder = *(b->order); //set our sort order
+		Compare comparator(b->order); //create the comparator used in the vector sort
 		//read in a record from the input pipe
 		cout << "??" << endl;
+		using namespace std::this_thread; // sleep_for, sleep_until
+		using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+		
 		while (b->inpipe->Remove (&myRec)) {
-			
+			cout << "Removed record" << endl;
 			char *bytes = myRec.GetBits(); //get the size of that record in bytes
 			int recBytes = ((int *)bytes)[0]; //convert to an int			
 			curSizeInBytes = curSizeInBytes + recBytes; //update the total size of the vector
@@ -72,7 +78,7 @@ void *BigQ::DoWork(void *arg) {
 				//this block handles residuals
 				//write these to the vector for next run processing
 				//only if the number of pages is greater than run length
-				if (pageCount % b->runlength == 0) {
+				if (pageCount % rlen == 0) {
 					Record temp; //init a new record
 					//read from the page
 					while (myPage.GetFirst(&temp) != 0) {
@@ -153,9 +159,10 @@ void BigQ::FinalSort(bigqutil *b) {
 	//get the total number of runs in the file
 	//this is based on the length of the file and specified run length
 	off_t totalPages = myFile.GetLength() - 1;
-	int totalRuns = int(ceil(double(totalPages) / double(b->runlength)));	
+	int rlen = b->runlength; 
+	int totalRuns = int(ceil(double(totalPages) / double(rlen)));	
 
-	int offset = b->runlength;	//set the number of pages in each run
+	int offset = rlen;	//set the number of pages in each run
 	Page myPagez[totalRuns]; //initialize an array to hold the pages of the runs	
 	Record PQ[totalRuns]; //initialize our custome priority queue array
 	int pagecount[totalRuns] = { 0 }; //initialize our array for the number of completed pages in a run

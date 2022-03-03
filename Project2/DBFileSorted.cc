@@ -116,15 +116,19 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 }
 
 void DBFileSorted::Add (Record &rec) {
-    is_write = true; //set current state to writing
+    is_write = true; //set current state to writing 
     if (is_read) {        
         is_read = false;
         if(bigQ == NULL) { //if bigQ isnt set up
+            cout << "creating bigQ" << endl;
+            input = new Pipe(pipeBufferSize); 
+            output = new Pipe(pipeBufferSize);
             bigQ = new BigQ(*input, *output, so, runlen);
         }               
     }
     //else {
-    input->Insert(&rec); //write the record to the pipe  
+    input->Insert(&rec); //write the record to the pipe 
+    cout << "inserted record into the pipe" << endl; 
     //}
 }
 

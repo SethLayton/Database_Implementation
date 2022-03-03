@@ -43,7 +43,7 @@ void Pipe :: Insert (Record *insertMe) {
 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
-
+	
 	// next, see if there is space in the pipe for more data; if
 	// there is, then do the insertion
 	if (lastSlot - firstSlot < totSpace) {
@@ -63,24 +63,26 @@ void Pipe :: Insert (Record *insertMe) {
 	pthread_cond_signal (&consumerVar);
 
 	// done!
+	cout << "insert last: " << lastSlot << endl;
 	pthread_mutex_unlock (&pipeMutex);
+	cout << "unlocked" << endl;
+	 
 }
-
-
 
 int Pipe :: Remove (Record *removeMe) {
 	 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
+	cout << "got lock" << endl;
 	// next, see if there is anything in the pipeline; if
 	// there is, then do the removal
+	cout << "last:" << lastSlot << " first: " << firstSlot << endl;
 	if (lastSlot != firstSlot) {
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
-
 	// if there is not, then we need to wait until the producer
 	// puts some data into the pipeline
 	} else {
-
+		cout << "done: " << done << endl;
 		// the pipeline is empty so we first see if this
 		// is because it was turned off
 		if (done) {
@@ -91,7 +93,7 @@ int Pipe :: Remove (Record *removeMe) {
 
 		// wait until there is something there
 		pthread_cond_wait (&consumerVar, &pipeMutex);
-
+		cout << "are we here?" << endl;
 		// since the producer may have decided to turn off
 		// the pipe, we need to check if it is still open
 		if (done && lastSlot == firstSlot) {
