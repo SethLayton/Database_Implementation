@@ -60,7 +60,7 @@ int DBFile::Create (const char *f_path, fType f_type, void *startup) {
         
         //set up the virtual base class to be the right type of DBFile
         
-       
+
         return myInteralClass->Create(f_path,f_type,startup);
     }
     catch(const std::exception& e)

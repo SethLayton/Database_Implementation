@@ -11,10 +11,7 @@
 #include <cstring>
 #include <bits/stdc++.h>
 
-DBFileSorted::DBFileSorted(int runlength, OrderMaker om) {
-
-    runlen = runlength;
-    so = om;
+DBFileSorted::DBFileSorted(int &runlength, OrderMaker &om) : so(om), runlen(runlength) {
 
 }
 
@@ -168,20 +165,35 @@ int DBFileSorted::GetNext (Record &fetchme) {
 }
 
 int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
+    //commented out for testing
+    // if (is_write) {
+    //     MergeInternal();
+    // }
+    //is_read = true;
+    so.Print();
+    applyMe.Print();
 
-    if (is_write) {
-        MergeInternal();
-    }
-    is_read = true;
+    //I dont see an easy way to parse applyMe, with existing functions.
+    //maybe we make the Print() function return a string that it builds up and we do some string parsing
+    //to see what attributes are in the subexpressions? That's the easiest dumb way I can think of doing it?
+
+    //EX: This is the applyMe.Print() when we use the CNF "(n_regionkey) AND (n_name)"
+    //  ( Att 2 from left record = Att 2 from left record (Int))  AND
+    //  ( Att 1 from left record = Att 1 from left record (String)) 
+    
+    //So Do we just string parse that print statement for the attributes in there?
+    //Then use the below loop to check the attributes of our DBFile sort order?
+    //idk?
+
     int numAtts = so.GetNumAtts();
     int *whichAtts = so.GetWhichAtts();
-
+    cout << "\nnumatts: " << numAtts << endl;
     for (int i = 0; i < numAtts; i++) { 
-		cout << whichAtts[i] << endl; 
+		cout << "att: " << whichAtts[i] << endl; 
 	}
-
-    Schema ms("catalog", "nation");
-    literal.Print(&ms);
+    
+    // Schema ms("catalog", "nation");
+    // literal.Print(&ms);
     return 1;
 }
 
