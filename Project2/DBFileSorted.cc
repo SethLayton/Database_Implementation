@@ -65,7 +65,6 @@ int DBFileSorted::Close () {
     try
     {
         if (is_write) {
-            cout << "Merge Internal called1" << endl;
             MergeInternal();
         }
         is_read = true;
@@ -87,23 +86,12 @@ int DBFileSorted::Close () {
 void DBFileSorted::MoveFirst () {
 
     if (is_write) {
-        cout << "Merge Internal called2" << endl;
         MergeInternal();
     }
     is_read = true;
     //an index to the current page that we are reading from the overall file
     //just reseting this index to 0
     curr_page = 0;
-}
-
-void DBFileSorted::cleanup() {
-    cout << "cleanup called" << endl;
-    //cout << "2&bigQ " << &bigQ << endl;
-    bigQ->pthreadwait();
-    // pthread_t pt = bigQ->getpt();
-    // cout << "&pt " << &pt << endl;
-    //pthread_join(pt , NULL);
-    //cout << "222&bigQ " << &bigQ << endl;
 }
 
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
@@ -133,35 +121,24 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 
 void DBFileSorted::Add (Record &rec) {
      //write the record to the pipe 
-    //cout << "inserted record into the pipe" << endl;
     is_write = true; //set current state to writing 
     if (is_read) {        
         is_read = false;
         if(!init) { //if bigQ isnt set up
-            cout << "creating bigq" << endl;
             input = new Pipe(pipeBufferSize, "Input");
             output = new Pipe(pipeBufferSize, "Output");            
             bigQ = new BigQ(*input, *output, so, runlen);
-            //cout << "&1bigQ " << &bigQ << endl;
             pthread_t pt = bigQ->getpt();
-            //cout << "&pt " << &pt << endl;
             init = true;
-            cout << "bigq created" << endl;
-        }
-        using namespace std::this_thread; // sleep_for, sleep_until
-		using namespace std::chrono; // nanoseconds, system_clock, seconds
-
-		//sleep_for(seconds(2));              
+        }        
     }
     
-    input->Insert(&rec); //write the record to the pipe 
-    //cout << "inserted record into the pipe" << endl; 
+    input->Insert(&rec); //write the record to the pipe  
 }
 
 int DBFileSorted::GetNext (Record &fetchme) {
 
     if (is_write) {
-        cout << "Merge Internal called3" << endl;
         MergeInternal();
     }
     is_read = true;
@@ -193,7 +170,6 @@ int DBFileSorted::GetNext (Record &fetchme) {
 int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 
     if (is_write) {
-        cout << "Merge Internal called4" << endl;
         MergeInternal();
     }
     is_read = true;
@@ -210,7 +186,6 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 }
 
 void DBFileSorted::MergeInternal() {
-    cout << "Merge Internal called" << endl;
     is_read = true;
     is_write = false; //set the current state to reading
     input->ShutDown(); //shut down the pipe
@@ -223,8 +198,9 @@ void DBFileSorted::MergeInternal() {
     Page newMyPage; //create a new temp page used to store our merged records
     int page_counter = 0; //page counter for newMyFile
     bool contReadFile = true; //exit condition for inner while loop
-    
-    while (output->Remove (&piperec)) { //Coninuously read from the pipe 
+    int count = 0;
+    while (output->Remove (&piperec)) { //Coninuously read from the pipe
+        count++;
         Record temp;    
         while (contReadFile) { //read from the file as long as the file value is less than the pipe value            
             int con = GetNext(filerec);
@@ -262,7 +238,7 @@ void DBFileSorted::MergeInternal() {
         } 
         if (!piperec.isNull()){ 
             if (newMyPage.Append(&piperec) == 0) //append the current smallest from pipe to our new temp page
-            {
+            {                
                 //our current page is full
                 //write this page out to the file
                 newMyFile.AddPage(&newMyPage, page_counter);
@@ -280,7 +256,7 @@ void DBFileSorted::MergeInternal() {
     Record temp;
     while (GetNext(temp) != 0) {
         if (newMyPage.Append(&temp) == 0) //append the current smallest in file to our new temp page
-        {
+        {            
             //our current page is full
             //write this page out to the file
             newMyFile.AddPage(&newMyPage, page_counter);

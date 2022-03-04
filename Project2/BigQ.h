@@ -23,21 +23,20 @@ class BigQ {
 		off_t file_length;
 		Page myPage;		
 		static OrderMaker sortorder;
-		long pageCount = 0;
+		int pageCount = 0;
 		pthread_t threads = pthread_t();
-		Pipe in;
-		Pipe out;
+		Pipe & in;
+		Pipe & out;
 		OrderMaker so;
 		int runlength;
 				
 	public:
 		BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
-		BigQ() {};
 		~BigQ ();
-		void* pthreadwait ();
+		void pthreadwait ();
 		void *DoWork();
 		void FinalSort();
-		pthread_t getpt() {return threads;}
+		pthread_t& getpt() {return threads;}
 
 	class Compare {
 		private:

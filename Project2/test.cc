@@ -18,13 +18,19 @@ int add_data (FILE *src, int numrecs, int &res) {
 	
 	int proc = 0;
 	int xx = 20000;  
-	while ((res = temp.SuckNextRecord (rel->schema (), src)) && ++proc < numrecs) {
-		dbfile.Add(temp);
-		if (proc == xx) cerr << "\t ";
-		if (proc % xx == 0) cerr << ".";
-		temp.SetNull();
+	while (proc < numrecs) {
+		res = temp.SuckNextRecord (rel->schema (), src);
+		if (res != 0) {
+			dbfile.Add(temp);
+			if (proc == xx) cerr << "\t ";
+			if (proc % xx == 0) cerr << ".";
+			temp.SetNull();
+			proc++;
+		}		
+		else {
+			break;
+		}
 	}
-
 
 	dbfile.Close();
 	return proc;
@@ -68,7 +74,12 @@ void test1 () {
 			cin >> x;
 		}
 		if (x == 1 || x == 2) {
-			proc = add_data (tblfile,lrand48()%(int)pow(1e3,x)+(x-1)*1000, res);
+
+			
+			int rand = lrand48()%(int)pow(1e3,x)+(x-1)*1000;
+			//int rand = 5;
+			cout << "random number of recs: " << rand << endl;
+			proc = add_data (tblfile, rand, res);
 			tot += proc;
 			if (proc) 
 				cout << "\n\t added " << proc << " recs..so far " << tot << endl;
@@ -79,7 +90,6 @@ void test1 () {
 	}
 	cout << "\n create finished.. " << tot << " recs inserted\n";
 	fclose (tblfile);
-	dbfile.cleanup();
 }
 
 // sequential scan of a DBfile 

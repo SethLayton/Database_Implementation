@@ -21,7 +21,6 @@ public:
 	void Add (Record &addme) override;
 	int GetNext (Record &fetchme) override;
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal) override;
-	void cleanup() override {};
 
 };
 

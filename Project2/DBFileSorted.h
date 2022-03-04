@@ -37,7 +37,6 @@ public:
 	int GetNext (Record &fetchme) override;
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal) override;
     void MergeInternal();
-    void cleanup() override;
 
 };
 
