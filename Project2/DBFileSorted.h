@@ -15,13 +15,15 @@ class DBFileSorted : public GenericDBFile {
 private:
     int runlen;
     OrderMaker so;
-    BigQ * bigQ = NULL;
+    
     bool is_write = false;
     bool is_read = false;
     int pipeBufferSize = 100;
     Pipe * input; 
     Pipe * output;
-    const char* f_name;    
+    const char* f_name;   
+    bool init = false;
+    BigQ * bigQ; 
 
 public:
 	DBFileSorted () {};
@@ -35,6 +37,7 @@ public:
 	int GetNext (Record &fetchme) override;
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal) override;
     void MergeInternal();
+    void cleanup() override;
 
 };
 

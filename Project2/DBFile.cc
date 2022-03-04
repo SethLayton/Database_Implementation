@@ -110,6 +110,10 @@ int DBFile::Open (const char *f_path) {
     }    
 }
 
+void DBFile::cleanup() {
+    myInteralClass->cleanup();
+}
+
 void DBFile::MoveFirst () {
 
     myInteralClass->MoveFirst();

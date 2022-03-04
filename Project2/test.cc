@@ -4,6 +4,8 @@
 #include "DBFile.h"
 #include "limits.h"
 #include <fstream>
+#include <chrono>
+#include <thread>
 void test1 ();
 void test2 ();
 void test3 ();
@@ -13,13 +15,14 @@ int add_data (FILE *src, int numrecs, int &res) {
 	DBFile dbfile;
 	dbfile.Open(rel->path ());
 	Record temp;
-
+	
 	int proc = 0;
 	int xx = 20000;  
 	while ((res = temp.SuckNextRecord (rel->schema (), src)) && ++proc < numrecs) {
 		dbfile.Add(temp);
 		if (proc == xx) cerr << "\t ";
 		if (proc % xx == 0) cerr << ".";
+		temp.SetNull();
 	}
 
 
@@ -39,7 +42,6 @@ void test1 () {
 
 	OrderMaker om;
 	rel->get_sort_order (om);  
-	om.Print();
 	
 	DBFile::sortutil startup = {runlen, &om};
 
@@ -77,6 +79,7 @@ void test1 () {
 	}
 	cout << "\n create finished.. " << tot << " recs inserted\n";
 	fclose (tblfile);
+	dbfile.cleanup();
 }
 
 // sequential scan of a DBfile 

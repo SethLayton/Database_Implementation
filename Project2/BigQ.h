@@ -24,13 +24,20 @@ class BigQ {
 		Page myPage;		
 		static OrderMaker sortorder;
 		long pageCount = 0;
+		pthread_t threads = pthread_t();
+		Pipe in;
+		Pipe out;
+		OrderMaker so;
+		int runlength;
 				
 	public:
 		BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
+		BigQ() {};
 		~BigQ ();
-		void *DoWork(void *arg);
-		void FinalSort(bigqutil *b);
-
+		void* pthreadwait ();
+		void *DoWork();
+		void FinalSort();
+		pthread_t getpt() {return threads;}
 
 	class Compare {
 		private:

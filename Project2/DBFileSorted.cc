@@ -9,12 +9,13 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
-
+#include <bits/stdc++.h>
 
 DBFileSorted::DBFileSorted(int runlength, OrderMaker om) {
 
     runlen = runlength;
     so = om;
+
 }
 
 int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
@@ -64,6 +65,7 @@ int DBFileSorted::Close () {
     try
     {
         if (is_write) {
+            cout << "Merge Internal called1" << endl;
             MergeInternal();
         }
         is_read = true;
@@ -85,6 +87,7 @@ int DBFileSorted::Close () {
 void DBFileSorted::MoveFirst () {
 
     if (is_write) {
+        cout << "Merge Internal called2" << endl;
         MergeInternal();
     }
     is_read = true;
@@ -93,13 +96,26 @@ void DBFileSorted::MoveFirst () {
     curr_page = 0;
 }
 
+void DBFileSorted::cleanup() {
+    cout << "cleanup called" << endl;
+    //cout << "2&bigQ " << &bigQ << endl;
+    bigQ->pthreadwait();
+    // pthread_t pt = bigQ->getpt();
+    // cout << "&pt " << &pt << endl;
+    //pthread_join(pt , NULL);
+    //cout << "222&bigQ " << &bigQ << endl;
+}
+
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 
     is_write = true; //set current state to writing
     if (is_read) {        
         is_read = false;
-        if(bigQ == NULL) { //if bigQ isnt set up
-            bigQ = new BigQ(*input, *output, so, runlen);
+        if(!init) { //if bigQ isnt set up
+            input = new Pipe(pipeBufferSize, "Input");
+            output = new Pipe(pipeBufferSize, "Output"); 
+            bigQ = new BigQ (*input, *output, so, runlen);
+            init = true;
         }
     }
     else {
@@ -116,25 +132,36 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 }
 
 void DBFileSorted::Add (Record &rec) {
+     //write the record to the pipe 
+    //cout << "inserted record into the pipe" << endl;
     is_write = true; //set current state to writing 
     if (is_read) {        
         is_read = false;
-        if(bigQ == NULL) { //if bigQ isnt set up
-            cout << "creating bigQ" << endl;
-            input = new Pipe(pipeBufferSize); 
-            output = new Pipe(pipeBufferSize);
+        if(!init) { //if bigQ isnt set up
+            cout << "creating bigq" << endl;
+            input = new Pipe(pipeBufferSize, "Input");
+            output = new Pipe(pipeBufferSize, "Output");            
             bigQ = new BigQ(*input, *output, so, runlen);
-        }               
+            //cout << "&1bigQ " << &bigQ << endl;
+            pthread_t pt = bigQ->getpt();
+            //cout << "&pt " << &pt << endl;
+            init = true;
+            cout << "bigq created" << endl;
+        }
+        using namespace std::this_thread; // sleep_for, sleep_until
+		using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+		//sleep_for(seconds(2));              
     }
-    //else {
+    
     input->Insert(&rec); //write the record to the pipe 
-    cout << "inserted record into the pipe" << endl; 
-    //}
+    //cout << "inserted record into the pipe" << endl; 
 }
 
 int DBFileSorted::GetNext (Record &fetchme) {
 
     if (is_write) {
+        cout << "Merge Internal called3" << endl;
         MergeInternal();
     }
     is_read = true;
@@ -166,6 +193,7 @@ int DBFileSorted::GetNext (Record &fetchme) {
 int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 
     if (is_write) {
+        cout << "Merge Internal called4" << endl;
         MergeInternal();
     }
     is_read = true;
@@ -182,7 +210,7 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 }
 
 void DBFileSorted::MergeInternal() {
-    
+    cout << "Merge Internal called" << endl;
     is_read = true;
     is_write = false; //set the current state to reading
     input->ShutDown(); //shut down the pipe

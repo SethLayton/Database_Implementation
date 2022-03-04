@@ -33,13 +33,14 @@ public:
 	virtual void Add (Record &addme) = 0;
 	virtual int GetNext (Record &fetchme) = 0;
 	virtual int GetNext (Record &fetchme, CNF &cnf, Record &literal) = 0;
+	virtual void cleanup() = 0;
 };
 
 class DBFile {
 private:
 
 	fType myType;
-	GenericDBFile *myInteralClass;
+	GenericDBFile *myInteralClass = NULL;
 
 public:
 	DBFile (); 
@@ -52,6 +53,7 @@ public:
 	int GetNext (Record &fetchme);
 	int GetNext (Record &fetchme, CNF &cnf, Record &literal);
 	void CreateSubClass(fType inputType, int &runlength, OrderMaker &so);
+	void cleanup();
 
 	typedef struct {
 		int runlen;
