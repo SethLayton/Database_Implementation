@@ -108,7 +108,7 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
             init = true;
         }        
     }
-    
+
     Record temp;    
     FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
     //do the actual record reading until the end of file
@@ -210,19 +210,13 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
                 }
             }
         }
-        else { //query OrderMaker is is empty
-            /*
-            note that if the “query” OrderMaker comes up empty – that is, it has no useful sorting attributes – then 
-            by definition, the first records that is “equal” to the literal record is the first record in the file 
-            and there is no reason to even do a binary search! 
-            */
-
-            //^^^ What does this mean??
+        else { //query OrderMaker is is empty            
+            MoveFirst(); //set to the first record
         }
         contQuery = true; 
     }
 
-    if (recordFound || contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
+    if (contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
 
         if (recordFound) { //this means we have a residual record that we already grabbed that we need to check before looping
             if (comp.Compare(&fetchme,&literal,&query) == 0) { //compare it with the query OrderMaker first
