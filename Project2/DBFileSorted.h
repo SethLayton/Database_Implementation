@@ -24,6 +24,8 @@ private:
     const char* f_name;   
     bool init = false;
     BigQ * bigQ; 
+    bool contQuery = false;
+    OrderMaker query;
 
 public:
     DBFileSorted (int &runlength, OrderMaker &so);  

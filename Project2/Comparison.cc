@@ -105,21 +105,30 @@ OrderMaker :: OrderMaker(Schema *schema) {
 
 	// now add in the doubles
 	for (int i = 0; i < n; i++) {
-                if (atts[i].myType == Double) {
-                        whichAtts[numAtts] = i;
-                        whichTypes[numAtts] = Double;
-                        numAtts++;
-                }
-        }
+		if (atts[i].myType == Double) {
+				whichAtts[numAtts] = i;
+				whichTypes[numAtts] = Double;
+				numAtts++;
+		}
+	}
 
 	// and finally the strings
-        for (int i = 0; i < n; i++) {
-                if (atts[i].myType == String) {
-                        whichAtts[numAtts] = i;
-                        whichTypes[numAtts] = String;
-                        numAtts++;
-                }
-        }
+	for (int i = 0; i < n; i++) {
+		if (atts[i].myType == String) {
+				whichAtts[numAtts] = i;
+				whichTypes[numAtts] = String;
+				numAtts++;
+		}
+	}
+}
+
+
+void OrderMaker :: AddAttr(Type type, int attr) {
+
+	whichAtts[numAtts] = attr;
+	whichTypes[numAtts] = type;
+	numAtts++;
+
 }
 
 
@@ -215,6 +224,38 @@ void CNF :: Print () {
 		else
 			cout << "\n";
 	}
+}
+
+bool CNF :: GetSubExpressions(int attr) {
+
+	bool onlyAttr = false;
+	bool success = false;
+	
+	for (int i = 0; i < numAnds; i++) {
+		for (int j = 0; j < orLens[i]; j++) {
+			Comparison c = orList[i][j];
+			if (c.GetFirstAtt() == attr && c.GetSecondAtt() == attr) { //Only attribute in this portion of the disjunction
+				if (c.GetOp() == Equals) { //and this portion is a equals check
+					//and either the left or right side of the equal check is a literal
+					if ((c.GetFirstOp() != Left || c.GetFirstOp() != Right) || (c.GetSecondOp() != Left || c.GetSecondOp() != Right)) { 
+						success = true;
+					}
+				}
+			}
+			else {
+				onlyAttr = false;
+			}
+		}
+		if (onlyAttr && success) {
+			return success;
+		}
+		else {
+			onlyAttr = false;
+			success = false;
+		}
+	}
+
+	return false;
 }
 
 // this is a helper routine that writes out another field for the literal record and its schema

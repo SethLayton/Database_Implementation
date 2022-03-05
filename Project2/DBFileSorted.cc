@@ -22,7 +22,8 @@ int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
         //create the new file based on the passed in name
         myFile.Open(0, f_path);
         //set the current page index to 0
-        MoveFirst();        
+        MoveFirst();
+        contQuery = false; //reset this for the GetNext function        
         //return success
         return 1;
     }
@@ -47,6 +48,7 @@ int DBFileSorted::Open (const char *f_path) {
         if (myFile.GetLength() > 0) {
             myFile.GetPage(&myPage, curr_page);
         }
+        contQuery = false; //reset this for the GetNext function
         //return success
         return 1;
     }
@@ -70,6 +72,7 @@ int DBFileSorted::Close () {
         //close the file
         myFile.Close();
         f_name = "";
+        contQuery = false; //reset this for the GetNext function
         //return success
         return 1;
     }
@@ -89,38 +92,41 @@ void DBFileSorted::MoveFirst () {
     //an index to the current page that we are reading from the overall file
     //just reseting this index to 0
     curr_page = 0;
+    contQuery = false; //reset this for the GetNext function
 }
 
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 
-    is_write = true; //set current state to writing
-    if (is_read) {        
-        is_read = false;
+    is_write = true; //set current state to writing 
+    if (is_read) {   //check if reading and we need to set up our pipe
+        is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
             input = new Pipe(pipeBufferSize, "Input");
-            output = new Pipe(pipeBufferSize, "Output"); 
-            bigQ = new BigQ (*input, *output, so, runlen);
+            output = new Pipe(pipeBufferSize, "Output");            
+            bigQ = new BigQ(*input, *output, so, runlen);
+            pthread_t pt = bigQ->getpt();
             init = true;
-        }
+        }        
     }
-    else {
-        Record temp;    
-        FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
-        //do the actual record reading until the end of file
-        while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
-        {
-            //we've successfully grabbed a record
-            //add it to the BigQ pipe        
-            input->Insert(&temp);
-        }
-    }    
+    
+    Record temp;    
+    FILE *tableFile = fopen (loadpath, "r"); //open up the file we want to read records from
+    //do the actual record reading until the end of file
+    while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
+    {
+        //we've successfully grabbed a record
+        //add it to the BigQ pipe        
+        input->Insert(&temp);
+    }
+  
+    contQuery = false; //reset this for the GetNext function
 }
 
 void DBFileSorted::Add (Record &rec) {
-     //write the record to the pipe 
+     
     is_write = true; //set current state to writing 
-    if (is_read) {        
-        is_read = false;
+    if (is_read) {   //check if reading and we need to set up our pipe
+        is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
             input = new Pipe(pipeBufferSize, "Input");
             output = new Pipe(pipeBufferSize, "Output");            
@@ -172,34 +178,84 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     //is_read = true;
     so.Print();
     applyMe.Print();
+    bool recordFound = false;
+    ComparisonEngine comp;
 
-    //I dont see an easy way to parse applyMe, with existing functions.
-    //maybe we make the Print() function return a string that it builds up and we do some string parsing
-    //to see what attributes are in the subexpressions? That's the easiest dumb way I can think of doing it?
+    //contQuery is here to check for back to back calls to this function.
+    //This means that we do not need to redo our Query build, or our search for first
+    if (!contQuery) {
+        
+        int numAtts = so.GetNumAtts(); //get our DBFile sort order information
+        int *whichAtts = so.GetWhichAtts(); //get our DBFile sort order information
+        Type *whichTypes = so.GetWhichTypes(); //get our DBFile sort order information
+        
+        for (int i = 0; i < numAtts; i++) { //loop through all of our DBFile sorted attributes
 
-    //EX: This is the applyMe.Print() when we use the CNF "(n_regionkey) AND (n_name)"
-    //  ( Att 2 from left record = Att 2 from left record (Int))  AND
-    //  ( Att 1 from left record = Att 1 from left record (String)) 
+            if (applyMe.GetSubExpressions(i)) { //if this attribute is in the applyMe CNF
+                query.AddAttr(whichTypes[i], whichAtts[i]); //Add this attribute to the query OrderMaker
+            }
+            else {
+                break; //first attribute that is not in the CNF we need to stop
+            }
+        }
+            
+        //if the query OrderMaker has useful stuff in it
+        if (query.GetNumAtts() > 0) {
+            query.Print();           
+            
+            while (GetNext(fetchme)) { //read from the current location until we find a match
+                if (comp.Compare(&fetchme,&literal,&query) == 0) { //Only do if this returns 0 (equals to) per the project description                    
+                    recordFound = true;
+                    break; //just need to find the first record with this search
+                }
+            }
+        }
+        else { //query OrderMaker is is empty
+            /*
+            note that if the “query” OrderMaker comes up empty – that is, it has no useful sorting attributes – then 
+            by definition, the first records that is “equal” to the literal record is the first record in the file 
+            and there is no reason to even do a binary search! 
+            */
+
+            //^^^ What does this mean??
+        }
+        contQuery = true; 
+    }
+
+    if (recordFound || contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
+
+        if (recordFound) { //this means we have a residual record that we already grabbed that we need to check before looping
+            if (comp.Compare(&fetchme,&literal,&query) == 0) { //compare it with the query OrderMaker first
+                if (comp.Compare(&fetchme,&literal,&applyMe) == 0) { //then compare it with the CNF
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            }
+        }
+        
+        while (GetNext(fetchme)) { //grab the next record that satisfies the condition
+            if (comp.Compare(&fetchme,&literal,&query) == 0) { //compare it with the query OrderMaker first
+                if (comp.Compare(&fetchme,&literal,&applyMe) == 0) { //then compare it with the CNF
+                    return 1;
+                }
+            }
+            else {
+                return 0;
+            }
+        }        
+    }
+    else {
+        return 0;
+    }
     
-    //So Do we just string parse that print statement for the attributes in there?
-    //Then use the below loop to check the attributes of our DBFile sort order?
-    //idk?
-
-    int numAtts = so.GetNumAtts();
-    int *whichAtts = so.GetWhichAtts();
-    cout << "\nnumatts: " << numAtts << endl;
-    for (int i = 0; i < numAtts; i++) { 
-		cout << "att: " << whichAtts[i] << endl; 
-	}
-    
-    // Schema ms("catalog", "nation");
-    // literal.Print(&ms);
-    return 1;
+    return 0;
 }
 
 void DBFileSorted::MergeInternal() {
-    is_read = true;
-    is_write = false; //set the current state to reading
+    is_read = true; //set the current state to reading
+    is_write = false; //unset the current writing state
     input->ShutDown(); //shut down the pipe
     Record piperec; //create a record to hold records from the pipe
     Record filerec; //create a record to hold records from the file   

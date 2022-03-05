@@ -33,6 +33,12 @@ public:
 
 	// print to the screen
 	void Print ();
+
+	Target GetFirstOp () { return operand1; }
+	Target GetSecondOp () { return operand2; }
+	int GetFirstAtt () { return whichAtt1; }
+	int GetSecondAtt () { return whichAtt2; }
+	CompOperator GetOp () { return op; }
 };
 
 
@@ -66,8 +72,10 @@ public:
 	// print to the screen
 	void Print ();
 
-	int *GetWhichAtts() {return whichAtts;}
-	int GetNumAtts() {return numAtts;}
+	int * GetWhichAtts() { return whichAtts; }
+	Type * GetWhichTypes() { return whichTypes; }
+	int GetNumAtts() { return numAtts; }
+	void AddAttr(Type type, int attr);
 };
 
 class Record;
@@ -104,6 +112,8 @@ public:
 	// version of the same function, except that it is used in the case of
 	// a relational selection over a single relation so only one schema is used
 	void GrowFromParseTree (struct AndList *parseTree, Schema *mySchema, Record &literal);
+
+	bool GetSubExpressions(int attr);
 
 };
 
