@@ -123,11 +123,8 @@ void test3 () {
 	DBFile dbfile;
 	dbfile.Open (rel->path());
 	dbfile.MoveFirst ();
-	// Schema ms("catalog", "nation");
-    // literal.Print(&ms);
 	Record temp;
-	dbfile.GetNext (temp, cnf, literal);
-	return;
+
 	int cnt = 0;
 	cerr << "\t";
 	while (dbfile.GetNext (temp, cnf, literal) && ++cnt) {
