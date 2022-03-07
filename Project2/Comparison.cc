@@ -63,7 +63,27 @@ void Comparison :: Print () {
 }
 
 
+std::ostream& operator<<(std::ostream& output_stream, const OrderMaker& order_maker)
+{
+  	output_stream << order_maker.numAtts << endl; //write out number of attributes in our current order maker (needed by the read in operator overload)
+	for (int i = 0; i < order_maker.numAtts; i++) { //loop through all our attributes 
+		output_stream << order_maker.whichAtts[i] << " "; //write out our attribute
+		output_stream << order_maker.whichTypes[i] << endl; //and write out the attribute type
+	}
+	return output_stream;
+}
 
+std::istream& operator>>(std::istream& input_stream, OrderMaker& order_maker)
+{
+  input_stream >> order_maker.numAtts; //read in the number of attributes from the file to define the for loop below
+	for (int i = 0; i < order_maker.numAtts; i++) { //loop that many times
+		input_stream >> order_maker.whichAtts[i]; //read in the attribute
+		int type;
+		input_stream >> type; //read in the type of the attribute
+		order_maker.whichTypes[i] = (Type)type; //cast the type correctly and store it
+	}
+	return input_stream;
+}
 
 OrderMaker :: OrderMaker() {
 	numAtts = 0;
@@ -85,21 +105,30 @@ OrderMaker :: OrderMaker(Schema *schema) {
 
 	// now add in the doubles
 	for (int i = 0; i < n; i++) {
-                if (atts[i].myType == Double) {
-                        whichAtts[numAtts] = i;
-                        whichTypes[numAtts] = Double;
-                        numAtts++;
-                }
-        }
+		if (atts[i].myType == Double) {
+				whichAtts[numAtts] = i;
+				whichTypes[numAtts] = Double;
+				numAtts++;
+		}
+	}
 
 	// and finally the strings
-        for (int i = 0; i < n; i++) {
-                if (atts[i].myType == String) {
-                        whichAtts[numAtts] = i;
-                        whichTypes[numAtts] = String;
-                        numAtts++;
-                }
-        }
+	for (int i = 0; i < n; i++) {
+		if (atts[i].myType == String) {
+				whichAtts[numAtts] = i;
+				whichTypes[numAtts] = String;
+				numAtts++;
+		}
+	}
+}
+
+
+void OrderMaker :: AddAttr(Type type, int attr) {
+
+	whichAtts[numAtts] = attr;
+	whichTypes[numAtts] = type;
+	numAtts++;
+
 }
 
 
@@ -143,7 +172,7 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 		// now verify that it operates over atts from both tables
 		if (!((orList[i][0].operand1 == Left && orList[i][0].operand2 == Right) ||
 		      (orList[i][0].operand2 == Left && orList[i][0].operand1 == Right))) {
-			continue;		
+			//continue;		
 		}
 
 		// since we are here, we have found a join attribute!!!
@@ -195,6 +224,38 @@ void CNF :: Print () {
 		else
 			cout << "\n";
 	}
+}
+
+bool CNF :: GetSubExpressions(int attr) {
+
+	bool onlyAttr = false;
+	bool success = false;
+	
+	for (int i = 0; i < numAnds; i++) {
+		for (int j = 0; j < orLens[i]; j++) {
+			Comparison c = orList[i][j];
+			if (c.GetFirstAtt() == attr && c.GetSecondAtt() == attr) { //Only attribute in this portion of the disjunction
+				if (c.GetOp() == Equals) { //and this portion is a equals check
+					//and either the left or right side of the equal check is a literal
+					if ((c.GetFirstOp() != Left || c.GetFirstOp() != Right) || (c.GetSecondOp() != Left || c.GetSecondOp() != Right)) { 
+						success = true;
+					}
+				}
+			}
+			else {
+				onlyAttr = false;
+			}
+		}
+		if (onlyAttr && success) {
+			return success;
+		}
+		else {
+			onlyAttr = false;
+			success = false;
+		}
+	}
+
+	return false;
 }
 
 // this is a helper routine that writes out another field for the literal record and its schema

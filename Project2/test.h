@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
-
+#include <cstring>
 #include "Pipe.h"
 #include "DBFile.h"
 #include "Record.h"
+#include "limits.h"
 using namespace std;
 
 // make sure that the information below is correct
@@ -15,10 +16,15 @@ using namespace std;
 const char *catalog_path = "catalog"; 
 const char *dbfile_dir = "../1gbdb/"; 
 const char *tpch_dir =  "../datagen/tpch-dbgen/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
+//const char *dbfile_dir = ""; 
+//const char *tpch_dir ="../1gbdb/"; 
 
 
 extern "C" {
+	typedef struct yy_buffer_state * YY_BUFFER_STATE;
 	int yyparse(void);   // defined in y.tab.c
+	extern YY_BUFFER_STATE yy_scan_string(char * str);
+	extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 }
 
 extern struct AndList *final;
@@ -40,7 +46,7 @@ private:
 public:
 	relation (const char *_name, Schema *_schema, const char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
-		sprintf (rpath, "%s%s.bin", prefix, rname);
+		sprintf (rpath, "%s%s%s.bin", tpch_dir, prefix, rname);		
 	}
 	const char* name () { return rname; }
 	const char* path () { return rpath; }
@@ -60,7 +66,13 @@ public:
 		cnf_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
 	}
 	void get_sort_order (OrderMaker &sortorder) {
-		cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
+		std::cin.ignore(INT_MAX, '\n');
+		std::string sx;
+		cout << "\n specify sort ordering (when done press enter):\n\t ";
+		std::getline(std::cin, sx);
+		char input[sx.length() + 1];
+		strcpy(input, sx.c_str()); 
+		YY_BUFFER_STATE buffer = yy_scan_string(input);
   		if (yyparse() != 0) {
 			cout << " Error: can't parse your CNF.\n";
 			exit (1);
@@ -70,6 +82,7 @@ public:
 		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
 		OrderMaker dummy;
 		sort_pred.GetSortOrders (sortorder, dummy);
+		yy_delete_buffer(buffer);
 	}
 };
 

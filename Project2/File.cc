@@ -192,13 +192,12 @@ void File :: GetPage (Page *putItHere, off_t whichPage) {
 
 void File :: AddPage (Page *addMe, off_t whichPage) {
 
+	
 	// this is because the first page has no data
 	whichPage++;
-
 	// if we are trying to add past the end of the file, then
 	// zero all of the pages out
-	if (whichPage >= curLength) {
-		
+	if (whichPage >= curLength) {		
 		// do the zeroing
 		for (off_t i = curLength; i < whichPage; i++) {
 			int foo = 0;

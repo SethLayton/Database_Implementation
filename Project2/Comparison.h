@@ -6,6 +6,7 @@
 #include "File.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
+#include <iostream>
 
 
 // This stores an individual comparison that is part of a CNF
@@ -32,6 +33,12 @@ public:
 
 	// print to the screen
 	void Print ();
+
+	Target GetFirstOp () { return operand1; }
+	Target GetSecondOp () { return operand2; }
+	int GetFirstAtt () { return whichAtt1; }
+	int GetSecondAtt () { return whichAtt2; }
+	CompOperator GetOp () { return op; }
 };
 
 
@@ -50,6 +57,11 @@ class OrderMaker {
 
 public:
 	
+
+	// writes out an ordermaker
+	friend std::ostream& operator<<(std::ostream&, const OrderMaker&);
+	// reads into an ordermaker
+	friend std::istream& operator>>(std::istream&, OrderMaker&);
 	// creates an empty OrdermMaker
 	OrderMaker();
 
@@ -59,6 +71,11 @@ public:
 
 	// print to the screen
 	void Print ();
+
+	int * GetWhichAtts() { return whichAtts; }
+	Type * GetWhichTypes() { return whichTypes; }
+	int GetNumAtts() { return numAtts; }
+	void AddAttr(Type type, int attr);
 };
 
 class Record;
@@ -87,16 +104,16 @@ public:
 	// print the comparison structure to the screen
 	void Print ();
 
-        // this takes a parse tree for a CNF and converts it into a 2-D
-        // matrix storing the same CNF expression.  This function is applicable
-        // specifically to the case where there are two relations involved
-        void GrowFromParseTree (struct AndList *parseTree, Schema *leftSchema, 
-		Schema *rightSchema, Record &literal);
+	// this takes a parse tree for a CNF and converts it into a 2-D
+	// matrix storing the same CNF expression.  This function is applicable
+	// specifically to the case where there are two relations involved
+	void GrowFromParseTree (struct AndList *parseTree, Schema *leftSchema, Schema *rightSchema, Record &literal);
 
-        // version of the same function, except that it is used in the case of
-        // a relational selection over a single relation so only one schema is used
-        void GrowFromParseTree (struct AndList *parseTree, Schema *mySchema, 
-		Record &literal);
+	// version of the same function, except that it is used in the case of
+	// a relational selection over a single relation so only one schema is used
+	void GrowFromParseTree (struct AndList *parseTree, Schema *mySchema, Record &literal);
+
+	bool GetSubExpressions(int attr);
 
 };
 
