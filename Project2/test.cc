@@ -44,9 +44,9 @@ void test1 () {
 
 	char tbl_path[100];
 	sprintf (tbl_path, "%s%s.tbl", tpch_dir, rel->name()); 
+	
 	cout << " input from file : " << tbl_path << endl;
-
-        FILE *tblfile = fopen (tbl_path, "r");
+    FILE *tblfile = fopen (tbl_path, "r");
 
 	srand48 (time (NULL));
 
