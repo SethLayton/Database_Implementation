@@ -12,8 +12,10 @@
 #include <bits/stdc++.h>
 
 DBFileSorted::DBFileSorted(int &runlength, OrderMaker &om) : so(om), runlen(runlength) {
+    // cout << "DBFileSorted::DBFileSorted -- RunLength: " << runlen << endl;
 
 }
+ 
 
 int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
 
@@ -35,7 +37,8 @@ int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
 }
 
 int DBFileSorted::Open (const char *f_path) {
-
+    //cout << "DBFileSorted::OPEN" << endl;
+    //so.Print();
     try
     {        
         //open the file
@@ -48,6 +51,7 @@ int DBFileSorted::Open (const char *f_path) {
         if (myFile.GetLength() > 0) {
             myFile.GetPage(&myPage, curr_page);
         }
+
         contQuery = false; //reset this for the GetNext function
         //return success
         return 1;
@@ -64,12 +68,15 @@ int DBFileSorted::Close () {
     try
     {
         if (is_write) {
+            cout << "DBFileSorted::Close - MERGE INTERNAL" << endl;
             MergeInternal();
         }
         is_read = true;
         //empty our current page
+
         myPage.EmptyItOut();
         //close the file
+        cout << "DBFileSorted::Close - CLOSE FILE" << endl;
         myFile.Close();
         f_name = "";
         contQuery = false; //reset this for the GetNext function
@@ -84,7 +91,9 @@ int DBFileSorted::Close () {
 }
 
 void DBFileSorted::MoveFirst () {
-
+    //cout << "DBFileSorted::MoveFirst" << endl;
+    //so.Print();
+    //cout << is_write << endl;
     if (is_write) {
         MergeInternal();
     }
@@ -96,7 +105,8 @@ void DBFileSorted::MoveFirst () {
 }
 
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
-
+    //cout << "DBFileSorted::Load" << endl;
+    //so.Print();
     is_write = true; //set current state to writing 
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
@@ -123,13 +133,18 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 }
 
 void DBFileSorted::Add (Record &rec) {
-     
-    is_write = true; //set current state to writing 
+    //so.Print();
+    // exit(1);
+    is_write = true; //set current state to writing
+    
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
+            cout << "DBFileSorted::Add - Creating BigQ" << endl;
             input = new Pipe(pipeBufferSize, "Input");
-            output = new Pipe(pipeBufferSize, "Output");            
+            output = new Pipe(pipeBufferSize, "Output"); 
+            so.Print();  
+            cout << "DBFileSorted::Add - runlen: " << runlen << endl;
             bigQ = new BigQ(*input, *output, so, runlen);
             pthread_t pt = bigQ->getpt();
             init = true;
@@ -176,35 +191,51 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     //     MergeInternal();
     // }
     //is_read = true;
-    so.Print();
-    applyMe.Print();
+    // cout << "DBFileSorted::GetNext -- Sort Order" << endl;
+    // so.Print();
+    //applyMe.Print();
     bool recordFound = false;
     ComparisonEngine comp;
-
+    cout << "DBFileSorted::GetNext - START" << endl;
+    Record temp;
+    
     //contQuery is here to check for back to back calls to this function.
     //This means that we do not need to redo our Query build, or our search for first
     if (!contQuery) {
-        
+    
         int numAtts = so.GetNumAtts(); //get our DBFile sort order information
         int *whichAtts = so.GetWhichAtts(); //get our DBFile sort order information
         Type *whichTypes = so.GetWhichTypes(); //get our DBFile sort order information
-        
+        so.Print();
+        applyMe.Print();
+        cout << "DBFileSorted::GetNext -- numAtts: "<< numAtts << endl;
+        // cout << "DBFileSorted::GetNext -- Starting for loop" << endl;
         for (int i = 0; i < numAtts; i++) { //loop through all of our DBFile sorted attributes
-
-            if (applyMe.GetSubExpressions(i)) { //if this attribute is in the applyMe CNF
+            // cout << "DBFileSorted::GetNext -- whichAtts: "<< whichAtts[i] << endl;
+            // cout << "DBFileSorted::GetNext -- ApplyMeGetSub: "<< applyMe.GetSubExpressions(whichAtts[i]) << endl;
+            if (applyMe.GetSubExpressions(whichAtts[i])) { //if this attribute is in the applyMe CNF
+                cout << "DBFileSorted::GetNext -- Adding attribute" << endl;
                 query.AddAttr(whichTypes[i], whichAtts[i]); //Add this attribute to the query OrderMaker
             }
             else {
+                cout << "DBFileSorted::GetNext -- Break from for loop" << endl;
                 break; //first attribute that is not in the CNF we need to stop
             }
         }
             
         //if the query OrderMaker has useful stuff in it
         if (query.GetNumAtts() > 0) {
-            query.Print();           
-            
+            cout << "Query had useful stuff" << endl;
+            // query.Print();           
+            // TODO: UPDATE THIS TO BE BINARY SEARCH
             while (GetNext(fetchme)) { //read from the current location until we find a match
-                if (comp.Compare(&fetchme,&literal,&query) == 0) { //Only do if this returns 0 (equals to) per the project description                    
+                cout << "." ;
+                if (comp.Compare(&fetchme,&literal,&query) == 0) { //Only do if this returns 0 (equals to) per the project description 
+                    cout << "RECORD FOUND" << endl; 
+                    // Schema s =  Schema("catalog", "nation");
+                    // cout << "oops" << endl;
+                    // literal.Print(&s);
+                    //cout << comp.Compare(&fetchme,&literal,&applyMe)<<endl;
                     recordFound = true;
                     break; //just need to find the first record with this search
                 }
@@ -215,28 +246,38 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
         }
         contQuery = true; 
     }
-
+    
     if (contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
 
         if (recordFound) { //this means we have a residual record that we already grabbed that we need to check before looping
-            if (comp.Compare(&fetchme,&literal,&query) == 0) { //compare it with the query OrderMaker first
-                if (comp.Compare(&fetchme,&literal,&applyMe) == 0) { //then compare it with the CNF
+            cout << "Recordfound comparison" << endl;
+            query.Print();
+            if (comp.Compare(&fetchme,&literal,&query) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
+                if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
+                    cout << "passed" << endl;
                     return 1;
                 }
                 else {
-                    return 0;
+                    cout << "failed" << endl;
+                    return 0; // 0
                 }
             }
         }
         
         while (GetNext(fetchme)) { //grab the next record that satisfies the condition
-            if (comp.Compare(&fetchme,&literal,&query) == 0) { //compare it with the query OrderMaker first
-                if (comp.Compare(&fetchme,&literal,&applyMe) == 0) { //then compare it with the CNF
+            cout << "comparison" << endl;
+            // query.Print();
+            if (comp.Compare(&fetchme,&literal,&query) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
+                if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
                     return 1;
                 }
+                // else { // remove when done
+                //     return 1;
+                // }
             }
             else {
-                return 0;
+                cout << "exit get next" << endl;
+                return 0;// 0
             }
         }        
     }
@@ -248,38 +289,51 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
 }
 
 void DBFileSorted::MergeInternal() {
+
     is_read = true; //set the current state to reading
     is_write = false; //unset the current writing state
+    cout << "DBFileSorted::MergeInternal() - SHUTDOWN INPUT" << endl;
     input->ShutDown(); //shut down the pipe
     Record piperec; //create a record to hold records from the pipe
     Record filerec; //create a record to hold records from the file   
     ComparisonEngine ce; //init comp engine
     const char* tempFileName = "tempfileName_myFile";
     File newMyFile; //create a new file used to store our merged records
+    cout << "DBFileSorted::MergeInternal() - NEWFILE OPEN" << endl;
     newMyFile.Open(0,tempFileName);
     Page newMyPage; //create a new temp page used to store our merged records
     int page_counter = 0; //page counter for newMyFile
     bool contReadFile = true; //exit condition for inner while loop
     int count = 0;
+    cout << "DBfileSorted::MergeInternal() - so"  << endl;
+    // so.Print();
+    cout << "DBFileSorted::MergeInternal() - WHILE LOOP output -> remove" << endl;
     while (output->Remove (&piperec)) { //Coninuously read from the pipe
+        //cout << "DBFileSorted::MergeInternal() - whileloop start" << endl; 
         count++;
         Record temp;    
-        while (contReadFile) { //read from the file as long as the file value is less than the pipe value            
+        while (contReadFile) { //read from the file as long as the file value is less than the pipe value  
+            cout << "DBFileSorted::MergeInternal() - contRead filrec" << endl;          
             int con = GetNext(filerec);
-            if (con != 0) { //read the first value from the file               
+            if (con != 0) { //read the first value from the file  
+                //cout << "DBFileSorted::MergeInternal() - contRead read first val" << endl;             
                 if (ce.Compare(&piperec, &filerec, &so) == 1) { //compare the file record with the pipe record
                     //filerec is smallest
                     temp = filerec;
+                    cout << "DBFileSorted::MergeInternal() - contRead TRUE" << endl;
+
                     contReadFile = true; //continue reading from the file
                 }
                 else {
                     //piperec is the smallest
+                    cout << "DBFileSorted::MergeInternal() - contRead FALSE" << endl;
                     temp = piperec;
                     contReadFile = false; //stop reading from the file and get the next pipe record
                 }
             }
             else {
                 //no data left in the file, continue reading from the pipe exclusively
+                cout << "DBFileSorted::MergeInternal() - contRead No data in file" << endl;
                 temp = piperec;
                 piperec.SetNull();
                 contReadFile = false;
@@ -298,11 +352,14 @@ void DBFileSorted::MergeInternal() {
             }
             temp.SetNull(); //clear out the temp record just in case
         } 
+        
         if (!piperec.isNull()){ 
+            //cout << "DBFileSorted::MergeInternal() - piperec if " << endl;
             if (newMyPage.Append(&piperec) == 0) //append the current smallest from pipe to our new temp page
             {                
                 //our current page is full
                 //write this page out to the file
+                // cout << "DBFileSorted::MergeInternal() - piperec AddPage" << endl;
                 newMyFile.AddPage(&newMyPage, page_counter);
                 //empty out our current page
                 newMyPage.EmptyItOut();
@@ -316,6 +373,7 @@ void DBFileSorted::MergeInternal() {
         
     }
     Record temp;
+    cout << "DBFileSorted::MergeInternal() - GETNEXT LOOP" << endl;
     while (GetNext(temp) != 0) {
         if (newMyPage.Append(&temp) == 0) //append the current smallest in file to our new temp page
         {            
@@ -340,6 +398,8 @@ void DBFileSorted::MergeInternal() {
     myFile.~File(); //clean our current file to prepare to be overwritten   
     myFile = newMyFile; //set our myFile to our newly created merged File
     newMyFile.~File(); //destroy our temp File
+    // newMyPage.~Page();
+
     remove(f_name);    
     std::rename(tempFileName, f_name);
     remove(tempFileName);

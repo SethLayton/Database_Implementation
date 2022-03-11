@@ -15,10 +15,11 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 
 	char *left_bits = left->GetBits();
 	char *right_bits = right->GetBits();
-	// cout << "num atts: " << orderUs->numAtts << endl;
+	// cout << "FIRST COMPARE num atts: " << orderUs->numAtts << endl;
 	for (int i = 0; i < orderUs->numAtts; i++) {
 		val1 = left_bits + ((int *) left_bits)[orderUs->whichAtts[i] + 1];
 		val2 = right_bits + ((int *) right_bits)[orderUs->whichAtts[i] + 1];
+		// cout << "VAL2: " << val2 << endl;
 	
 		// these are used to store the two operands, depending on their type
 		int val1Int, val2Int;
@@ -35,11 +36,14 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 			val2Int = *((int *) val2);
 	
 			// and do the comparison
-			if (val1Int < val2Int) 
+			if (val1Int < val2Int) {
+				cout << "ComparisonEngine::compare lesser" << endl;
 				return -1;
-			else if (val1Int > val2Int)
+			}
+			else if (val1Int > val2Int){
+				cout << "ComparisonEngine::compare greater" << endl;
 				return 1;
-	
+			}
 			break;
 	
 	
@@ -69,7 +73,7 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 	
 		}
 	}
-
+	cout << "ComparisonEngine:: equal" << endl;
 	return 0;
 }
 
@@ -153,6 +157,7 @@ int ComparisonEngine :: Compare (Record *left, Record *literal, CNF *myCompariso
 			int result = Run(left, literal, &myComparison->orList[i][j]);
 			
 			if (result != 0) {
+				
 				break;	
 			}
 			

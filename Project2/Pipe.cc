@@ -67,24 +67,29 @@ void Pipe :: Insert (Record *insertMe) {
 }
 
 int Pipe :: Remove (Record *removeMe) {
+	// cout << "Pipe::Remove() - get mutex lock" << endl; 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
 	// next, see if there is anything in the pipeline; if
 	// there is, then do the removal
 	if (lastSlot != firstSlot) {
+		//cout << "Pipe::Remove() - Consume" << endl; 
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
+		//cout << "Pipe::Remove() - Finish Consume" << endl; 
 	// if there is not, then we need to wait until the producer
 	// puts some data into the pipeline
 	} else {
 		// the pipeline is empty so we first see if this
 		// is because it was turned off
 		if (done) {
-
+			//cout << "Pipe::Remove() - Unlock mutex 1" << endl; 
 			pthread_mutex_unlock (&pipeMutex);
+			//cout << "Pipe::Remove() - Unlock done 1" << endl;
 			return 0;
 		}
 
 		// wait until there is something there
+		//cout << "Pipe::Remove() - WAIT" << endl; 
 		int r = pthread_cond_wait (&consumerVar, &pipeMutex);
 		// since the producer may have decided to turn off
 		// the pipe, we need to check if it is still open
@@ -97,13 +102,14 @@ int Pipe :: Remove (Record *removeMe) {
 	
 	// note that we have deleted a record
 	firstSlot++;
-
+	//cout << "Pipe::Remove() - UNLOCK 2" << endl; 
 	pthread_mutex_unlock (&pipeMutex);
 
 	// signal the producer who might now want to take the slot
 	// that has been freed up by the deletion
+	//cout << "Pipe::Remove() - BROADCAST" << endl; 
 	pthread_cond_broadcast (&producerVar);
-	
+	// cout << "Pipe::Remove() - BROADCAST DONE" << endl;
 	// done!
 	
 	return 1;

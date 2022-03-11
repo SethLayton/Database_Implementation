@@ -13,8 +13,8 @@
 
 class DBFileSorted : public GenericDBFile {
 private:
-    int & runlen;
-    OrderMaker & so;
+    int  runlen;
+    OrderMaker so;
     
     bool is_write = false;
     bool is_read = false;

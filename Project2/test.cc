@@ -13,14 +13,20 @@ void test3 ();
 int add_data (FILE *src, int numrecs, int &res) {
 	
 	DBFile dbfile;
+	cout << "test::add_data - OPEN" << endl;
 	dbfile.Open(rel->path ());
 	Record temp;
 	
 	int proc = 0;
-	int xx = 20000;  
+	int xx = 20000; 
+	cout << "test::add_data - START SUCK" << endl; 
 	while (proc < numrecs) {
+		// cout << proc << endl;
 		res = temp.SuckNextRecord (rel->schema (), src);
+		// cout << res << endl;
+		// temp.Print(rel->schema());
 		if (res != 0) {
+			//cout << "test::add_data - ADD" << endl;
 			dbfile.Add(temp);
 			if (proc == xx) cerr << "\t ";
 			if (proc % xx == 0) cerr << ".";
@@ -28,15 +34,18 @@ int add_data (FILE *src, int numrecs, int &res) {
 			proc++;
 		}		
 		else {
+			// cout << "add_data start break" << endl;
 			break;
+			// cout << "add_data end break" << endl;
 		}
 	}
-
+	cout << "test::add_data - CLOSE" << endl;
 	dbfile.Close();
+	cout << "test::add_data - FINISH CLOSED" << endl;
 	return proc;
 }
-
-
+ 
+ 
 // create a dbfile interactively
 void test1 () {
 
@@ -79,10 +88,11 @@ void test1 () {
 
 			
 			int rand = lrand48()%(int)pow(1e3,x)+(x-1)*1000;
-			//int rand = 5;
+			// int rand = 70000;
 			cout << "random number of recs: " << rand << endl;
 			proc = add_data (tblfile, rand, res);
 			tot += proc;
+			cout << proc << endl;
 			if (proc) 
 				cout << "\n\t added " << proc << " recs..so far " << tot << endl;
 		}
@@ -129,6 +139,8 @@ void test3 () {
 
 	int cnt = 0;
 	cerr << "\t";
+	// cout << "Literal" << endl;
+	// literal.Print(rel->schema());
 	while (dbfile.GetNext (temp, cnf, literal) && ++cnt) {
 		temp.Print (rel->schema());
 		if (cnt % 10000 == 0) {
@@ -139,7 +151,7 @@ void test3 () {
 	dbfile.Close ();
 
 }
-
+ 
 int main (int argc, char *argv[]) {
 
 	setup ();

@@ -27,7 +27,7 @@ class BigQ {
 		pthread_t threads = pthread_t();
 		Pipe & in;
 		Pipe & out;
-		OrderMaker so;
+		OrderMaker & so;
 		int runlength;
 				
 	public:

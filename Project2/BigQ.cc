@@ -8,10 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp), out(outp) {	
+BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp), out(outp), so(sortorder) {	
 
-	so = sortorder;
+	// so = sortorder;
 	runlength = runlen;
+	// cout << "BIQ CONSTRUCTOR -- RunLength: "<< runlength << "\t runlen: " << runlen << endl;
 	threads = pthread_t();
 	//create thread and initialize starting values
 	//bigqutil bqutil = {&inp, &outp, &sortorder, runlen, this}; //pass the thread the bigqutil structure for all the information it needs
@@ -19,6 +20,8 @@ BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp)
 }
 
 BigQ::~BigQ () { 
+	myPage.~Page();
+	myFile.~File();
 }
 void BigQ::pthreadwait () {
 	pthread_join(threads, NULL);
@@ -31,6 +34,7 @@ void * ts(void *arg)
  
 void *BigQ::DoWork() {
 	myFile.Open(0, "f_path"); //create our file that stores all the runs
+	// so.Print();
 	Record myRec; //create a record to store read in records from the input pipe
 	std::vector<Record> records; //create a vector to store above records
 	file_length = myFile.GetLength(); //get the current length of the file
@@ -41,6 +45,10 @@ void *BigQ::DoWork() {
 	//read in a record from the input pipe
 	while (in.Remove (&myRec)) {
 		char *bytes = myRec.GetBits(); //get the size of that record in bytes
+		if (bytes == NULL) {
+			cout << "BigQ::DoWork -- BYTES NULL" << endl;
+			exit(1);
+		}
 		int recBytes = ((int *)bytes)[0]; //convert to an int		
 		curSizeInBytes = curSizeInBytes + recBytes; //update the total size of the vector
 		//the vector is now full with enough records to fill up a run
@@ -137,7 +145,8 @@ void BigQ::FinalSort() {
 	//this is based on the length of the file and specified run length
 	off_t totalPages = myFile.GetLength() - 1;
 	int rlen = runlength; 
-	int totalRuns = int(ceil(double(totalPages) / double(rlen)));	
+	int totalRuns = int(ceil(double(totalPages) / double(rlen)));
+	// cout << "TOTAL RUNS: " << totalRuns <<"\ttotalPages: "<< totalPages << "\trLen: "<< rlen<< endl;	
 	int offset = rlen;	//set the number of pages in each run
 	Page myPagez[totalRuns]; //initialize an array to hold the pages of the runs	
 	Record PQ[totalRuns]; //initialize our custome priority queue array
@@ -206,6 +215,9 @@ void BigQ::FinalSort() {
 			PQ[index_min].Consume(&tempRecord); //insert the record in our custom priority queue
 		}		
 	}
+	// for (int p =0; p < totalRuns; p++) {
+	// 	myPagez[p].~Page();
+	// }
 }
 
 

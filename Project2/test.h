@@ -14,8 +14,8 @@ using namespace std;
 // make sure that the information below is correct
 
 const char *catalog_path = "catalog"; 
-const char *dbfile_dir = "../1gbdb/"; 
-const char *tpch_dir =  "../datagen/tpch-dbgen/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
+const char *dbfile_dir = ""; 
+const char *tpch_dir =  "../1gbdb/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
 //const char *dbfile_dir = ""; 
 //const char *tpch_dir ="../1gbdb/"; 
 
