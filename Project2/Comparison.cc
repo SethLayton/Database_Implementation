@@ -229,22 +229,18 @@ void CNF :: Print () {
 bool CNF :: GetSubExpressions(int attr) {
 
 	
-	cout << "CNF::GetSubExpressions -- start for loop. numAnds: "<< numAnds << endl;
 	for (int i = 0; i < numAnds; i++) {
 		bool onlyAttr = true;
 		bool success = false;
 		for (int j = 0; j < orLens[i]; j++) {
 			Comparison c = orList[i][j];
-			cout << "CNF::GetSubExpressions --  attr: "<< attr<< " c.GetFirst "<< c.GetFirstAtt() << " c.GetSecond "<< c.GetSecondAtt() << endl;
 			//c.Print();
 			if ( (c.GetFirstAtt() == attr && c.GetSecondOp() == Literal) || 
 				 (c.GetSecondAtt()== attr && c.GetFirstOp()== Literal) ){ //Only attribute in this portion of the disjunction
-				cout << "Passed First att check" << endl;
 			
 				if (c.GetOp() == Equals) { //and this portion is a equals check
 					//and either the left or right side of the equal check is a literal
 					
-					cout << "Passed Final check" << endl;
 					success = true;
 					
 				}
@@ -254,12 +250,10 @@ bool CNF :: GetSubExpressions(int attr) {
 			}
 		}
 		if (onlyAttr && success) {
-			cout << "CNF::GetSubExpressions -- Attr found!" << endl;
 			return success;
 		}
 		
 	}
-	cout << "CNF::GetSubExpressions -- No attr found" << endl;
 	return false;
 }
 
@@ -677,8 +671,8 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 	// close the record file
 	fclose (outRecFile);
 
-	// remove("sdafdsfFFDSDA");
-	// remove("hkljdfgkSDFSDF");
+	remove("sdafdsfFFDSDA");
+	remove("hkljdfgkSDFSDF");
 }
 
 

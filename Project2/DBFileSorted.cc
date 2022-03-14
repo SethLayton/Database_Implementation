@@ -190,15 +190,11 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     // if (is_write) {
     //     MergeInternal();
     // }
-    //is_read = true;
-    // cout << "DBFileSorted::GetNext -- Sort Order" << endl;
-    // so.Print();
-    //applyMe.Print();
+    
     bool recordFound = false;
     ComparisonEngine comp;
-    cout << "DBFileSorted::GetNext - START" << endl;
     Record temp;
-    
+
     //contQuery is here to check for back to back calls to this function.
     //This means that we do not need to redo our Query build, or our search for first
     if (!contQuery) {
@@ -206,19 +202,16 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
         int numAtts = so.GetNumAtts(); //get our DBFile sort order information
         int *whichAtts = so.GetWhichAtts(); //get our DBFile sort order information
         Type *whichTypes = so.GetWhichTypes(); //get our DBFile sort order information
-        so.Print();
-        applyMe.Print();
-        cout << "DBFileSorted::GetNext -- numAtts: "<< numAtts << endl;
+        // so.Print();
+        // applyMe.Print();
         // cout << "DBFileSorted::GetNext -- Starting for loop" << endl;
         for (int i = 0; i < numAtts; i++) { //loop through all of our DBFile sorted attributes
             // cout << "DBFileSorted::GetNext -- whichAtts: "<< whichAtts[i] << endl;
             // cout << "DBFileSorted::GetNext -- ApplyMeGetSub: "<< applyMe.GetSubExpressions(whichAtts[i]) << endl;
             if (applyMe.GetSubExpressions(whichAtts[i])) { //if this attribute is in the applyMe CNF
-                cout << "DBFileSorted::GetNext -- Adding attribute" << endl;
                 query.AddAttr(whichTypes[i], whichAtts[i]); //Add this attribute to the query OrderMaker
             }
             else {
-                cout << "DBFileSorted::GetNext -- Break from for loop" << endl;
                 break; //first attribute that is not in the CNF we need to stop
             }
         }
@@ -226,16 +219,11 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
         //if the query OrderMaker has useful stuff in it
         if (query.GetNumAtts() > 0) {
             cout << "Query had useful stuff" << endl;
-            // query.Print();           
+            query.Print();           
             // TODO: UPDATE THIS TO BE BINARY SEARCH
             while (GetNext(fetchme)) { //read from the current location until we find a match
-                cout << "." ;
-                if (comp.Compare(&fetchme,&literal,&query) == 0) { //Only do if this returns 0 (equals to) per the project description 
-                    cout << "RECORD FOUND" << endl; 
-                    // Schema s =  Schema("catalog", "nation");
-                    // cout << "oops" << endl;
-                    // literal.Print(&s);
-                    //cout << comp.Compare(&fetchme,&literal,&applyMe)<<endl;
+                if (comp.Compare(&query,&fetchme,&literal) == 0) { //Only do if this returns 0 (equals to) per the project description 
+                    
                     recordFound = true;
                     break; //just need to find the first record with this search
                 }
@@ -250,24 +238,20 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     if (contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
 
         if (recordFound) { //this means we have a residual record that we already grabbed that we need to check before looping
-            cout << "Recordfound comparison" << endl;
             query.Print();
-            if (comp.Compare(&fetchme,&literal,&query) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
+            if (comp.Compare(&query, &fetchme,&literal) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
                 if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
-                    cout << "passed" << endl;
                     return 1;
                 }
                 else {
-                    cout << "failed" << endl;
                     return 0; // 0
                 }
             }
         }
         
         while (GetNext(fetchme)) { //grab the next record that satisfies the condition
-            cout << "comparison" << endl;
             // query.Print();
-            if (comp.Compare(&fetchme,&literal,&query) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
+            if (comp.Compare(&query, &fetchme,&literal) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
                 if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
                     return 1;
                 }
@@ -276,7 +260,6 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
                 // }
             }
             else {
-                cout << "exit get next" << endl;
                 return 0;// 0
             }
         }        
@@ -292,48 +275,40 @@ void DBFileSorted::MergeInternal() {
 
     is_read = true; //set the current state to reading
     is_write = false; //unset the current writing state
-    cout << "DBFileSorted::MergeInternal() - SHUTDOWN INPUT" << endl;
     input->ShutDown(); //shut down the pipe
     Record piperec; //create a record to hold records from the pipe
     Record filerec; //create a record to hold records from the file   
     ComparisonEngine ce; //init comp engine
     const char* tempFileName = "tempfileName_myFile";
     File newMyFile; //create a new file used to store our merged records
-    cout << "DBFileSorted::MergeInternal() - NEWFILE OPEN" << endl;
     newMyFile.Open(0,tempFileName);
     Page newMyPage; //create a new temp page used to store our merged records
     int page_counter = 0; //page counter for newMyFile
     bool contReadFile = true; //exit condition for inner while loop
     int count = 0;
-    cout << "DBfileSorted::MergeInternal() - so"  << endl;
     // so.Print();
-    cout << "DBFileSorted::MergeInternal() - WHILE LOOP output -> remove" << endl;
     while (output->Remove (&piperec)) { //Coninuously read from the pipe
         //cout << "DBFileSorted::MergeInternal() - whileloop start" << endl; 
         count++;
         Record temp;    
         while (contReadFile) { //read from the file as long as the file value is less than the pipe value  
-            cout << "DBFileSorted::MergeInternal() - contRead filrec" << endl;          
             int con = GetNext(filerec);
             if (con != 0) { //read the first value from the file  
                 //cout << "DBFileSorted::MergeInternal() - contRead read first val" << endl;             
                 if (ce.Compare(&piperec, &filerec, &so) == 1) { //compare the file record with the pipe record
                     //filerec is smallest
                     temp = filerec;
-                    cout << "DBFileSorted::MergeInternal() - contRead TRUE" << endl;
 
                     contReadFile = true; //continue reading from the file
                 }
                 else {
                     //piperec is the smallest
-                    cout << "DBFileSorted::MergeInternal() - contRead FALSE" << endl;
                     temp = piperec;
                     contReadFile = false; //stop reading from the file and get the next pipe record
                 }
             }
             else {
                 //no data left in the file, continue reading from the pipe exclusively
-                cout << "DBFileSorted::MergeInternal() - contRead No data in file" << endl;
                 temp = piperec;
                 piperec.SetNull();
                 contReadFile = false;
@@ -373,7 +348,6 @@ void DBFileSorted::MergeInternal() {
         
     }
     Record temp;
-    cout << "DBFileSorted::MergeInternal() - GETNEXT LOOP" << endl;
     while (GetNext(temp) != 0) {
         if (newMyPage.Append(&temp) == 0) //append the current smallest in file to our new temp page
         {            

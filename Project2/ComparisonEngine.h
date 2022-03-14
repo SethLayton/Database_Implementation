@@ -31,6 +31,11 @@ public:
         // greater than right.   This particular version of Compare is used
         // when both of the records come from the SAME RELATION
 	int Compare(Record *left, Record *right, OrderMaker *orderUs);
+
+        
+        // Custom function added by Ozzy to make sure that we can compare 
+        // a literal with a record under an ordermaker
+	int Compare(OrderMaker *orderUs, Record *left, Record *right);
         
 	// similar to the last function, except that this one works in the
         // case where the two records come from different input relations
