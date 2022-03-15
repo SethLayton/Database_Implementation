@@ -13,20 +13,15 @@ void test3 ();
 int add_data (FILE *src, int numrecs, int &res) {
 	
 	DBFile dbfile;
-	cout << "test::add_data - OPEN" << endl;
 	dbfile.Open(rel->path ());
 	Record temp;
 	
 	int proc = 0;
 	int xx = 20000; 
-	cout << "test::add_data - START SUCK" << endl; 
 	while (proc < numrecs) {
-		// cout << proc << endl;
 		res = temp.SuckNextRecord (rel->schema (), src);
-		// cout << res << endl;
-		// temp.Print(rel->schema());
+
 		if (res != 0) {
-			//cout << "test::add_data - ADD" << endl;
 			dbfile.Add(temp);
 			if (proc == xx) cerr << "\t ";
 			if (proc % xx == 0) cerr << ".";
@@ -34,14 +29,10 @@ int add_data (FILE *src, int numrecs, int &res) {
 			proc++;
 		}		
 		else {
-			// cout << "add_data start break" << endl;
 			break;
-			// cout << "add_data end break" << endl;
 		}
 	}
-	cout << "test::add_data - CLOSE" << endl;
 	dbfile.Close();
-	cout << "test::add_data - FINISH CLOSED" << endl;
 	return proc;
 }
  

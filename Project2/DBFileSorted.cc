@@ -37,8 +37,7 @@ int DBFileSorted::Create (const char *f_path, fType f_type, void *startup) {
 }
 
 int DBFileSorted::Open (const char *f_path) {
-    //cout << "DBFileSorted::OPEN" << endl;
-    //so.Print();
+
     try
     {        
         //open the file
@@ -68,7 +67,6 @@ int DBFileSorted::Close () {
     try
     {
         if (is_write) {
-            cout << "DBFileSorted::Close - MERGE INTERNAL" << endl;
             MergeInternal();
         }
         is_read = true;
@@ -76,7 +74,6 @@ int DBFileSorted::Close () {
 
         myPage.EmptyItOut();
         //close the file
-        cout << "DBFileSorted::Close - CLOSE FILE" << endl;
         myFile.Close();
         f_name = "";
         contQuery = false; //reset this for the GetNext function
@@ -91,9 +88,6 @@ int DBFileSorted::Close () {
 }
 
 void DBFileSorted::MoveFirst () {
-    //cout << "DBFileSorted::MoveFirst" << endl;
-    //so.Print();
-    //cout << is_write << endl;
     if (is_write) {
         MergeInternal();
     }
@@ -105,14 +99,12 @@ void DBFileSorted::MoveFirst () {
 }
 
 void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
-    //cout << "DBFileSorted::Load" << endl;
-    //so.Print();
     is_write = true; //set current state to writing 
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
             input = new Pipe(pipeBufferSize, "Input");
-            output = new Pipe(pipeBufferSize, "Output");            
+            output = new Pipe(pipeBufferSize, "Output");   
             bigQ = new BigQ(*input, *output, so, runlen);
             pthread_t pt = bigQ->getpt();
             init = true;
@@ -125,7 +117,7 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
     while (temp.SuckNextRecord (&f_schema, tableFile) == 1) 
     {
         //we've successfully grabbed a record
-        //add it to the BigQ pipe        
+        //add it to the BigQ pipe
         input->Insert(&temp);
     }
   
@@ -133,18 +125,14 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
 }
 
 void DBFileSorted::Add (Record &rec) {
-    //so.Print();
-    // exit(1);
+
     is_write = true; //set current state to writing
     
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
-            cout << "DBFileSorted::Add - Creating BigQ" << endl;
             input = new Pipe(pipeBufferSize, "Input");
             output = new Pipe(pipeBufferSize, "Output"); 
-            so.Print();  
-            cout << "DBFileSorted::Add - runlen: " << runlen << endl;
             bigQ = new BigQ(*input, *output, so, runlen);
             pthread_t pt = bigQ->getpt();
             init = true;
@@ -202,9 +190,7 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
         int numAtts = so.GetNumAtts(); //get our DBFile sort order information
         int *whichAtts = so.GetWhichAtts(); //get our DBFile sort order information
         Type *whichTypes = so.GetWhichTypes(); //get our DBFile sort order information
-        // so.Print();
-        // applyMe.Print();
-        // cout << "DBFileSorted::GetNext -- Starting for loop" << endl;
+        
         for (int i = 0; i < numAtts; i++) { //loop through all of our DBFile sorted attributes
             // cout << "DBFileSorted::GetNext -- whichAtts: "<< whichAtts[i] << endl;
             // cout << "DBFileSorted::GetNext -- ApplyMeGetSub: "<< applyMe.GetSubExpressions(whichAtts[i]) << endl;
@@ -218,12 +204,10 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
             
         //if the query OrderMaker has useful stuff in it
         if (query.GetNumAtts() > 0) {
-            cout << "Query had useful stuff" << endl;
-            query.Print();           
-            // TODO: UPDATE THIS TO BE BINARY SEARCH
+            // cout << "Query had useful stuff" << endl;
             while (GetNext(fetchme)) { //read from the current location until we find a match
                 if (comp.Compare(&query,&fetchme,&literal) == 0) { //Only do if this returns 0 (equals to) per the project description 
-                    
+                    // cout << "Found Record" << endl;
                     recordFound = true;
                     break; //just need to find the first record with this search
                 }
@@ -238,26 +222,19 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
     if (contQuery) { //if we are running a back to back GetNext call or a record was found in the first call
 
         if (recordFound) { //this means we have a residual record that we already grabbed that we need to check before looping
-            query.Print();
             if (comp.Compare(&query, &fetchme,&literal) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
                 if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
                     return 1;
                 }
-                else {
-                    return 0; // 0
-                }
             }
+           
         }
         
         while (GetNext(fetchme)) { //grab the next record that satisfies the condition
-            // query.Print();
             if (comp.Compare(&query, &fetchme,&literal) == 0 || query.GetNumAtts() == 0) { //compare it with the query OrderMaker first
                 if (comp.Compare(&fetchme,&literal,&applyMe) == 1) { //then compare it with the CNF
                     return 1;
                 }
-                // else { // remove when done
-                //     return 1;
-                // }
             }
             else {
                 return 0;// 0
@@ -286,7 +263,6 @@ void DBFileSorted::MergeInternal() {
     int page_counter = 0; //page counter for newMyFile
     bool contReadFile = true; //exit condition for inner while loop
     int count = 0;
-    // so.Print();
     while (output->Remove (&piperec)) { //Coninuously read from the pipe
         //cout << "DBFileSorted::MergeInternal() - whileloop start" << endl; 
         count++;
