@@ -234,13 +234,11 @@ bool CNF :: GetSubExpressions(int attr) {
 		bool success = false;
 		for (int j = 0; j < orLens[i]; j++) {
 			Comparison c = orList[i][j];
-			//c.Print();
 			if ( (c.GetFirstAtt() == attr && c.GetSecondOp() == Literal) || 
 				 (c.GetSecondAtt()== attr && c.GetFirstOp()== Literal) ){ //Only attribute in this portion of the disjunction
 			
 				if (c.GetOp() == Equals) { //and this portion is a equals check
 					//and either the left or right side of the equal check is a literal
-					
 					success = true;
 					
 				}

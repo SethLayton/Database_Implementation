@@ -105,11 +105,12 @@ void test2 () {
 	Record temp;
 
 	int cnt = 0;
-	cerr << "\t";
 	while (dbfile.GetNext (temp) && ++cnt) {
+		cout << "\t";
 		temp.Print (rel->schema());
+		cout << endl;
 		if (cnt % 10000) {
-			cerr << ".";
+			// cerr << ".";
 		}
 	}
 	cout << "\n scanned " << cnt << " recs \n";
@@ -129,13 +130,12 @@ void test3 () {
 	Record temp;
 
 	int cnt = 0;
-	cerr << "\t";
-	// cout << "Literal" << endl;
-	// literal.Print(rel->schema());
 	while (dbfile.GetNext (temp, cnf, literal) && ++cnt) {
+		cout << "\t";
 		temp.Print (rel->schema());
+		cout << endl;
 		if (cnt % 10000 == 0) {
-			cerr << ".";
+			// cerr << ".";
 		}
 	}
 	cout << "\n query over " << rel->path () << " returned " << cnt << " recs\n";
