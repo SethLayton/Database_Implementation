@@ -11,6 +11,7 @@ int gtest1 ();
 int gtest2 ();
 int gtest3 ();
 
+
  
 
 //Test that it can sort on `colnames`
@@ -50,20 +51,34 @@ int gtest2(char* colname) {
 	dbfile.MoveFirst ();
 	Record temp;
     Record old;
+    int err = 0;
+    // dbfile.GetNext(old);
+    int i = 0;
+    Record rec[2];
+	Record *last = NULL, *prev = NULL;
+	while (dbfile.GetNext (rec[i%2])) {
+		prev = last;
+		last = &rec[i%2];
 
-    dbfile.GetNext(old);
-
-	while (dbfile.GetNext (temp)) {
-		if (ceng.Compare(&old, &temp, &om)==1) {
-            return 0;
+		if (NULL != prev && NULL != last) {
+			if (ceng.Compare (prev, last, &om) == 1) {
+				err++;
+			}
         }
+		i++; 
+	}
+
+	// while (dbfile.GetNext (temp)) {
+	// 	if (ceng.Compare(&old, &temp, &om)==1) {
+    //         return 0;
+    //     }
         
 
-		old.Consume(&temp);
-	}
+	// 	old.Consume(&temp);
+	// }
 	
 	dbfile.Close ();
-    return 1;
+    return err;
 }
 //Tests the CNF from output.log in project 1
 int gtest3(relation *rel, char* input_string) {
@@ -86,53 +101,81 @@ int gtest3(relation *rel, char* input_string) {
 }
                       // 0  1  2  3  4   5  6   7
 //relation *rel_ptr[] = {n, r, c, p, ps, s, o, li};
+// TEST(SortStrings, P_Name) {
+//     char* col = "(p_name)";
+//     EXPECT_EQ(1, gtest1(3,4, col));
+//     EXPECT_EQ(0, gtest2(col));
+// }
+// TEST(SortStrings, P_Mfgr) {
+    
+//     char* col = "(p_mfgr)";
+//     EXPECT_EQ(1, gtest1(3,4, col));
+//     EXPECT_EQ(0, gtest2(col));
+
+// }
+// TEST(SortStrings, P_Brand) {
+//     char* col = "(p_brand)";
+//     EXPECT_EQ(1, gtest1(3,7, col));
+//     EXPECT_EQ(0, gtest2(col));
+// }
+// TEST(SortStrings, P_Type) {
+//     char* col = "(p_type)";
+//     EXPECT_EQ(1, gtest1(3,4, col));
+//     EXPECT_EQ(0, gtest2(col));
+// }
+// TEST(SortStrings, P_Container) {
+//     char* col = "(p_container)";
+//     EXPECT_EQ(1, gtest1(3,4, col));
+//     EXPECT_EQ(0, gtest2(col));
+// }
+
 TEST(SortOnOne, Region_RegionKey){
     // cout <<"ptr: " << endl;
     // cout <<"Got it " << endl;
     char* col = "(r_name)";
-    EXPECT_EQ(1, gtest1(1,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(1,2, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 TEST(SortOnOne, Nation_RegionKey){
     // rel=rel_ptr[0];
     char* col = "(n_regionkey)";
-    EXPECT_EQ(1, gtest1(0,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(0,2, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 TEST(SortOnOne, Customer_AcctBal){
     // rel=rel_ptr[2];
     char* col = "(c_acctbal)";
-    EXPECT_EQ(1, gtest1(2,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(2,8, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 
 
 TEST(SortOnTwo, Part_Price_AND_Size){
     // rel=rel_ptr[3];
     char* col = "(p_retailprice) AND (p_size)";
-    EXPECT_EQ(1, gtest1(3,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(3,9, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 
 TEST(SortOnTwo, Order_OPriority_AND_Status){
     // rel=rel_ptr[6];
     char* col = "(o_orderpriority) AND (o_orderstatus)";
-    EXPECT_EQ(1, gtest1(6,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(6,7, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 
 TEST(SortOnTwo, Supplier_Nation_AND_phone){
     // rel=rel_ptr[5];
     char* col = "(s_nationkey) AND (s_phone)";
-    EXPECT_EQ(1, gtest1(5,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(5,15, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 
 TEST(SortOnThree, PartSupp_){
     // rel=rel_ptr[4];
     char* col = "(ps_partkey) AND (ps_availqty) AND (ps_supplycost)";
-    EXPECT_EQ(1, gtest1(4,1, col));
-    EXPECT_EQ(1, gtest2(col));
+    EXPECT_EQ(1, gtest1(4,11, col));
+    EXPECT_EQ(0, gtest2(col));
 }
 TEST(ScanAndFilter, LoadsAllDatabase) {
     EXPECT_EQ(5, gtest3(r, ((char*) "(r_regionkey>-1)")));
@@ -147,16 +190,13 @@ TEST(ScanAndFilter, TestQueriesResultInCorrectSize) {
 	
     EXPECT_EQ(1, gtest3(r, ((char*) "(r_name = 'EUROPE')")));
 	EXPECT_EQ(2, gtest3(r, ((char*) "(r_name < 'MIDDLE EAST') AND (r_regionkey > 1)")));
-    //Error
 	EXPECT_EQ(3, gtest3(n, ((char*) "(n_regionkey = 3) AND (n_nationkey > 10) AND (n_name > 'JAPAN')")));
 	EXPECT_EQ(9, gtest3(s, ((char*) "(s_suppkey < 10)")));
-    //error
 	EXPECT_EQ(19, gtest3(s, ((char*)"(s_nationkey = 18) AND (s_acctbal > 1000.0) AND (s_suppkey < 400)")));
 	EXPECT_EQ(10, gtest3(c, ((char*)"(c_nationkey = 23) AND (c_mktsegment = 'FURNITURE') AND (c_acctbal > 7023.99) AND (c_acctbal < 7110.83)")));
 	EXPECT_EQ(8, gtest3(p, ((char*)"(p_brand = 'Brand#13') AND (p_retailprice > 500.0) AND (p_retailprice < 930.0) AND (p_size > 28) AND (p_size < 1000000)")));
 	EXPECT_EQ(14, gtest3(ps, ((char*) "(ps_supplycost > 999.98)")));
 	EXPECT_EQ(14, gtest3(ps, ((char*) "(ps_availqty < 10) AND (ps_supplycost > 100.0) AND (ps_suppkey < 300)")));
-    //error
 	EXPECT_EQ(10, gtest3(o, ((char*) "(o_orderpriority = '1-URGENT') AND (o_orderstatus = 'O') AND (o_shippriority = 0) AND (o_totalprice > 1015.68) AND (o_totalprice < 1051.89)")));
 	
 }
