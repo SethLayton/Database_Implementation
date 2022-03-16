@@ -12,7 +12,6 @@
 #include <bits/stdc++.h>
 
 DBFileSorted::DBFileSorted(int &runlength, OrderMaker &om) : so(om), runlen(runlength) {
-    // cout << "DBFileSorted::DBFileSorted -- RunLength: " << runlen << endl;
 
 }
  
@@ -174,10 +173,10 @@ int DBFileSorted::GetNext (Record &fetchme) {
 }
 
 int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
-    //commented out for testing
-    // if (is_write) {
-    //     MergeInternal();
-    // }
+
+    if (is_write) {
+        MergeInternal();
+    }
     
     bool recordFound = false;
     ComparisonEngine comp;
@@ -192,8 +191,6 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
         Type *whichTypes = so.GetWhichTypes(); //get our DBFile sort order information
         
         for (int i = 0; i < numAtts; i++) { //loop through all of our DBFile sorted attributes
-            // cout << "DBFileSorted::GetNext -- whichAtts: "<< whichAtts[i] << endl;
-            // cout << "DBFileSorted::GetNext -- ApplyMeGetSub: "<< applyMe.GetSubExpressions(whichAtts[i]) << endl;
             if (applyMe.GetSubExpressions(whichAtts[i])) { //if this attribute is in the applyMe CNF
                 query.AddAttr(whichTypes[i], whichAtts[i]); //Add this attribute to the query OrderMaker
             }
@@ -207,7 +204,6 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
             // cout << "Query had useful stuff" << endl;
             while (GetNext(fetchme)) { //read from the current location until we find a match
                 if (comp.Compare(&query,&fetchme,&literal) == 0) { //Only do if this returns 0 (equals to) per the project description 
-                    // cout << "Found Record" << endl;
                     recordFound = true;
                     break; //just need to find the first record with this search
                 }
