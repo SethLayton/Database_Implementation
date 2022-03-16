@@ -79,11 +79,9 @@ int ComparisonEngine :: Compare( OrderMaker *orderUs, Record *left, Record *lite
 
 	char *left_bits = left->GetBits();
 	char *right_bits = literal->GetBits();
-	// cout << "FIRST COMPARE num atts: " << orderUs->numAtts << endl;
 	for (int i = 0; i < orderUs->numAtts; i++) {
 		val1 = left_bits + ((int *) left_bits)[orderUs->whichAtts[i] + 1];
 		val2 = right_bits + ((int *) right_bits)[ i+ 1];
-		// cout << "VAL2: " << val2 << endl;
 	
 		// these are used to store the two operands, depending on their type
 		int val1Int, val2Int;
@@ -101,11 +99,9 @@ int ComparisonEngine :: Compare( OrderMaker *orderUs, Record *left, Record *lite
 	
 			// and do the comparison
 			if (val1Int < val2Int) {
-				// cout << "ComparisonEngine::compare lesser" << endl;
 				return -1;
 			}
 			else if (val1Int > val2Int){
-				// cout << "ComparisonEngine::compare greater" << endl;
 				return 1;
 			}
 			break;
@@ -137,7 +133,6 @@ int ComparisonEngine :: Compare( OrderMaker *orderUs, Record *left, Record *lite
 	
 		}
 	}
-	// cout << "ComparisonEngine:: equal" << endl;
 	return 0;
 }
 // returns a -1, 0, or 1 depending upon whether left is less then, equal to, or greater

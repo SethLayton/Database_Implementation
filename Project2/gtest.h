@@ -100,14 +100,10 @@ public:
 			std::cout << "Can't parse your CNF.\n";
 			exit (1);
 		}
-		// cout << " \n";
-        // cout << "PARSING"<<endl;
 		Record literal;
 		CNF sort_pred;
-        // cout << "GROW" << endl;
 		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
 		OrderMaker dummy;
-        // cout << "get sort order" << endl;
 		sort_pred.GetSortOrders (sortorder, dummy);
 		yy_delete_buffer(buffer);
 	}

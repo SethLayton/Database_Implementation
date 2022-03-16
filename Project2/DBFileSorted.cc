@@ -201,7 +201,6 @@ int DBFileSorted::GetNext (Record &fetchme, CNF &applyMe, Record &literal) {
             
         //if the query OrderMaker has useful stuff in it
         if (query.GetNumAtts() > 0) {
-            // cout << "Query had useful stuff" << endl;
             while (GetNext(fetchme)) { //read from the current location until we find a match
                 if (comp.Compare(&query,&fetchme,&literal) == 0) { //Only do if this returns 0 (equals to) per the project description 
                     recordFound = true;
@@ -260,13 +259,11 @@ void DBFileSorted::MergeInternal() {
     bool contReadFile = true; //exit condition for inner while loop
     int count = 0;
     while (output->Remove (&piperec)) { //Coninuously read from the pipe
-        //cout << "DBFileSorted::MergeInternal() - whileloop start" << endl; 
         count++;
         Record temp;    
         while (contReadFile) { //read from the file as long as the file value is less than the pipe value  
             int con = GetNext(filerec);
-            if (con != 0) { //read the first value from the file  
-                //cout << "DBFileSorted::MergeInternal() - contRead read first val" << endl;             
+            if (con != 0) { //read the first value from the file            
                 if (ce.Compare(&piperec, &filerec, &so) == 1) { //compare the file record with the pipe record
                     //filerec is smallest
                     temp = filerec;
@@ -301,12 +298,10 @@ void DBFileSorted::MergeInternal() {
         } 
         
         if (!piperec.isNull()){ 
-            //cout << "DBFileSorted::MergeInternal() - piperec if " << endl;
             if (newMyPage.Append(&piperec) == 0) //append the current smallest from pipe to our new temp page
             {                
                 //our current page is full
                 //write this page out to the file
-                // cout << "DBFileSorted::MergeInternal() - piperec AddPage" << endl;
                 newMyFile.AddPage(&newMyPage, page_counter);
                 //empty out our current page
                 newMyPage.EmptyItOut();

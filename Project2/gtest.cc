@@ -19,22 +19,17 @@ int gtest1 (int table, int runlength, char* colname) {
     relation *rel_ptr[] = {n, r, c, p, ps, s, o, li};
     rel = rel_ptr[table];
     OrderMaker om;
-    // cout << "OM" << endl;
 
     rel->get_sort_order(om, colname);
-    // cout << "COULDN't get sort" << endl;
 
     DBFile::sortutil startup = {runlength, &om};
 	DBFile dbfile;
-    // cout << "CREATED" << endl;
     dbfile.Create (rel->path(), sorted, &startup);
     dbfile.Close();
     dbfile.Open(rel->path());
 	char tbl_path[100];
 	sprintf (tbl_path, "%s%s.tbl", tpch_dir, rel->name());
-    // cout << "LOAD from tblpath: "<< tbl_path << endl;
     dbfile.Load (*(rel->schema ()), tbl_path);
-    // cout << "CLOSE" << endl;
     dbfile.Close();
 
     return 1;
@@ -130,8 +125,6 @@ int gtest3(relation *rel, char* input_string) {
 // }
 
 TEST(SortOnOne, Region_RegionKey){
-    // cout <<"ptr: " << endl;
-    // cout <<"Got it " << endl;
     char* col = "(r_name)";
     EXPECT_EQ(1, gtest1(1,2, col));
     EXPECT_EQ(0, gtest2(col));

@@ -10,12 +10,9 @@
 
 BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp), out(outp), so(sortorder) {	
 
-	// so = sortorder;
 	runlength = runlen;
-	// cout << "BIQ CONSTRUCTOR -- RunLength: "<< runlength << "\t runlen: " << runlen << endl;
 	threads = pthread_t();
 	//create thread and initialize starting values
-	//bigqutil bqutil = {&inp, &outp, &sortorder, runlen, this}; //pass the thread the bigqutil structure for all the information it needs
 	pthread_create(&threads, NULL, ts, this); //actually create the thread
 }
 
@@ -146,7 +143,6 @@ void BigQ::FinalSort() {
 	off_t totalPages = myFile.GetLength() - 1;
 	int rlen = runlength; 
 	int totalRuns = int(ceil(double(totalPages) / double(rlen)));
-	// cout << "TOTAL RUNS: " << totalRuns <<"\ttotalPages: "<< totalPages << "\trLen: "<< rlen<< endl;	
 	int offset = rlen;	//set the number of pages in each run
 	Page myPagez[totalRuns]; //initialize an array to hold the pages of the runs	
 	Record PQ[totalRuns]; //initialize our custome priority queue array
