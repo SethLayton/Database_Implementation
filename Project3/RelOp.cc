@@ -6,37 +6,53 @@ void* thread_starter(void* obj) {
 	switch (t-> _class)	{
 
 		case selectsipe:
-			SelectPipe* thread = static_cast<SelectPipe*>(t->context);
-			thread->DoWork();
+		{
+			SelectPipe* threadSP = static_cast<SelectPipe*>(t->context);
+			threadSP->DoWork();
 			break;
+		}
 		case selectfile:
-			SelectFile* thread = static_cast<SelectFile*>(t->context);
-			thread->DoWork();
+		{
+			SelectFile* threadSF = static_cast<SelectFile*>(t->context);
+			threadSF->DoWork();
 			break;
+		}
 		case project:
-			Project* thread = static_cast<Project*>(t->context);
-			thread->DoWork();
+		{
+			Project* threadP = static_cast<Project*>(t->context);
+			threadP->DoWork();
 			break;
+		}
 		case join:
-			Join* thread = static_cast<Join*>(t->context);
-			thread->DoWork();
+		{
+			Join* threadJ = static_cast<Join*>(t->context);
+			threadJ->DoWork();
 			break;
+		}
 		case duplicateremoval:
-			DuplicateRemoval* thread = static_cast<DuplicateRemoval*>(t->context);
-			thread->DoWork();
+		{
+			DuplicateRemoval* threadDR = static_cast<DuplicateRemoval*>(t->context);
+			threadDR->DoWork();
 			break;
+		}
 		case sum:
-			Sum* thread = static_cast<Sum*>(t->context);
-			thread->DoWork();
+		{
+			Sum* threadS = static_cast<Sum*>(t->context);
+			threadS->DoWork();
 			break;
+		}
 		case groupby:
-			GroupBy* thread = static_cast<GroupBy*>(t->context);
-			thread->DoWork();
+		{
+			GroupBy* threadGB = static_cast<GroupBy*>(t->context);
+			threadGB->DoWork();
 			break;
+		}
 		case writeout:
-			WriteOut* thread = static_cast<WriteOut*>(t->context);
-			thread->DoWork();
+		{
+			WriteOut* threadWO = static_cast<WriteOut*>(t->context);
+			threadWO->DoWork();
 			break;
+		}
 		
 		default:
 			break;
@@ -147,7 +163,7 @@ void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, in
 
 }
 
-void* SelectPipe::DoWork() {
+void* Project::DoWork() {
 
 	pthread_exit(NULL);	
 }
@@ -173,7 +189,7 @@ void Join::Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &
 
 }
 
-void* SelectPipe::DoWork() {
+void* Join::DoWork() {
 
 	pthread_exit(NULL);	
 }
@@ -199,7 +215,7 @@ void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema)
 
 }
 
-void* SelectPipe::DoWork() {
+void* DuplicateRemoval::DoWork() {
 
 	pthread_exit(NULL);	
 }
@@ -225,7 +241,7 @@ void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe)
 
 }
 
-void* SelectPipe::DoWork() {
+void* Sum::DoWork() {
 
 	pthread_exit(NULL);	
 }
@@ -251,7 +267,7 @@ void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &
 
 }
 
-void* SelectPipe::DoWork() {
+void* GroupBy::DoWork() {
 
 	pthread_exit(NULL);	
 }
