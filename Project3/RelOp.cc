@@ -57,6 +57,8 @@ void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void SelectFile::WaitUntilDone()
@@ -101,6 +103,7 @@ void* SelectPipe::DoWork() {
 		//for sanity
 		temp.SetNull();
 	}
+	pthread_exit(NULL);	
 }
 
 void SelectPipe::WaitUntilDone()
@@ -125,6 +128,8 @@ void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, in
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void Project::WaitUntilDone()
@@ -149,6 +154,8 @@ void Join::Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void Join::WaitUntilDone()
@@ -173,6 +180,8 @@ void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema)
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void DuplicateRemoval::WaitUntilDone()
@@ -197,6 +206,8 @@ void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe)
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void Sum::WaitUntilDone()
@@ -221,6 +232,8 @@ void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &
 }
 
 void* SelectPipe::DoWork() {
+
+	pthread_exit(NULL);	
 }
 
 void GroupBy::WaitUntilDone()
@@ -245,6 +258,8 @@ void WriteOut::Run(Pipe &inPipe, FILE *outFile, Schema &mySchema)
 }
 
 void* SelectPipe::DoWork() {
+	
+	pthread_exit(NULL);	
 }
 
 void WriteOut::WaitUntilDone()
