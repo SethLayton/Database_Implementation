@@ -72,14 +72,16 @@ void SelectFile::Use_n_Pages(int runlen)
 /* #region  SelectPipe */
 void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) {
 
+	//initialize starting values
 	in = inPipe;
 	out = outPipe;
 	op = selOp;
 	lit = literal;
 	thread = pthread_t();
+	//create the thread util to pass to the starter
 	threadutil tutil = {selectsipe, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
@@ -87,11 +89,16 @@ void* SelectPipe::DoWork() {
 
 	ComparisonEngine ce;
 	Record temp;
+	//read everything from the given input pipe
 	while (in.Remove(&temp)) {
-
+		//compare the record to the given CNF and (I think)
+		//if its not 0 then it is 'accepted' by the CNF and
+		//we add it to the given output pipe
 		if (ce.Compare(&temp,&lit,&op) != 0) {
 			out.Insert(&temp);
 		}
+		//even though temp is 'cleared out' do this 
+		//for sanity
 		temp.SetNull();
 	}
 }
