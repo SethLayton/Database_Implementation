@@ -102,8 +102,8 @@ void DBFileSorted::Load (Schema &f_schema, const char *loadpath) {
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
-            input = new Pipe(pipeBufferSize, "Input");
-            output = new Pipe(pipeBufferSize, "Output");   
+            input = new Pipe(pipeBufferSize);
+            output = new Pipe(pipeBufferSize);   
             bigQ = new BigQ(*input, *output, so, runlen);
             pthread_t pt = bigQ->getpt();
             init = true;
@@ -130,8 +130,8 @@ void DBFileSorted::Add (Record &rec) {
     if (is_read) {   //check if reading and we need to set up our pipe
         is_read = false; //unset reading
         if(!init) { //if bigQ isnt set up
-            input = new Pipe(pipeBufferSize, "Input");
-            output = new Pipe(pipeBufferSize, "Output"); 
+            input = new Pipe(pipeBufferSize);
+            output = new Pipe(pipeBufferSize); 
             bigQ = new BigQ(*input, *output, so, runlen);
             pthread_t pt = bigQ->getpt();
             init = true;

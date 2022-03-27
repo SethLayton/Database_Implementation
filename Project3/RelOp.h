@@ -21,6 +21,10 @@ class SelectFile : public RelationalOp {
 
 	private:
 		pthread_t thread = pthread_t();
+		DBFile & dbfile;
+		Pipe & out;
+		CNF & op;
+		Record & lit;
 	// pthread_t thread;
 	// Record *buffer;
 

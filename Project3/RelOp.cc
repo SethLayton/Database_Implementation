@@ -49,15 +49,34 @@ void* thread_starter(void* obj) {
 void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
 {
 
+	//initialize starting values
+	dbfile = inFile;
+	out = outPipe;
+	op = selOp;
+	lit = literal;
 	thread = pthread_t();
+	//create the thread util to pass to the starter
 	threadutil tutil = {selectfile, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
-void* SelectPipe::DoWork() {
+void* SelectFile::DoWork() {
 
+	Record temp;
+	//scan all the records in the dbfile
+	//only grabbing those where the CNF op
+	//equates to true
+	while (dbfile.GetNext(temp, op, lit)) {
+		//insert the selected record into the pipe
+		out.Insert(&temp);
+		//for sanity clear out the temp record
+		temp.SetNull();
+	}
+	//shutdown the output pipe
+	out.ShutDown();
+	//exit the thread
 	pthread_exit(NULL);	
 }
 
@@ -103,6 +122,7 @@ void* SelectPipe::DoWork() {
 		//for sanity
 		temp.SetNull();
 	}
+	//shutdown the thread
 	pthread_exit(NULL);	
 }
 
