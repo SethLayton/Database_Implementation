@@ -28,7 +28,6 @@ Record :: Record (const Record & r) : bits(NULL)
 
 Record & Record :: operator = (Record const & r)
 {
-  // cout << "assignment operator called" << endl;
   if (this != &r) // make sure we are not assigning to self
     {
       delete [] bits;
@@ -201,7 +200,6 @@ void Record :: Consume (Record *fromMe) {
 	delete [] bits;
 	bits = fromMe->bits;
 	fromMe->bits = NULL;
-
 }
 
 
@@ -405,8 +403,6 @@ void Record :: Print (Schema *mySchema) {
 		}
 	}
 
-	cout << "\n";
 }
-
 
 

@@ -15,7 +15,6 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 
 	char *left_bits = left->GetBits();
 	char *right_bits = right->GetBits();
-	// cout << "num atts: " << orderUs->numAtts << endl;
 	for (int i = 0; i < orderUs->numAtts; i++) {
 		val1 = left_bits + ((int *) left_bits)[orderUs->whichAtts[i] + 1];
 		val2 = right_bits + ((int *) right_bits)[orderUs->whichAtts[i] + 1];
@@ -35,11 +34,12 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 			val2Int = *((int *) val2);
 	
 			// and do the comparison
-			if (val1Int < val2Int) 
+			if (val1Int < val2Int) {
 				return -1;
-			else if (val1Int > val2Int)
+			}
+			else if (val1Int > val2Int){
 				return 1;
-	
+			}
 			break;
 	
 	
@@ -69,11 +69,72 @@ int ComparisonEngine :: Compare(Record *left, Record *right, OrderMaker *orderUs
 	
 		}
 	}
-
 	return 0;
 }
 
+// New function that allows a literal and a record to compare
+int ComparisonEngine :: Compare( OrderMaker *orderUs, Record *left, Record *literal) {
 
+	char *val1, *val2;
+
+	char *left_bits = left->GetBits();
+	char *right_bits = literal->GetBits();
+	for (int i = 0; i < orderUs->numAtts; i++) {
+		val1 = left_bits + ((int *) left_bits)[orderUs->whichAtts[i] + 1];
+		val2 = right_bits + ((int *) right_bits)[ i+ 1];
+	
+		// these are used to store the two operands, depending on their type
+		int val1Int, val2Int;
+		double val1Double, val2Double;
+		
+		// now check the type and do the comparison
+		switch (orderUs->whichTypes[i]) {
+	
+			// first case: we are dealing with integers
+			case Int:
+	
+			// cast the two bit strings to ints
+			val1Int = *((int *) val1);
+			val2Int = *((int *) val2);
+	
+			// and do the comparison
+			if (val1Int < val2Int) {
+				return -1;
+			}
+			else if (val1Int > val2Int){
+				return 1;
+			}
+			break;
+	
+	
+			// second case: dealing with doubles
+			case Double:
+	
+			// cast the two bit strings to doubles
+			val1Double = *((double *) val1);
+			val2Double = *((double *) val2);
+	
+			// and do the comparison
+			if (val1Double < val2Double)
+				return -1;
+			else if (val1Double > val2Double)
+				return 1;
+	
+			break;
+	
+	
+			// last case: dealing with strings
+			default:
+			int sc = strcmp (val1, val2);
+			if (sc != 0)
+				return sc;
+
+			break;
+	
+		}
+	}
+	return 0;
+}
 // returns a -1, 0, or 1 depending upon whether left is less then, equal to, or greater
 // than right, depending upon the OrderMakers that are passed in.  This one is used for
 // joins, where you have to compare records *across* two input tables
@@ -153,6 +214,7 @@ int ComparisonEngine :: Compare (Record *left, Record *literal, CNF *myCompariso
 			int result = Run(left, literal, &myComparison->orList[i][j]);
 			
 			if (result != 0) {
+				
 				break;	
 			}
 			
@@ -415,5 +477,4 @@ int ComparisonEngine :: Run (Record *left, Record *right, Record *literal, Compa
 	}
 
 }
-
 

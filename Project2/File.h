@@ -51,7 +51,7 @@ class File {
 private:
 
 	int myFilDes;
-	off_t curLength; 
+	off_t curLength = 0; 
 
 public:
 

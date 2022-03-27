@@ -1,19 +1,23 @@
 #ifndef TEST_H
 #define TEST_H
 #include <stdio.h>
-#include <iostream>
 #include <stdlib.h>
+#include <iostream>
+#include <math.h>
+#include <cstring>
 #include "Pipe.h"
 #include "DBFile.h"
 #include "Record.h"
-
+#include "limits.h"
 using namespace std;
 
 // make sure that the information below is correct
 
 const char *catalog_path = "catalog"; 
-const char *tpch_dir ="../1gbdb/"; // dir where dbgen tpch files (extension *.tbl) can be found
 const char *dbfile_dir = ""; 
+const char *tpch_dir =  "../1gbdb/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
+//const char *dbfile_dir = ""; 
+//const char *tpch_dir ="../1gbdb/"; 
 
 
 extern "C" {
@@ -30,7 +34,6 @@ typedef struct {
 	OrderMaker *order;
 	bool print;
 	bool write;
-    int success;
 }testutil;
 
 class relation {
@@ -43,7 +46,7 @@ private:
 public:
 	relation (const char *_name, Schema *_schema, const char *_prefix) :
 		rname (_name), rschema (_schema), prefix (_prefix) {
-		sprintf (rpath, "%s%s%s.bin",tpch_dir, prefix, rname);
+		sprintf (rpath, "%s%s%s.bin", tpch_dir, prefix, rname);		
 	}
 	const char* name () { return rname; }
 	const char* path () { return rpath; }
@@ -53,37 +56,50 @@ public:
 		cout << "\t name: " << name () << endl;
 		cout << "\t path: " << path () << endl;
 	}
-
-	void get_cnf (CNF &cnf_pred, Record &literal) {
-		cout << " Enter CNF predicate (when done press ctrl-D):\n\t";
-  		if (yyparse() != 0) {
-			cout << "Can't parse your CNF.\n";
-			exit (1);
-		}
-		cnf_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
-	}
-	void get_sort_order (OrderMaker &sortorder) {
-		cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
-  		if (yyparse() != 0) {
-			cout << "Can't parse your sort CNF.\n";
-			exit (1);
-		}
-		cout << " \n";
-		Record literal;
-		CNF sort_pred;
-		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
-		OrderMaker dummy;
-		//sort_pred.GetSortOrders (sortorder, dummy);
-	}
-
-	void get_sort_order (OrderMaker &sortorder, char* input_string) {		
+    void get_cnf (CNF &cnf_pred, Record &literal, char* input_string) {		
 		YY_BUFFER_STATE buffer = yy_scan_string(input_string);
 		
   		if (yyparse() != 0) {
 			std::cout << "Can't parse your CNF.\n";
 			exit (1);
 		}
-		cout << " \n";
+		cnf_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
+		yy_delete_buffer(buffer);
+	}
+	void get_cnf (CNF &cnf_pred, Record &literal) {
+		cout << "\n enter CNF predicate (when done press ctrl-D):\n\t";
+  		if (yyparse() != 0) {
+			cout << " Error: can't parse your CNF.\n";
+			exit (1);
+		}
+		cnf_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
+	}
+	void get_sort_order (OrderMaker &sortorder) {
+		std::cin.ignore(INT_MAX, '\n');
+		std::string sx;
+		cout << "\n specify sort ordering (when done press enter):\n\t ";
+		std::getline(std::cin, sx);
+		char input[sx.length() + 1];
+		strcpy(input, sx.c_str()); 
+		YY_BUFFER_STATE buffer = yy_scan_string(input);
+  		if (yyparse() != 0) {
+			cout << " Error: can't parse your CNF.\n";
+			exit (1);
+		}
+		Record literal;
+		CNF sort_pred;
+		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate
+		OrderMaker dummy;
+		sort_pred.GetSortOrders (sortorder, dummy);
+		yy_delete_buffer(buffer);
+	}
+    void get_sort_order (OrderMaker &sortorder, char* input_string) {		
+		YY_BUFFER_STATE buffer = yy_scan_string(input_string);
+		
+  		if (yyparse() != 0) {
+			std::cout << "Can't parse your CNF.\n";
+			exit (1);
+		}
 		Record literal;
 		CNF sort_pred;
 		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate

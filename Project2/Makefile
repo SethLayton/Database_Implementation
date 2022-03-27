@@ -7,23 +7,27 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o -lfl -lgtest -lpthread
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o test.o
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o test.o -lfl -lgtest -lpthread
 	
-gtest.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o gtest.o
-	$(CC) -o gtest.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o gtest.o -lfl -lgtest -lpthread
+a2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-test.o
+	$(CC) -o a2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-test.o -lfl -lgtest -lpthread
 	
-a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Pipe.o y.tab.o lex.yy.o a1-test.o
-	$(CC) -o a1test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Pipe.o y.tab.o lex.yy.o a1-test.o -lfl -lgtest -lpthread
-	
+a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o
+	$(CC) -o a1test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o -lfl -lgtest -lpthread
+gtest.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o gtest.o
+	$(CC) -o gtest.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o gtest.o -lfl -lgtest -lpthread
+
 test.o: test.cc
 	$(CC) -g -c test.cc
-	
-gtest.o: gtest.cc
-	$(CC) -g -c gtest.cc
+
+a2-test.o: a2-test.cc
+	$(CC) -g -c a2-test.cc
 
 a1-test.o: a1-test.cc
 	$(CC) -g -c a1-test.cc
+gtest.o: gtest.cc
+	$(CC) -g -c gtest.cc
 
 Comparison.o: Comparison.cc
 	$(CC) -g -c Comparison.cc
@@ -39,6 +43,12 @@ BigQ.o: BigQ.cc
 
 DBFile.o: DBFile.cc
 	$(CC) -g -c DBFile.cc
+
+DBFileHeap.o: DBFileHeap.cc
+	$(CC) -g -c DBFileHeap.cc
+
+DBFileSorted.o: DBFileSorted.cc
+	$(CC) -g -c DBFileSorted.cc
 
 File.o: File.cc
 	$(CC) -g -c File.cc

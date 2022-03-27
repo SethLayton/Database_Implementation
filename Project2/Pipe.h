@@ -12,12 +12,12 @@ private:
 	// these are used for data storage in the pipeline
 	Record *buffered;
 
-	int firstSlot;
-	int lastSlot;
-	int totSpace;
+	int firstSlot = 0;
+	int lastSlot = 0;
+	int totSpace = 0;
 
 	int done;
-
+	std::string name = "";
 	// mutex for the pipe
 	pthread_mutex_t pipeMutex;
 
@@ -25,13 +25,17 @@ private:
 	pthread_cond_t producerVar;
 	pthread_cond_t consumerVar;
 
-public:
+	
 
+public:
+	
 	// this sets up the pipeline; the parameter is the number of
 	// records to buffer
-	Pipe (int bufferSize);	
+	Pipe() {};
+	Pipe (int bufferSize, std::string);	
 	virtual ~Pipe();
-
+	int getfsize() {return firstSlot;}
+	int getlsize() {return lastSlot;}
 	// This inserts a record into the pipeline; note that if the
 	// buffer size is exceeded, then the insertion may block
 	// Note that the parameter is consumed; after insertion, it can
