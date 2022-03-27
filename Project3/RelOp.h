@@ -5,6 +5,7 @@
 #include "DBFile.h"
 #include "Record.h"
 #include "Function.h"
+#include "Defs.h"
 
 class RelationalOp {
 	public:
@@ -19,57 +20,93 @@ class RelationalOp {
 class SelectFile : public RelationalOp { 
 
 	private:
+		pthread_t thread = pthread_t();
 	// pthread_t thread;
 	// Record *buffer;
 
 	public:
 
-	void Run (DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal);
-	void WaitUntilDone ();
-	void Use_n_Pages (int n);
+		void Run (DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal);
+		void WaitUntilDone ();
+		void Use_n_Pages (int n);
+		void *DoWork();
 
 };
 
 class SelectPipe : public RelationalOp {
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class Project : public RelationalOp { 
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class Join : public RelationalOp { 
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class DuplicateRemoval : public RelationalOp {
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, Pipe &outPipe, Schema &mySchema) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, Schema &mySchema) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class Sum : public RelationalOp {
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, Pipe &outPipe, Function &computeMe) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, Function &computeMe) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class GroupBy : public RelationalOp {
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
 class WriteOut : public RelationalOp {
+	private:
+		pthread_t thread = pthread_t();
 	public:
-	void Run (Pipe &inPipe, FILE *outFile, Schema &mySchema) { }
-	void WaitUntilDone () { }
-	void Use_n_Pages (int n) { }
+		void Run (Pipe &inPipe, FILE *outFile, Schema &mySchema) { }
+		void WaitUntilDone () { }
+		void Use_n_Pages (int n) { }
+		void *DoWork();
 };
+
+typedef struct {
+	int _class;
+	void *context;
+}threadutil;
+
+void* thread_starter(void* obj);
 #endif
