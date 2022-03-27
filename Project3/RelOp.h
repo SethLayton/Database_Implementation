@@ -36,8 +36,12 @@ class SelectFile : public RelationalOp {
 class SelectPipe : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
+		Pipe & in;
+		Pipe & out;
+		CNF & op;
+		Record & lit;
 	public:
-		void Run (Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) { }
+		void Run (Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal);
 		void WaitUntilDone () { }
 		void Use_n_Pages (int n) { }
 		void *DoWork();

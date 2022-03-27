@@ -70,9 +70,12 @@ void SelectFile::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  SelectPipe */
-void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal)
-{
+void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) {
 
+	in = inPipe;
+	out = outPipe;
+	op = selOp;
+	lit = literal;
 	thread = pthread_t();
 	threadutil tutil = {selectsipe, this};
 	//create thread and initialize starting values
@@ -81,7 +84,16 @@ void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal)
 }
 
 void* SelectPipe::DoWork() {
-	
+
+	ComparisonEngine ce;
+	Record temp;
+	while (in.Remove(&temp)) {
+
+		if (ce.Compare(&temp,&lit,&op) != 0) {
+			out.Insert(&temp);
+		}
+		temp.SetNull();
+	}
 }
 
 void SelectPipe::WaitUntilDone()
