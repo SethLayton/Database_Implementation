@@ -1,0 +1,36 @@
+n_nationkey: [16], n_name: [MOZAMBIQUE], n_regionkey: [0], n_comment: [s. ironic, unusual asymptotes wake blithely r]
+n_nationkey: [17], n_name: [PERU], n_regionkey: [1], n_comment: [platelets. blithely pending dependencies use fluffily across the even pinto beans. carefully silent accoun]
+n_nationkey: [18], n_name: [CHINA], n_regionkey: [2], n_comment: [c dependencies. furiously express notornis sleep slyly regular accounts. ideas sleep. depos]
+n_nationkey: [19], n_name: [ROMANIA], n_regionkey: [3], n_comment: [ular asymptotes are about the furious multipliers. express dependencies nag above the ironically ironic account]
+n_nationkey: [20], n_name: [SAUDI ARABIA], n_regionkey: [4], n_comment: [ts. silent requests haggle. closely express packages sleep across the blithely]
+n_nationkey: [21], n_name: [VIETNAM], n_regionkey: [2], n_comment: [hely enticingly express accounts. even, final ]
+n_nationkey: [22], n_name: [RUSSIA], n_regionkey: [3], n_comment: [ requests against the platelets use never according to the quickly regular pint]
+n_nationkey: [23], n_name: [UNITED KINGDOM], n_regionkey: [3], n_comment: [eans boost carefully special requests. accounts are. carefull]
+n_nationkey: [24], n_name: [UNITED STATES], n_regionkey: [1], n_comment: [y final packages. slow foxes cajole quickly. quickly silent platelets breach ironic accounts. unusual pinto be]
+ consumer: removed 25 recs from the pipe
+****************************************************************************************************************************************************************************************
+ producer: opened DBFile ../1gbdb/customer.bin
+ producer: inserted 150000 recs into the pipe
+ consumer: removed 150000 recs from the pipe
+****************************************************************************************************************************************************************************************
+o_orderkey: [5999968], o_custkey: [12896], o_orderstatus: [F], o_totalprice: [354575], o_orderdate: [1992-12-24], o_orderpriority: [3-MEDIUM], o_clerk: [Clerk#000000736], o_shippriority: [0], o_comment: [ cajole blithely ag]
+o_orderkey: [5999969], o_custkey: [138182], o_orderstatus: [O], o_totalprice: [26663], o_orderdate: [1996-06-01], o_orderpriority: [1-URGENT], o_clerk: [Clerk#000000712], o_shippriority: [0], o_comment: [g quickly after the fluff]
+o_orderkey: [5999970], o_custkey: [124754], o_orderstatus: [O], o_totalprice: [192135], o_orderdate: [1995-11-19], o_orderpriority: [2-HIGH], o_clerk: [Clerk#000000822], o_shippriority: [0], o_comment: [ss deposits. blithely final deposit]
+o_orderkey: [5999971], o_custkey: [30355], o_orderstatus: [O], o_totalprice: [317383], o_orderdate: [1996-07-18], o_orderpriority: [4-NOT SPECIFIED], o_clerk: [Clerk#000000608], o_shippriority: [0], o_comment: [aggle blithely among the blithely ]
+o_orderkey: [5999972], o_custkey: [143594], o_orderstatus: [O], o_totalprice: [114857], o_orderdate: [1996-05-02], o_orderpriority: [3-MEDIUM], o_clerk: [Clerk#000000536], o_shippriority: [0], o_comment: [y express accounts above the blithely bold ]
+o_orderkey: [5999973], o_custkey: [32071], o_orderstatus: [O], o_totalprice: [68906.6], o_orderdate: [1997-07-13], o_orderpriority: [4-NOT SPECIFIED], o_clerk: [Clerk#000000130], o_shippriority: [0], o_comment: [ special ideas use pending pinto beans. requests haggle blithely ca]
+o_orderkey: [5999974], o_custkey: [55448], o_orderstatus: [F], o_totalprice: [92750.9], o_orderdate: [1993-07-28], o_orderpriority: [3-MEDIUM], o_clerk: [Clerk#000000776], o_shippriority: [0], o_comment: [fts. requests affix furiously a]
+o_orderkey: [5999975], o_custkey: [113398], o_orderstatus: [F], o_totalprice: [63216.7], o_orderdate: [1993-07-25], o_orderpriority: [1-URGENT], o_clerk: [Clerk#000000813], o_shippriority: [0], o_comment: [oost! ironic instructions h]
+o_orderkey: [6000000], o_custkey: [110063], o_orderstatus: [O], o_totalprice: [37625.3], o_orderdate: [1996-08-31], o_orderpriority: [2-HIGH], o_clerk: [Clerk#000000411], o_shippriority: [0], o_comment: [ess pinto beans boost slyly regular accounts! furiously even]
+ consumer: removed 1500000 recs from the pipe
+****************************************************************************************************************************************************************************************
+n_nationkey: [16], n_name: [MOZAMBIQUE], n_regionkey: [0], n_comment: [s. ironic, unusual asymptotes wake blithely r]
+n_nationkey: [17], n_name: [PERU], n_regionkey: [1], n_comment: [platelets. blithely pending dependencies use fluffily across the even pinto beans. carefully silent accoun]
+n_nationkey: [18], n_name: [CHINA], n_regionkey: [2], n_comment: [c dependencies. furiously express notornis sleep slyly regular accounts. ideas sleep. depos]
+n_nationkey: [19], n_name: [ROMANIA], n_regionkey: [3], n_comment: [ular asymptotes are about the furious multipliers. express dependencies nag above the ironically ironic account]
+n_nationkey: [20], n_name: [SAUDI ARABIA], n_regionkey: [4], n_comment: [ts. silent requests haggle. closely express packages sleep across the blithely]
+n_nationkey: [21], n_name: [VIETNAM], n_regionkey: [2], n_comment: [hely enticingly express accounts. even, final ]
+n_nationkey: [22], n_name: [RUSSIA], n_regionkey: [3], n_comment: [ requests against the platelets use never according to the quickly regular pint]
+n_nationkey: [23], n_name: [UNITED KINGDOM], n_regionkey: [3], n_comment: [eans boost carefully special requests. accounts are. carefull]
+n_nationkey: [24], n_name: [UNITED STATES], n_regionkey: [1], n_comment: [y final packages. slow foxes cajole quickly. quickly silent platelets breach ironic accounts. unusual pinto be]
+ consumer: removed 25 recs from the pipe
