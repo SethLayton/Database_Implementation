@@ -1,4 +1,4 @@
-#include "gtest.h"
+#include "gtestpartone.h"
 #include "BigQ.h"
 #include <pthread.h>
 #include <cstring>
