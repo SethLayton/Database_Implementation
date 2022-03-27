@@ -66,8 +66,8 @@ void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
 {
 
 	//initialize starting values
-	dbfile = inFile;
-	out = outPipe;
+	dbfile = &inFile;
+	out = &outPipe;
 	op = selOp;
 	lit = literal;
 	thread = pthread_t();
@@ -84,14 +84,14 @@ void* SelectFile::DoWork() {
 	//scan all the records in the dbfile
 	//only grabbing those where the CNF op
 	//equates to true
-	while (dbfile.GetNext(temp, op, lit)) {
+	while (dbfile->GetNext(temp, op, lit)) {
 		//insert the selected record into the pipe
-		out.Insert(&temp);
+		out->Insert(&temp);
 		//for sanity clear out the temp record
 		temp.SetNull();
 	}
 	//shutdown the output pipe
-	out.ShutDown();
+	out->ShutDown();
 	//exit the thread
 	pthread_exit(NULL);	
 }
@@ -110,8 +110,8 @@ void SelectFile::Use_n_Pages(int runlen)
 void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) {
 
 	//initialize starting values
-	in = inPipe;
-	out = outPipe;
+	in = &inPipe;
+	out = &outPipe;
 	op = selOp;
 	lit = literal;
 	thread = pthread_t();
@@ -127,12 +127,12 @@ void* SelectPipe::DoWork() {
 	ComparisonEngine ce;
 	Record temp;
 	//read everything from the given input pipe
-	while (in.Remove(&temp)) {
+	while (in->Remove(&temp)) {
 		//compare the record to the given CNF and (I think)
 		//if its not 0 then it is 'accepted' by the CNF and
 		//we add it to the given output pipe
 		if (ce.Compare(&temp,&lit,&op) != 0) {
-			out.Insert(&temp);
+			out->Insert(&temp);
 		}
 		//even though temp is 'cleared out' do this 
 		//for sanity
@@ -287,9 +287,9 @@ void WriteOut::Run(Pipe &inPipe, FILE *outFile, Schema &mySchema)
 {
 
 	//initialize starting values
-	in = inPipe;
+	in = &inPipe;
 	file = outFile;
-	schema = mySchema;
+	schema = &mySchema;
 	thread = pthread_t();
 	//create struct to pass to thread starter
 	threadutil tutil = {writeout, this};
@@ -302,9 +302,9 @@ void* WriteOut::DoWork() {
 	
 	Record temp;
 	//read all the records from the input pipe
-	while (in.Remove(&temp)) {
+	while (in->Remove(&temp)) {
 		//write the record out to the specified stream
-		temp.Print(&schema, file);
+		temp.Print(schema, file);
 		//for sanity set the temp record to null
 		temp.SetNull();
 	}

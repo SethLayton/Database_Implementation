@@ -9,6 +9,7 @@
 
 class RelationalOp {
 	public:
+	RelationalOp() {};
 	// blocks the caller until the particular relational operator 
 	// has run to completion
 	virtual void WaitUntilDone () = 0;
@@ -21,10 +22,10 @@ class SelectFile : public RelationalOp {
 
 	private:
 		pthread_t thread = pthread_t();
-		DBFile & dbfile;
-		Pipe & out;
-		CNF & op;
-		Record & lit;
+		DBFile * dbfile;
+		Pipe * out;
+		CNF op;
+		Record lit;
 	public:
 		void Run (DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal);
 		void WaitUntilDone ();
@@ -35,10 +36,10 @@ class SelectFile : public RelationalOp {
 class SelectPipe : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
-		Pipe & in;
-		Pipe & out;
-		CNF & op;
-		Record & lit;
+		Pipe * in;
+		Pipe * out;
+		CNF op;
+		Record lit;
 	public:
 		void Run (Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal);
 		void WaitUntilDone ();
@@ -99,10 +100,11 @@ class GroupBy : public RelationalOp {
 class WriteOut : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
-		Pipe & in;
+		Pipe * in;
 		FILE* file;
-		Schema & schema;
+		Schema * schema;
 	public:
+		WriteOut() {};
 		void Run (Pipe &inPipe, FILE *outFile, Schema &mySchema);
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
