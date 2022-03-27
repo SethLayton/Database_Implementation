@@ -270,15 +270,29 @@ void GroupBy::Use_n_Pages(int runlen)
 void WriteOut::Run(Pipe &inPipe, FILE *outFile, Schema &mySchema)
 {
 
+	//initialize starting values
+	in = inPipe;
+	file = outFile;
+	schema = mySchema;
 	thread = pthread_t();
+	//create struct to pass to thread starter
 	threadutil tutil = {writeout, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
-void* SelectPipe::DoWork() {
+void* WriteOut::DoWork() {
 	
+	Record temp;
+	//read all the records from the input pipe
+	while (in.Remove(&temp)) {
+		//write the record out to the specified stream
+		temp.Print(&schema, file);
+		//for sanity set the temp record to null
+		temp.SetNull();
+	}
+	//exit thread
 	pthread_exit(NULL);	
 }
 

@@ -104,6 +104,9 @@ class GroupBy : public RelationalOp {
 class WriteOut : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
+		Pipe & in;
+		FILE* file;
+		Schema & schema;
 	public:
 		void Run (Pipe &inPipe, FILE *outFile, Schema &mySchema) { }
 		void WaitUntilDone () { }
