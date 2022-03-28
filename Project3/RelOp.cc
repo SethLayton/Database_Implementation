@@ -286,7 +286,8 @@ void* Sum::DoWork() {
 	//create the attribute object to hold the type
 	Attribute attr;
 	//name the attribute
-    attr.name = "Sum";	
+	const char* name = "Sum";
+    attr.name = name;	
 	//create the string to hold the value converted below
 	std::string value = "";
 	if (isInt) {

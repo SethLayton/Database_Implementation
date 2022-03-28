@@ -15,7 +15,7 @@ struct att_pair {
 };
 struct Attribute {
 
-	char *name;
+	const char *name;
 	Type myType;
 };
 
