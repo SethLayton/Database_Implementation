@@ -85,6 +85,9 @@ class DuplicateRemoval : public RelationalOp {
 class Sum : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
+		Pipe* in;
+		Pipe* out;
+		Function* func;
 	public:
 		void Run (Pipe &inPipe, Pipe &outPipe, Function &computeMe);
 		void WaitUntilDone ();

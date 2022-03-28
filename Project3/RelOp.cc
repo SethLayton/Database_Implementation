@@ -246,28 +246,81 @@ void DuplicateRemoval::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  Sum */
-void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe)
+void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe) 
 {
-
+	//initialize starting values
+	in = &inPipe;
+	out = &outPipe;
+	func = &computeMe;
 	thread = pthread_t();
+	//create thread helper struct
 	threadutil tutil = {sum, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
 void* Sum::DoWork() {
-
+	
+	Record temp;
+	//get in if the function is returning int or double
+	int isInt = func->getReturnsInt();
+	//set up aggregates
+	int intResultsTotal = 0;
+	double doubleResultsTotal = 0.0;
+	//remove all records from the input pipe
+	while (in->Remove(&temp)) {
+		//set up intermediate results
+		int intResults = 0;
+		double doubleResults = 0.0;
+		//apply the function to the given record
+		func->Apply(temp, intResults, doubleResults);
+		//update the aggregate values
+		intResultsTotal += intResults;
+		doubleResultsTotal += doubleResults;
+		//for sanity set the temp record to null
+		temp.SetNull();
+	}
+	//create the record object to hold the returned sum
+	Record returnRecord;
+	//create the attribute object to hold the type
+	Attribute attr;
+	//name the attribute
+    attr.name = "Sum";	
+	//create the string to hold the value converted below
+	std::string value = "";
+	if (isInt) {
+		//create the tuple that contains the aggregated int value
+		//set the type
+		attr.myType = Int;
+		//convert the "Value" that gets strored in the record
+		value = std::to_string(intResultsTotal) + "|";	
+	}
+	else {
+		//create the tuple that contains the aggregated double value
+		//set the type
+		attr.myType = Double;
+		//convert the "Value" that gets strored in the record
+		value = std::to_string(doubleResultsTotal) + "|";				
+	}
+	
+	//create the schema for this returning record
+	Schema returnSchema ("out_sch", 1, &attr);
+	//create the record
+	returnRecord.ComposeRecord(&returnSchema, value.c_str());
+	//put that record into the output pipe
+	out->Insert(&returnRecord);
+	//shut down output pipe
+	out->ShutDown();
+	//exit thread
 	pthread_exit(NULL);	
 }
 
-void Sum::WaitUntilDone()
-{
+void Sum::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void Sum::Use_n_Pages(int runlen)
-{
+void Sum::Use_n_Pages(int runlen) {
 }
 /* #endregion */
 

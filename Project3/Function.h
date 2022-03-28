@@ -28,6 +28,7 @@ private:
 
 public:
 
+	int getReturnsInt() { return returnsInt; }
 	Function ();
 
 	// this grows the specified function from a parse tree and converts
