@@ -1,4 +1,6 @@
 #include "RelOp.h"
+#include <bits/stdc++.h>
+#include <algorithm>
 
 void* thread_starter(void* obj) {
 	threadutil *t = (threadutil *) obj;
@@ -153,28 +155,41 @@ void SelectPipe::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  Project */
-void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput)
-{
-
+void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput) {
+	//initialize starting values
+	in = &inPipe;
+	out = &outPipe;
+	indexLocations = keepMe;
+	numInput = numAttsInput;
+	numOutput = numAttsOutput;
 	thread = pthread_t();
+	//create thread struct to pass to thread starter for initialization
 	threadutil tutil = {project, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
 void* Project::DoWork() {
 
+	Record temp;	
+	while (in->Remove(&temp)) {
+		//do the projection
+		temp.Project(indexLocations, numOutput, numInput);
+		//place the projected record into the output pipe
+		out->Insert(&temp);
+		//for sanity clear out the temp record
+		temp.SetNull();
+	}
+	out->ShutDown();
 	pthread_exit(NULL);	
 }
 
-void Project::WaitUntilDone()
-{
+void Project::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void Project::Use_n_Pages(int runlen)
-{
+void Project::Use_n_Pages(int runlen) {
 }
 /* #endregion */
 

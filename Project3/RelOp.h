@@ -22,8 +22,8 @@ class SelectFile : public RelationalOp {
 
 	private:
 		pthread_t thread = pthread_t();
-		DBFile * dbfile;
-		Pipe * out;
+		DBFile* dbfile;
+		Pipe* out;
 		CNF op;
 		Record lit;
 	public:
@@ -36,8 +36,8 @@ class SelectFile : public RelationalOp {
 class SelectPipe : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
-		Pipe * in;
-		Pipe * out;
+		Pipe* in;
+		Pipe* out;
 		CNF op;
 		Record lit;
 	public:
@@ -50,7 +50,12 @@ class SelectPipe : public RelationalOp {
 class Project : public RelationalOp { 
 	private:
 		pthread_t thread = pthread_t();
-	public:
+		Pipe* in;
+		Pipe* out;
+		int* indexLocations;
+		int numInput;
+		int numOutput;
+ 	public:
 		void Run (Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput);
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
