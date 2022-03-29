@@ -98,6 +98,11 @@ class Sum : public RelationalOp {
 class GroupBy : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
+		Pipe* in;
+		Pipe* out;
+		OrderMaker* groups;
+		Function* func;
+		int runlength = 0;
 	public:
 		void Run (Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe);
 		void WaitUntilDone ();

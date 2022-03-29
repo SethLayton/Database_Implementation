@@ -1,6 +1,7 @@
 #include "RelOp.h"
 #include <bits/stdc++.h>
 #include <algorithm>
+#include "BigQ.h"
 
 void* thread_starter(void* obj) {
 	threadutil *t = (threadutil *) obj;
@@ -64,8 +65,7 @@ void* thread_starter(void* obj) {
 }
 
 /* #region  SelectFile */
-void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
-{
+void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal) {
 
 	//initialize starting values
 	dbfile = &inFile;
@@ -98,13 +98,11 @@ void* SelectFile::DoWork() {
 	pthread_exit(NULL);	
 }
 
-void SelectFile::WaitUntilDone()
-{
+void SelectFile::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void SelectFile::Use_n_Pages(int runlen)
-{
+void SelectFile::Use_n_Pages(int runlen) {
 }
 /* #endregion */
 
@@ -140,17 +138,18 @@ void* SelectPipe::DoWork() {
 		//for sanity
 		temp.SetNull();
 	}
+	//shutdown the output pipe
+	out->ShutDown();
 	//shutdown the thread
 	pthread_exit(NULL);	
 }
 
-void SelectPipe::WaitUntilDone()
-{
+void SelectPipe::WaitUntilDone() {
+
 	pthread_join (thread, NULL);
 }
 
-void SelectPipe::Use_n_Pages(int runlen)
-{
+void SelectPipe::Use_n_Pages(int runlen) {
 }
 /* #endregion */
 
@@ -181,7 +180,9 @@ void* Project::DoWork() {
 		//for sanity clear out the temp record
 		temp.SetNull();
 	}
+	//shutdown the output pipe
 	out->ShutDown();
+	//exit the thread
 	pthread_exit(NULL);	
 }
 
@@ -326,28 +327,132 @@ void Sum::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  GroupBy */
-void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe)
-{
+void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) {
 
+	//initialize starting values
+	in = &inPipe;
+	out = &outPipe;
+	groups = &groupAtts;
+	func = &computeMe;
 	thread = pthread_t();
+	//initialize the thread starter util
 	threadutil tutil = {groupby, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
 
 }
 
 void* GroupBy::DoWork() {
 
+	Record temp;
+	//get in if the function is returning int or double
+	int isInt = func->getReturnsInt();
+	//set up aggregates
+	int intResultsTotal = 0;
+	double doubleResultsTotal = 0.0;
+	//set up the output pipe for the BigQ class
+	//to place the sorted records into
+	Pipe* output;
+	int pipeBufferSize = 100;
+	output = new Pipe(pipeBufferSize); 
+	//create and start the BigQ class to start
+	//consuming records from the in Pipe
+	//and placing them into the output Pipe  
+	BigQ bigQ (*in, *output, *groups, runlength);
+	//creat a record to store previous records
+	Record prev;
+	//create our comparison engine object
+	ComparisonEngine ce;
+	//bool for tracking the first run of
+	//the comparison, since prev starts
+	//out as nothing it'll always fail
+	//the first if statement below
+	bool init = false;
+	
+	int numGroups = groups->GetNumAtts() + 1;
+	//read in the values from the BigQ output pipe
+	while (output->Remove(&temp)) {		
+		//set up intermediate results
+		int intResults = 0;
+		double doubleResults = 0.0;
+		if (ce.Compare(&temp, &prev, groups) == 0 || !init) {
+			//this record is part of the grouping
+			//apply the function to the given record
+			func->Apply(temp, intResults, doubleResults);
+			//update the aggregate values
+			intResultsTotal += intResults;
+			doubleResultsTotal += doubleResults;
+			init = true;
+		}
+		else {
+			//not part of the grouping need to write out the grouping
+			//and start the aggregation of the next
+			//create the record object to hold the returned sum
+			Record returnRecord;
+			//create the attribute object to hold the type
+			Attribute attr[numGroups];
+			//name the attribute
+			const char* name = "Sum";
+			attr[0].name = name;	
+			//create the string to hold the value converted below
+			std::string value = "";
+			if (isInt) {
+				//create the tuple that contains the aggregated int value
+				//set the type
+				attr[0].myType = Int;
+				//convert the "Value" that gets strored in the record
+				value = std::to_string(intResultsTotal) + "|";	
+			}
+			else {
+				//create the tuple that contains the aggregated double value
+				//set the type
+				attr[0].myType = Double;
+				//convert the "Value" that gets strored in the record
+				value = std::to_string(doubleResultsTotal) + "|";				
+			}
+			
+			int *atts = groups->GetWhichAtts();
+			Type* attsTypes = groups->GetWhichTypes();
+			for (int i = 1; i < numGroups; i++) {
+				const char* attrname = "Attr";
+				std::string attrnum = std::to_string(i);
+				std::string attrnameFinal( string(attrname) + attrnum );
+				attr[i].name = attrnameFinal.c_str();
+				attr[i].myType = attsTypes[i-1];
+				value += prev.getValue(attsTypes[i-1], i-1) + "|";
+			}
+			//create the schema for this returning record
+			Schema returnSchema ("sum_sch", numGroups, attr);
+			//create the record
+			returnRecord.ComposeRecord(&returnSchema, value.c_str());
+			//put that record into the output pipe
+			out->Insert(&returnRecord);
+
+
+			//now we need to start a new aggregate for the current
+			//read in record
+			func->Apply(temp, intResults, doubleResults);
+			//update the aggregate values
+			intResultsTotal = intResults;
+			doubleResultsTotal = doubleResults;
+
+		}
+		//update the previous record
+		//for comparison with the next
+		prev.Consume(&temp);
+	}
+	//shutdown output pipe
+	out->ShutDown();
+	//exit thread
 	pthread_exit(NULL);	
 }
 
-void GroupBy::WaitUntilDone()
-{
+void GroupBy::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void GroupBy::Use_n_Pages(int runlen)
-{
+void GroupBy::Use_n_Pages(int runlen) {
+	runlength = runlen;
 }
 /* #endregion */
 
@@ -381,13 +486,11 @@ void* WriteOut::DoWork() {
 	pthread_exit(NULL);	
 }
 
-void WriteOut::WaitUntilDone()
-{
+void WriteOut::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void WriteOut::Use_n_Pages(int runlen)
-{
+void WriteOut::Use_n_Pages(int runlen) {
 }
 /* #endregion */
 

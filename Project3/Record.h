@@ -78,6 +78,8 @@ public:
 	// prints the contents of the record to a file; this requires
 	// that the schema also be given so that the record can be interpreted
 	void Print (Schema *mySchema, FILE* file);
+
+	std::string getValue(Type myType, int index);
 };
 
 #endif

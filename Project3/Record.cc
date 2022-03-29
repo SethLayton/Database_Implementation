@@ -529,7 +529,7 @@ void Record :: Print (Schema *mySchema, FILE* file) {
 
 		// here we determine the type, which given in the schema;
 		// depending on the type we then print out the contents
-		cout << "[";
+		//cout << "[";
 		fprintf (file, "[");
 		// first is integer
 		if (atts[i].myType == Int) {
@@ -564,4 +564,24 @@ void Record :: Print (Schema *mySchema, FILE* file) {
 	fprintf (file, "\n");
 }
 
+std::string Record :: getValue (Type myType, int index) {
 
+	int pointer = ((int *) bits)[index + 1];
+	// first is integer
+	if (myType == Int) {
+		int *myInt = (int *) &(bits[pointer]);
+		return std::to_string(*myInt);	
+
+	// then is a double
+	} 
+	else if (myType == Double) {
+		double *myDouble = (double *) &(bits[pointer]);
+		return std::to_string(*myDouble);	
+
+	// then is a character string
+	} 
+	else {
+		char *myString = (char *) &(bits[pointer]);
+		return myString;	
+	} 
+}

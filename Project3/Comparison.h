@@ -76,6 +76,8 @@ public:
 	Type * GetWhichTypes() { return whichTypes; }
 	int GetNumAtts() { return numAtts; }
 	void AddAttr(Type type, int attr);
+	Type getAttrType();
+	
 };
 
 class Record;
