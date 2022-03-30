@@ -265,12 +265,12 @@ void q6 () {
 	init_SF_ps (pred_ps, 100);
 
 	Join J;
-		// left _s
-		// right _ps
-		Pipe _s_ps (pipesz);
-		CNF cnf_p_ps;
-		Record lit_p_ps;
-		get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
+	// left _s
+	// right _ps
+	Pipe _s_ps (pipesz);
+	CNF cnf_p_ps;
+	Record lit_p_ps;
+	get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
 
 	int outAtts = sAtts + psAtts;
 	Attribute s_nationkey = {"s_nationkey", Int};

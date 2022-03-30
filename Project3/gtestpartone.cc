@@ -128,8 +128,8 @@ int test1 (int option, int runlen,int table, char* colname) {
 	OrderMaker sortorder (rel->schema()); 
 	rel->get_sort_order (sortorder, colname);
 	int buffsz = 100; // pipe cache size
-	Pipe input (buffsz, "input");
-	Pipe output (buffsz, "output");
+	Pipe input (buffsz);
+	Pipe output (buffsz);
 
 	// thread to dump data i nto the input pipe (for BigQ's consumption)
 	pthread_t thread1;
