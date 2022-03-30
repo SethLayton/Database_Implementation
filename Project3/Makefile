@@ -13,8 +13,8 @@ test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFi
 a2-2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o
 	$(CC) -o a2-2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o -lfl -lgtest -lpthread
 	
-a2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-test.o
-	$(CC) -o a2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-test.o -lfl -lgtest -lpthread
+a2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2test.o
+	$(CC) -o a2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2test.o -lfl -lgtest -lpthread
 	
 a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o
 	$(CC) -o a1test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o -lfl -lgtest
@@ -22,8 +22,8 @@ a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DB
 test.o: test.cc
 	$(CC) -g -c test.cc
 	
-a2-2test.o: a2-2test.cc
-	$(CC) -g -c a2-2test.cc
+a2test.o: a2test.cc
+	$(CC) -g -c a2test.cc
 
 a2-test.o: a2-test.cc
 	$(CC) -g -c a2-test.cc

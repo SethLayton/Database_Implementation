@@ -82,6 +82,7 @@ void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
 
 void* SelectFile::DoWork() {
 
+	cout << "SelectFile Thread started " << endl;
 	Record temp;
 	//scan all the records in the dbfile
 	//only grabbing those where the CNF op

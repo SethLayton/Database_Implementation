@@ -359,15 +359,15 @@ possible plan:
 
 int main (int argc, char *argv[]) {
 
-	if (argc != 2) {
-		cerr << " Usage: ./test.out [1-8] \n";
-		exit (0);
-	}
+	// if (argc != 2) {
+	// 	cerr << " Usage: ./test.out [1-8] \n";
+	// 	exit (0);
+	// }
 
 	void (*query_ptr[]) () = {&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8};  
 	void (*query) ();
-	int qindx = atoi (argv[1]);
-
+	//int qindx = atoi (argv[1]);
+	int qindx = 1;
 	if (qindx > 0 && qindx < 9) {
 		setup ();
 		query = query_ptr [qindx - 1];
