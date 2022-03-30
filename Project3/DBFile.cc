@@ -16,11 +16,13 @@
 DBFile::DBFile () {}
 
 void DBFile::CreateSubClass(fType type, int &runlength, OrderMaker &so) {
-    
+    cout << "Create subclass call" << endl;
     if (type == sorted) {
+        cout << "Create subclass call: Sorted" << endl;
         myInteralClass = new DBFileSorted(runlength, so);
     }
     else if (type == heap) {
+        cout << "Create subclass call: Heap" << endl;
         myInteralClass = new DBFileHeap();
     }
     else if (type == tree) {
@@ -86,8 +88,10 @@ int DBFile::Open (const char *f_path) {
         metafile.append(".meta");
         ifstream mf;
         mf.open(metafile);
-        if(!mf) return 1;
-
+        if(!mf) {
+            cout << "No metadata file found for: " << metafile << endl;
+            return 1;
+        }
         //read in the type from the first line of the fiel
         mf >> type;
         myType = (fType) type; //convert that value to a type

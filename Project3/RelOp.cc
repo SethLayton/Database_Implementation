@@ -64,14 +64,18 @@ void* thread_starter(void* obj) {
 	return nullptr;
 }
 
-/* #region  SelectFile */
-void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal) {
 
+/* #region  SelectFile */
+SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
+	Run();
+}
+void SelectFile::Run() {
+	dbfile.MoveFirst();
 	//initialize starting values
-	dbfile = &inFile;
-	out = &outPipe;
-	op = selOp;
-	lit = literal;
+	// dbfile = &inFile;
+	// out = &outPipe;
+	// op = selOp;
+	// lit = literal;
 	thread = pthread_t();
 	//create the thread util to pass to the starter
 	threadutil tutil = {selectfile, this};
@@ -81,20 +85,20 @@ void SelectFile::Run(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal)
 }
 
 void* SelectFile::DoWork() {
-
+	dbfile.MoveFirst();
 	cout << "SelectFile Thread started " << endl;
 	Record temp;
 	//scan all the records in the dbfile
 	//only grabbing those where the CNF op
 	//equates to true
-	while (dbfile->GetNext(temp, op, lit)) {
+	while (dbfile.GetNext(temp, op, lit)) {
 		//insert the selected record into the pipe
-		out->Insert(&temp);
+		out.Insert(&temp);
 		//for sanity clear out the temp record
 		temp.SetNull();
 	}
 	//shutdown the output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//exit the thread
 	pthread_exit(NULL);	
 }
@@ -108,13 +112,16 @@ void SelectFile::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  SelectPipe */
-void SelectPipe::Run(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal) {
+SelectPipe::SelectPipe(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal): in(inPipe), out(outPipe), op(selOp), lit(literal) {
+	Run();
+}
+void SelectPipe::Run() {
 
 	//initialize starting values
-	in = &inPipe;
-	out = &outPipe;
-	op = selOp;
-	lit = literal;
+	// in = &inPipe;
+	// out = &outPipe;
+	// op = selOp;
+	// lit = literal;
 	thread = pthread_t();
 	//create the thread util to pass to the starter
 	threadutil tutil = {selectsipe, this};
@@ -128,19 +135,19 @@ void* SelectPipe::DoWork() {
 	ComparisonEngine ce;
 	Record temp;
 	//read everything from the given input pipe
-	while (in->Remove(&temp)) {
+	while (in.Remove(&temp)) {
 		//compare the record to the given CNF and (I think)
 		//if its not 0 then it is 'accepted' by the CNF and
 		//we add it to the given output pipe
 		if (ce.Compare(&temp,&lit,&op) != 0) {
-			out->Insert(&temp);
+			out.Insert(&temp);
 		}
 		//even though temp is 'cleared out' do this 
 		//for sanity
 		temp.SetNull();
 	}
 	//shutdown the output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//shutdown the thread
 	pthread_exit(NULL);	
 }
@@ -155,13 +162,20 @@ void SelectPipe::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  Project */
-void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput) {
-	//initialize starting values
-	in = &inPipe;
-	out = &outPipe;
+Project::Project(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput, int in_pages): in(inPipe), out(outPipe) {
 	indexLocations = keepMe;
 	numInput = numAttsInput;
 	numOutput = numAttsOutput;
+	runlength = in_pages;
+	Run();
+}
+void Project::Run() {
+	//initialize starting values
+	// in = &inPipe;
+	// out = &outPipe;
+	// indexLocations = keepMe;
+	// numInput = numAttsInput;
+	// numOutput = numAttsOutput;
 	thread = pthread_t();
 	//create thread struct to pass to thread starter for initialization
 	threadutil tutil = {project, this};
@@ -173,16 +187,16 @@ void Project::Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, in
 void* Project::DoWork() {
 
 	Record temp;	
-	while (in->Remove(&temp)) {
+	while (in.Remove(&temp)) {
 		//do the projection
 		temp.Project(indexLocations, numOutput, numInput);
 		//place the projected record into the output pipe
-		out->Insert(&temp);
+		out.Insert(&temp);
 		//for sanity clear out the temp record
 		temp.SetNull();
 	}
 	//shutdown the output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//exit the thread
 	pthread_exit(NULL);	
 }
@@ -196,7 +210,10 @@ void Project::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  Join */
-void Join::Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal)
+Join::Join(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal): inL(inPipeL), inR(inPipeR), out(outPipe), op(selOp), lit(literal) {
+	Run();
+}
+void Join::Run()
 {
 
 	thread = pthread_t();
@@ -222,11 +239,14 @@ void Join::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  DuplicateRemoval */
-void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema) {
+DuplicateRemoval::DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema): in(inPipe), out(outPipe), schema(mySchema) {
+	Run();
+}
+void DuplicateRemoval::Run() {
 	//initialize starting values
-	in = &inPipe;
-	out = &outPipe;
-	schema = mySchema;
+	// in = &inPipe;
+	// out = &outPipe;
+	// schema = mySchema;
 	thread = pthread_t();
 	//create thread util to pass to thread starter
 	threadutil tutil = {duplicateremoval, this};
@@ -254,7 +274,7 @@ void* DuplicateRemoval::DoWork() {
 	//create and start the BigQ class to start
 	//consuming records from the in Pipe
 	//and placing them into the output Pipe  
-	BigQ bigQ (*in, *output, tempOrder, runlength);
+	BigQ bigQ (in, *output, tempOrder, runlength);
 	//create a comparison engine object
 	ComparisonEngine ce;
 	//create a record to store the previous record
@@ -264,14 +284,14 @@ void* DuplicateRemoval::DoWork() {
 	while (output->Remove(&temp)) {
 		
 		if (ce.Compare(&prev, &temp, &tempOrder) != 0 || !init) {
-			out->Insert(&temp);
+			out.Insert(&temp);
 			init = true;
 		}
 		prev.Consume(&temp);
 	}	
 	
 	//shutdown output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//exit thread
 	pthread_exit(NULL);	
 }
@@ -286,12 +306,16 @@ void DuplicateRemoval::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  Sum */
-void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe) 
+Sum::Sum(Pipe &inPipe, Pipe &outPipe, Function &computeMe, int in_pages): in(inPipe), out(outPipe), func(computeMe) {
+	runlength = in_pages;
+	Run();
+}
+void Sum::Run() 
 {
 	//initialize starting values
-	in = &inPipe;
-	out = &outPipe;
-	func = &computeMe;
+	// in = &inPipe;
+	// out = &outPipe;
+	// func = &computeMe;
 	thread = pthread_t();
 	//create thread helper struct
 	threadutil tutil = {sum, this};
@@ -304,17 +328,17 @@ void* Sum::DoWork() {
 	
 	Record temp;
 	//get in if the function is returning int or double
-	int isInt = func->getReturnsInt();
+	int isInt = func.getReturnsInt();
 	//set up aggregates
 	int intResultsTotal = 0;
 	double doubleResultsTotal = 0.0;
 	//remove all records from the input pipe
-	while (in->Remove(&temp)) {
+	while (in.Remove(&temp)) {
 		//set up intermediate results
 		int intResults = 0;
 		double doubleResults = 0.0;
 		//apply the function to the given record
-		func->Apply(temp, intResults, doubleResults);
+		func.Apply(temp, intResults, doubleResults);
 		//update the aggregate values
 		intResultsTotal += intResults;
 		doubleResultsTotal += doubleResults;
@@ -350,9 +374,9 @@ void* Sum::DoWork() {
 	//create the record
 	returnRecord.ComposeRecord(&returnSchema, value.c_str());
 	//put that record into the output pipe
-	out->Insert(&returnRecord);
+	out.Insert(&returnRecord);
 	//shut down output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//exit thread
 	pthread_exit(NULL);	
 }
@@ -366,13 +390,17 @@ void Sum::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  GroupBy */
-void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) {
+GroupBy::GroupBy(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe, int in_pages): in(inPipe), out(outPipe), groups(groupAtts), func(computeMe) {
+	runlength = in_pages;
+	Run();
+}
+void GroupBy::Run() {
 
 	//initialize starting values
-	in = &inPipe;
-	out = &outPipe;
-	groups = &groupAtts;
-	func = &computeMe;
+	// in = &inPipe;
+	// out = &outPipe;
+	// groups = &groupAtts;
+	// func = &computeMe;
 	thread = pthread_t();
 	//initialize the thread starter util
 	threadutil tutil = {groupby, this};
@@ -385,7 +413,7 @@ void* GroupBy::DoWork() {
 
 	Record temp;
 	//get in if the function is returning int or double
-	int isInt = func->getReturnsInt();
+	int isInt = func.getReturnsInt();
 	//set up aggregates
 	int intResultsTotal = 0;
 	double doubleResultsTotal = 0.0;
@@ -397,7 +425,7 @@ void* GroupBy::DoWork() {
 	//create and start the BigQ class to start
 	//consuming records from the in Pipe
 	//and placing them into the output Pipe  
-	BigQ bigQ (*in, *output, *groups, runlength);
+	BigQ bigQ (in, *output, groups, runlength);
 	//creat a record to store previous records
 	Record prev;
 	//create our comparison engine object
@@ -408,16 +436,16 @@ void* GroupBy::DoWork() {
 	//the first if statement below
 	bool init = false;
 	
-	int numGroups = groups->GetNumAtts() + 1;
+	int numGroups = groups.GetNumAtts() + 1;
 	//read in the values from the BigQ output pipe
 	while (output->Remove(&temp)) {		
 		//set up intermediate results
 		int intResults = 0;
 		double doubleResults = 0.0;
-		if (ce.Compare(&temp, &prev, groups) == 0 || !init) {
+		if (ce.Compare(&temp, &prev, &groups) == 0 || !init) {
 			//this record is part of the grouping
 			//apply the function to the given record
-			func->Apply(temp, intResults, doubleResults);
+			func.Apply(temp, intResults, doubleResults);
 			//update the aggregate values
 			intResultsTotal += intResults;
 			doubleResultsTotal += doubleResults;
@@ -450,8 +478,8 @@ void* GroupBy::DoWork() {
 				value = std::to_string(doubleResultsTotal) + "|";				
 			}
 			
-			int *atts = groups->GetWhichAtts();
-			Type* attsTypes = groups->GetWhichTypes();
+			int *atts = groups.GetWhichAtts();
+			Type* attsTypes = groups.GetWhichTypes();
 			for (int i = 1; i < numGroups; i++) {
 				const char* attrname = "Attr";
 				std::string attrnum = std::to_string(i);
@@ -465,12 +493,12 @@ void* GroupBy::DoWork() {
 			//create the record
 			returnRecord.ComposeRecord(&returnSchema, value.c_str());
 			//put that record into the output pipe
-			out->Insert(&returnRecord);
+			out.Insert(&returnRecord);
 
 
 			//now we need to start a new aggregate for the current
 			//read in record
-			func->Apply(temp, intResults, doubleResults);
+			func.Apply(temp, intResults, doubleResults);
 			//update the aggregate values
 			intResultsTotal = intResults;
 			doubleResultsTotal = doubleResults;
@@ -481,7 +509,7 @@ void* GroupBy::DoWork() {
 		prev.Consume(&temp);
 	}
 	//shutdown output pipe
-	out->ShutDown();
+	out.ShutDown();
 	//exit thread
 	pthread_exit(NULL);	
 }
@@ -496,13 +524,17 @@ void GroupBy::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  WriteOut */
-void WriteOut::Run(Pipe &inPipe, FILE *outFile, Schema &mySchema)
+WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema): in(inPipe), file(outFile), schema(mySchema) {
+	file = outFile;
+	Run();
+}
+void WriteOut::Run()
 {
 
 	//initialize starting values
-	in = &inPipe;
-	file = outFile;
-	schema = &mySchema;
+	// in = &inPipe;
+	// file = outFile;
+	// schema = &mySchema;
 	thread = pthread_t();
 	//create struct to pass to thread starter
 	threadutil tutil = {writeout, this};
@@ -515,9 +547,9 @@ void* WriteOut::DoWork() {
 	
 	Record temp;
 	//read all the records from the input pipe
-	while (in->Remove(&temp)) {
+	while (in.Remove(&temp)) {
 		//write the record out to the specified stream
-		temp.Print(schema, file);
+		temp.Print(&schema, file);
 		//for sanity set the temp record to null
 		temp.SetNull();
 	}
