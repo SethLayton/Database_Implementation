@@ -221,28 +221,66 @@ void Join::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  DuplicateRemoval */
-void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema)
-{
-
+void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema) {
+	//initialize starting values
+	in = &inPipe;
+	out = &outPipe;
+	schema = mySchema;
 	thread = pthread_t();
+	//create thread util to pass to thread starter
 	threadutil tutil = {duplicateremoval, this};
-	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); 
 
 }
 
 void* DuplicateRemoval::DoWork() {
 
+	Record temp;
+	//create output pipe for out BigQ run
+	Pipe* output;
+	int pipeBufferSize = 100;
+	output = new Pipe(pipeBufferSize); 
+	//create an ordermaker object for us to build
+	OrderMaker tempOrder;
+	int numAtts = schema.GetNumAtts();
+	Attribute* atts = schema.GetAtts();
+	//convert each attribute in the schema into
+	//an attribute of the ordermaker
+	for (int i = 0; i < numAtts; i++) {
+		tempOrder.AddAttr(atts[i].myType, i);
+	}
+	//create and start the BigQ class to start
+	//consuming records from the in Pipe
+	//and placing them into the output Pipe  
+	BigQ bigQ (*in, *output, tempOrder, runlength);
+	//create a comparison engine object
+	ComparisonEngine ce;
+	//create a record to store the previous record
+	//used for comparison
+	Record prev;
+	bool init = false;
+	while (output->Remove(&temp)) {
+		
+		if (ce.Compare(&prev, &temp, &tempOrder) != 0 || !init) {
+			out->Insert(&temp);
+			init = true;
+		}
+		prev.Consume(&temp);
+	}	
+	
+	//shutdown output pipe
+	out->ShutDown();
+	//exit thread
 	pthread_exit(NULL);	
 }
 
-void DuplicateRemoval::WaitUntilDone()
-{
+void DuplicateRemoval::WaitUntilDone() {
 	pthread_join (thread, NULL);
 }
 
-void DuplicateRemoval::Use_n_Pages(int runlen)
-{
+void DuplicateRemoval::Use_n_Pages(int runlen) {
+	runlength = runlen;
 }
 /* #endregion */
 

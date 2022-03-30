@@ -33,6 +33,8 @@ class Schema {
 
 public:
 
+	Schema() {};
+
 	// gets the set of attributes, but be careful with this, since it leads
 	// to aliasing!!!
 	Attribute *GetAtts ();

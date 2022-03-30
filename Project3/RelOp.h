@@ -75,6 +75,10 @@ class Join : public RelationalOp {
 class DuplicateRemoval : public RelationalOp {
 	private:
 		pthread_t thread = pthread_t();
+		Pipe* in;
+		Pipe* out;
+		Schema schema;
+		int runlength = 0;
 	public:
 		void Run (Pipe &inPipe, Pipe &outPipe, Schema &mySchema);
 		void WaitUntilDone ();
