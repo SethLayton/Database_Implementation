@@ -5,7 +5,6 @@
 
 void* thread_starter(void* obj) {
 	threadutil *t = (threadutil *) obj;
-
 	switch (t-> _class)	{
 
 		case selectsipe:
@@ -64,28 +63,22 @@ void* thread_starter(void* obj) {
 	return nullptr;
 }
 
-
 /* #region  SelectFile */
 SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
+	dbfile.MoveFirst();
 	Run();
 }
+
 void SelectFile::Run() {
-	dbfile.MoveFirst();
-	//initialize starting values
-	// dbfile = &inFile;
-	// out = &outPipe;
-	// op = selOp;
-	// lit = literal;
 	thread = pthread_t();
 	//create the thread util to pass to the starter
-	threadutil tutil = {selectfile, this};
+	static threadutil tutil = {selectfile, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
 void* SelectFile::DoWork() {
-	dbfile.MoveFirst();
 	cout << "SelectFile Thread started " << endl;
 	Record temp;
 	//scan all the records in the dbfile
@@ -115,18 +108,13 @@ void SelectFile::Use_n_Pages(int runlen) {
 SelectPipe::SelectPipe(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal): in(inPipe), out(outPipe), op(selOp), lit(literal) {
 	Run();
 }
-void SelectPipe::Run() {
 
-	//initialize starting values
-	// in = &inPipe;
-	// out = &outPipe;
-	// op = selOp;
-	// lit = literal;
+void SelectPipe::Run() {
 	thread = pthread_t();
 	//create the thread util to pass to the starter
-	threadutil tutil = {selectsipe, this};
+	static threadutil tutil = {selectsipe, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
@@ -169,18 +157,13 @@ Project::Project(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int
 	runlength = in_pages;
 	Run();
 }
+
 void Project::Run() {
-	//initialize starting values
-	// in = &inPipe;
-	// out = &outPipe;
-	// indexLocations = keepMe;
-	// numInput = numAttsInput;
-	// numOutput = numAttsOutput;
 	thread = pthread_t();
 	//create thread struct to pass to thread starter for initialization
-	threadutil tutil = {project, this};
+	static threadutil tutil = {project, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
@@ -213,13 +196,12 @@ void Project::Use_n_Pages(int runlen) {
 Join::Join(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal): inL(inPipeL), inR(inPipeR), out(outPipe), op(selOp), lit(literal) {
 	Run();
 }
-void Join::Run()
-{
 
+void Join::Run() {
 	thread = pthread_t();
-	threadutil tutil = {join, this};
+	static threadutil tutil = {join, this};
 	//create thread and initialize starting values
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); //actually create the thread
+	pthread_create(&thread, NULL, thread_starter, &tutil); //actually create the thread
 
 }
 
@@ -242,16 +224,13 @@ void Join::Use_n_Pages(int runlen)
 DuplicateRemoval::DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema): in(inPipe), out(outPipe), schema(mySchema) {
 	Run();
 }
+
 void DuplicateRemoval::Run() {
-	//initialize starting values
-	// in = &inPipe;
-	// out = &outPipe;
-	// schema = mySchema;
 	thread = pthread_t();
 	//create thread util to pass to thread starter
-	threadutil tutil = {duplicateremoval, this};
+	static threadutil tutil = {duplicateremoval, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil); 
+	pthread_create(&thread, NULL, thread_starter, &tutil); 
 
 }
 
@@ -310,17 +289,13 @@ Sum::Sum(Pipe &inPipe, Pipe &outPipe, Function &computeMe, int in_pages): in(inP
 	runlength = in_pages;
 	Run();
 }
-void Sum::Run() 
-{
-	//initialize starting values
-	// in = &inPipe;
-	// out = &outPipe;
-	// func = &computeMe;
+
+void Sum::Run() {
 	thread = pthread_t();
 	//create thread helper struct
-	threadutil tutil = {sum, this};
+	static threadutil tutil = {sum, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
@@ -394,18 +369,14 @@ GroupBy::GroupBy(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &c
 	runlength = in_pages;
 	Run();
 }
+
 void GroupBy::Run() {
 
-	//initialize starting values
-	// in = &inPipe;
-	// out = &outPipe;
-	// groups = &groupAtts;
-	// func = &computeMe;
 	thread = pthread_t();
 	//initialize the thread starter util
-	threadutil tutil = {groupby, this};
+	static threadutil tutil = {groupby, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
@@ -528,18 +499,13 @@ WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema): in(inPipe), f
 	file = outFile;
 	Run();
 }
-void WriteOut::Run()
-{
 
-	//initialize starting values
-	// in = &inPipe;
-	// file = outFile;
-	// schema = &mySchema;
+void WriteOut::Run() {
 	thread = pthread_t();
 	//create struct to pass to thread starter
-	threadutil tutil = {writeout, this};
+	static threadutil tutil = {writeout, this};
 	//create thread
-	pthread_create(&thread, NULL, thread_starter, (void *)&tutil);
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 
 }
 
