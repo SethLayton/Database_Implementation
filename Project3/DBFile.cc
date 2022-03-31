@@ -16,13 +16,10 @@
 DBFile::DBFile () {}
 
 void DBFile::CreateSubClass(fType type, int &runlength, OrderMaker &so) {
-    cout << "Create subclass call" << endl;
     if (type == sorted) {
-        cout << "Create subclass call: Sorted" << endl;
         myInteralClass = new DBFileSorted(runlength, so);
     }
     else if (type == heap) {
-        cout << "Create subclass call: Heap" << endl;
         myInteralClass = new DBFileHeap();
     }
     else if (type == tree) {
