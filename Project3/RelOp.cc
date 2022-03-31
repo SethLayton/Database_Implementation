@@ -221,7 +221,8 @@ void Join::Use_n_Pages(int runlen)
 /* #endregion */
 
 /* #region  DuplicateRemoval */
-DuplicateRemoval::DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema): in(inPipe), out(outPipe), schema(mySchema) {
+DuplicateRemoval::DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema, int in_pages): in(inPipe), out(outPipe), schema(mySchema) {
+	runlength = in_pages;
 	Run();
 }
 
@@ -261,7 +262,9 @@ void* DuplicateRemoval::DoWork() {
 	Record prev;
 	bool init = false;
 	while (output->Remove(&temp)) {
-		
+		Attribute IA = {"int", Int};
+		Schema __ps_sch ("__ps", 1, &IA);
+		temp.Print(&__ps_sch);
 		if (ce.Compare(&prev, &temp, &tempOrder) != 0 || !init) {
 			out.Insert(&temp);
 			init = true;

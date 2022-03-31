@@ -113,14 +113,14 @@ void q2 () {
 
 	char *pred_p = "(p_retailprice > 931.00) AND (p_retailprice < 931.31)";
 	init_SF_p (pred_p, 100);
-
 	
-		Pipe _out (pipesz);
-		int keepMe[] = {0,1,7};
-		int numAttsIn = pAtts;
-		int numAttsOut = 3;
+	Pipe _out (pipesz);
+	int keepMe[] = {0,1,7};
+	int numAttsIn = pAtts;
+	int numAttsOut = 3;
 	//P_p.Use_n_Pages (buffsz);
 	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p);
+	
 	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
 	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
 	//P_p.Run (_p, _out, keepMe, numAttsIn, numAttsOut);
@@ -130,7 +130,7 @@ void q2 () {
 
 	Attribute att3[] = {IA, SA, DA};
 	Schema out_sch ("out_sch", numAttsOut, att3);
-	int cnt = clear_pipe (_p, p->schema (), true);
+	int cnt = clear_pipe (_out, &out_sch, true);
 
 	cout << "\n\n query2 returned " << cnt << " records \n";
 
@@ -228,27 +228,27 @@ void q5 () {
 	init_SF_ps (pred_ps, 100);
 
 	// Project P_ps;
-		Pipe __ps (pipesz);
-		int keepMe[] = {1};
-		int numAttsIn = psAtts;
-		int numAttsOut = 1;
+	Pipe __ps (pipesz);
+	int keepMe[] = {1};
+	int numAttsIn = psAtts;
+	int numAttsOut = 1;
 	//P_ps.Use_n_Pages (buffsz);
 
 	// DuplicateRemoval D;
-		// inpipe = __ps
-		Pipe ___ps (pipesz);
-		Schema __ps_sch ("__ps", 1, &IA);
+	// inpipe = __ps
+	Pipe ___ps (pipesz);
+	Schema __ps_sch ("__ps", 1, &IA);
 		
 	// WriteOut W;
-		// inpipe = ___ps
-		char *fwpath = "ps.w.tmp";
-		FILE *writefile = fopen (fwpath, "w");
+	// inpipe = ___ps
+	char *fwpath = "ps.w.tmp";
+	FILE *writefile = fopen (fwpath, "w");
 
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
 	Project P_ps(_ps, __ps, keepMe, numAttsIn, numAttsOut, buffsz);
 	//P_ps.Run (_ps, __ps, keepMe, numAttsIn, numAttsOut);
-	DuplicateRemoval D(__ps, ___ps,__ps_sch);
+	DuplicateRemoval D(__ps, ___ps,__ps_sch, 1);
 	//D.Run (__ps, ___ps,__ps_sch);
 	WriteOut W(___ps, writefile, __ps_sch);
 	//W.Run (___ps, writefile, __ps_sch);
@@ -381,7 +381,7 @@ int main (int argc, char *argv[]) {
 	void (*query_ptr[]) () = {&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8};  
 	void (*query) ();
 	//int qindx = atoi (argv[1]);
-	int qindx = 1;
+	int qindx = 5;
 	if (qindx > 0 && qindx < 9) {
 		setup ();
 		query = query_ptr [qindx - 1];

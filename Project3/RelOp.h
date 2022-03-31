@@ -90,7 +90,7 @@ class DuplicateRemoval : public RelationalOp {
 		Schema& schema;
 		int runlength = 0;
 	public:
-		DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema);
+		DuplicateRemoval(Pipe &inPipe, Pipe &outPipe, Schema &mySchema, int pages);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
