@@ -310,15 +310,19 @@ void Record :: Consume (Record *fromMe) {
 
 void Record :: Copy (Record *copyMe) {
 	// this is a deep copy, so allocate the bits and move them over!
-	delete [] bits;
-	bits = new (std::nothrow) char[((int *) copyMe->bits)[0]];
+	if (bits != NULL) {
+		delete [] bits;
+	}
+	
+	char* b = copyMe->bits;
+	bits = new (std::nothrow) char[((int *) b)[0]];
 	if (bits == NULL)
 	{
 		cout << "ERROR : Not enough memory. EXIT !!!\n";
 		exit(1);
 	}
 
-	memcpy (bits, copyMe->bits, ((int *) copyMe->bits)[0]);
+	memcpy (bits, b, ((int *) b)[0]);
 
 }
 

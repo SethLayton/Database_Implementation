@@ -251,7 +251,6 @@ void* DuplicateRemoval::DoWork() {
 	for (int i = 0; i < numAtts; i++) {
 		tempOrder.AddAttr(atts[i].myType, i);
 	}
-	tempOrder.Print();
 	//create and start the BigQ class to start
 	//consuming records from the in Pipe
 	//and placing them into the output Pipe  
@@ -260,25 +259,21 @@ void* DuplicateRemoval::DoWork() {
 	ComparisonEngine ce;
 	//create a record to store the previous record
 	//used for comparison
-	Record* prev = NULL, * last = NULL;
+	Record prev;
 	bool init = false;
-	int count = 0;
 	while (output->Remove(&temp)) {
-		last = &temp;
-		count++;
-		cout << "Total processed: " << count << endl;
-		if ( count = 79080)
 		if (!init) {
+			prev.Copy(&temp);
 			out.Insert(&temp);
 			init = true;
 		}
-		else if (ce.Compare(prev, last, &tempOrder) != 0) {
-			out.Insert(&temp);
+		else {
+			if (ce.Compare(&prev, &temp, &tempOrder) != 0) {
+				prev.Copy(&temp);
+				out.Insert(&temp);
+			}
 		}
-		prev = last;
-		temp.SetNull();
 	}	
-	
 	//shutdown output pipe
 	out.ShutDown();
 	//exit thread
@@ -408,7 +403,7 @@ void* GroupBy::DoWork() {
 	//and placing them into the output Pipe  
 	BigQ bigQ (in, *output, groups, runlength);
 	//creat a record to store previous records
-	Record* prev = NULL, * last = NULL;
+	Record prev;
 	//create our comparison engine object
 	ComparisonEngine ce;
 	//bool for tracking the first run of
@@ -420,14 +415,13 @@ void* GroupBy::DoWork() {
 	int numGroups = groups.GetNumAtts() + 1;
 	//read in the values from the BigQ output pipe
 	while (output->Remove(&temp)) {		
-		last = &temp;
 		//set up intermediate results
 		int intResults = 0;
 		double doubleResults = 0.0;
-		if (ce.Compare(last, prev, &groups) == 0 || !init) {
+		if (ce.Compare(&temp, &prev, &groups) == 0 || !init) {
 			//this record is part of the grouping
 			//apply the function to the given record
-			func.Apply(*last, intResults, doubleResults);
+			func.Apply(temp, intResults, doubleResults);
 			//update the aggregate values
 			intResultsTotal += intResults;
 			doubleResultsTotal += doubleResults;
@@ -468,7 +462,7 @@ void* GroupBy::DoWork() {
 				std::string attrnameFinal( string(attrname) + attrnum );
 				attr[i].name = attrnameFinal.c_str();
 				attr[i].myType = attsTypes[i-1];
-				value += prev->getValue(attsTypes[i-1], i-1) + "|";
+				value += prev.getValue(attsTypes[i-1], i-1) + "|";
 			}
 			//create the schema for this returning record
 			Schema returnSchema ("sum_sch", numGroups, attr);
@@ -480,7 +474,7 @@ void* GroupBy::DoWork() {
 
 			//now we need to start a new aggregate for the current
 			//read in record
-			func.Apply(*last, intResults, doubleResults);
+			func.Apply(temp, intResults, doubleResults);
 			//update the aggregate values
 			intResultsTotal = intResults;
 			doubleResultsTotal = doubleResults;
@@ -488,8 +482,7 @@ void* GroupBy::DoWork() {
 		}
 		//update the previous record
 		//for comparison with the next
-		prev = last;
-		temp.SetNull();
+		prev.Copy(&temp);
 	}
 	//shutdown output pipe
 	out.ShutDown();
@@ -526,6 +519,7 @@ void* WriteOut::DoWork() {
 	Record temp;
 	//read all the records from the input pipe
 	while (in.Remove(&temp)) {
+		//temp.Print(&schema);
 		//write the record out to the specified stream
 		temp.Print(&schema, file);
 		//for sanity set the temp record to null
