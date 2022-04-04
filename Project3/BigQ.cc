@@ -47,8 +47,6 @@ void *BigQ::DoWork() {
 		// myRec.Print(&s);
 		char *bytes = myRec.GetBits(); //get the size of that record in bytes
 		if (bytes == NULL) {
-			cout << endl;
-			cout << runlength<<filename << endl;
 			cout << "BigQ::DoWork -- BYTES NULL" << endl;
 			exit(1);
 		}

@@ -299,29 +299,30 @@ void q6 () {
 	Attribute joinatt[] = {IA,SA,SA,s_nationkey,SA,DA,SA,IA,IA,IA,ps_supplycost,SA};
 	Schema join_sch ("join_sch", outAtts, joinatt);
 
-	Attribute groupatt[] = {s_nationkey};
-	Schema group_sch("group_sch", 1,groupatt );
+	
 	// GroupBy G;
 	// _s (input pipe)
-	Pipe _out (1);
+	Pipe _out (100);
 	Function func;
 	char *str_sum = "(ps_supplycost)";
 	get_cnf (str_sum, &join_sch, func);
 	func.Print ();
-	OrderMaker grp_order (&group_sch);
+	OrderMaker grp_order;
+	grp_order.AddAttr(Int, 3);
 	//G.Use_n_Pages (1);
 
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-	GroupBy G(_s_ps, _out, grp_order, func, 1);
+	GroupBy G(_s_ps, _out, grp_order, func, 10);
 	//G.Run (_s_ps, _out, grp_order, func);
 
 	SF_ps.WaitUntilDone ();
 	J.WaitUntilDone ();
 	G.WaitUntilDone ();
-
+	Attribute sum = {"sum", Double};
+	Attribute groupatt[] = {sum, s_nationkey};
 	Schema sum_sch ("sum_sch", 2, groupatt);
 	int cnt = clear_pipe (_out, &sum_sch, true);
 	cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
