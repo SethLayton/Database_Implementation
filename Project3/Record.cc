@@ -568,6 +568,10 @@ void Record :: Print (Schema *mySchema, FILE* file) {
 	fprintf (file, "\n");
 }
 
+int Record::GetNumAtts() {
+	return ((((int *)bits)[1]) / sizeof(int)) - 1;
+}
+
 std::string Record :: getValue (Type myType, int index) {
 
 	int pointer = ((int *) bits)[index + 1];

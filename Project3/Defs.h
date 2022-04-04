@@ -11,7 +11,7 @@
 enum Target {Left, Right, Literal};
 enum CompOperator {LessThan, GreaterThan, Equals};
 enum Type {Int, Double, String};
-enum ClassList {selectsipe, selectfile, project, join, duplicateremoval, sum, groupby, writeout};
+enum ClassList {selectsipe, selectfile, selectfile2, project, join, duplicateremoval, sum, groupby, writeout};
 
 
 unsigned int Random_Generate();

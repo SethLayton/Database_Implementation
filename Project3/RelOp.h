@@ -26,13 +26,16 @@ class SelectFile : public RelationalOp {
 		Pipe& out;
 		CNF& op;
 		Record& lit;
+		std::string filename;
 	public:
-		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal);
+		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, std::string name);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
 		void *DoWork();
 };
+
+
 
 class SelectPipe : public RelationalOp {
 	private:
@@ -72,10 +75,13 @@ class Join : public RelationalOp {
 		Pipe& inR;
 		Pipe& out;
 		CNF& op;
+		// Schema& sL;
+		// Schema& sR;
 		Record& lit;
 		pthread_t thread = pthread_t();
+		int npage;
 	public:
-		Join(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal);
+		Join(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal);//, Schema &schemaL, Schema &schemaR);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
@@ -134,8 +140,9 @@ class WriteOut : public RelationalOp {
 		Pipe& in;
 		FILE* file;
 		Schema& schema;
+		bool first;
 	public:
-		WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema);
+		WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema, bool first);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
@@ -146,6 +153,14 @@ typedef struct {
 	int _class;
 	void *context;
 }threadutil;
+
+typedef struct {
+	std::string myname;
+	DBFile &dbfiles;
+	Pipe &outpipe;
+	CNF &cnf;
+	Record &literal;
+}threadselect;
 
 void* thread_starter(void* obj);
 #endif

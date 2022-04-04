@@ -17,8 +17,7 @@ BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp)
 }
 
 BigQ::~BigQ () { 
-	myPage.~Page();
-	myFile.~File();
+
 }
 void BigQ::pthreadwait () {
 	pthread_join(threads, NULL);

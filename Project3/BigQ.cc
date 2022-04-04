@@ -14,9 +14,11 @@ BigQ :: BigQ (Pipe &inp, Pipe &outp, OrderMaker &sortorder, int runlen) :in(inp)
 	threads = pthread_t();
 	//create thread and initialize starting values
 	pthread_create(&threads, NULL, ts, this); //actually create the thread
+	
 }
 
 BigQ::~BigQ () { 
+
 }
 void BigQ::pthreadwait () {
 	pthread_join(threads, NULL);
@@ -28,7 +30,11 @@ void * ts(void *arg)
 }
  
 void *BigQ::DoWork() {
-	myFile.Open(0, "f_path"); //create our file that stores all the runs
+	cout << "Run Length: "<<  runlength << endl;
+	int numQs = std::rand();
+	std::string filename = "f_path" + std::to_string(numQs);
+	cout << filename << endl;
+	myFile.Open(0, filename.c_str()); //create our file that stores all the runs
 	// so.Print();
 	Record myRec; //create a record to store read in records from the input pipe
 	std::vector<Record> records; //create a vector to store above records
@@ -39,8 +45,12 @@ void *BigQ::DoWork() {
 	Compare comparator(&so); //create the comparator used in the vector sort
 	//read in a record from the input pipe
 	while (in.Remove (&myRec)) {
+		// Schema s ("catalog","supplier");
+		// myRec.Print(&s);
 		char *bytes = myRec.GetBits(); //get the size of that record in bytes
 		if (bytes == NULL) {
+			cout << endl;
+			so.Print();
 			cout << "BigQ::DoWork -- BYTES NULL" << endl;
 			exit(1);
 		}
@@ -131,6 +141,7 @@ void *BigQ::DoWork() {
 	FinalSort();
 	//shutdown the out pipe
 	out.ShutDown();	
+	remove(filename.c_str());
 	pthread_exit(NULL);	
 	
 }

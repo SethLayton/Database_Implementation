@@ -1,6 +1,7 @@
 #include "test.h"
 #include "BigQ.h"
 #include "RelOp.h"
+// #include "RelOp2.h"
 #include <pthread.h>
 
 Attribute IA = {"int", Int};
@@ -94,11 +95,19 @@ void init_SF_c (char *pred_str, int numpgs) {
 // expected output: 31 records
 void q1 () {
 
-	char *pred_ps = "(ps_supplycost < 1.04)";
+	char *pred_ps = "(ps_suppkey=ps_suppkey)";//"(ps_supplycost = 771.64)";
 	init_SF_ps (pred_ps, 100);
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, "");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
+	char *fwpath = "ps.test";
+	FILE *writefile = fopen (fwpath, "w");
+	
+	
+
+	
+	WriteOut W(_ps, writefile, *ps->schema(), true);
 	SF_ps.WaitUntilDone ();
+	W.WaitUntilDone();
 
 	int cnt = clear_pipe (_ps, ps->schema (), true);
 	cout << "\n\n query1 returned " << cnt << " records \n";
@@ -119,7 +128,7 @@ void q2 () {
 	int numAttsIn = pAtts;
 	int numAttsOut = 3;
 	//P_p.Use_n_Pages (buffsz);
-	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p);
+	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p, "");
 	
 	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
 	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
@@ -152,7 +161,7 @@ void q3 () {
 	get_cnf (str_sum, s->schema (), func);
 	func.Print ();
 	//T.Use_n_Pages (1);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s);
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, "");
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s);
 	Sum T(_s, _out, func, 1);
 	//T.Run (_s, _out, func);
@@ -177,7 +186,7 @@ void q4 () {
 	cout << " query4 \n";
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s);
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s,"1");
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -190,7 +199,7 @@ void q4 () {
 		CNF cnf_p_ps;
 		Record lit_p_ps;
 		get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
-
+	
 	int outAtts = sAtts + psAtts;
 	Attribute ps_supplycost = {"ps_supplycost", Double};
 	Attribute joinatt[] = {IA,SA,SA,IA,SA,DA,SA, IA,IA,IA,ps_supplycost,SA};
@@ -202,9 +211,10 @@ void q4 () {
 	Function func;
 	char *str_sum = "(ps_supplycost)";
 	get_cnf (str_sum, &join_sch, func);
+
 	func.Print ();
 	//T.Use_n_Pages (1);
-	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps);
+	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps,"");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
@@ -244,13 +254,13 @@ void q5 () {
 	char *fwpath = "ps.w.tmp";
 	FILE *writefile = fopen (fwpath, "w");
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
 	Project P_ps(_ps, __ps, keepMe, numAttsIn, numAttsOut, buffsz);
 	//P_ps.Run (_ps, __ps, keepMe, numAttsIn, numAttsOut);
 	DuplicateRemoval D(__ps, ___ps,__ps_sch, 1);
 	//D.Run (__ps, ___ps,__ps_sch);
-	WriteOut W(___ps, writefile, __ps_sch);
+	WriteOut W(___ps, writefile, __ps_sch, true);
 	//W.Run (___ps, writefile, __ps_sch);
 
 	SF_ps.WaitUntilDone ();
@@ -269,7 +279,7 @@ void q6 () {
 	cout << " query6 \n";
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s);
+	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s,"");
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -299,7 +309,7 @@ void q6 () {
 	OrderMaker grp_order (&join_sch);
 	//G.Use_n_Pages (1);
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
@@ -368,8 +378,64 @@ possible plan:
 	On __l:
 		W (__l)
 */
-	cout << " TBA\n";
+	cout << " JOIN \n";
+	char *pred_s = "(s_suppkey = s_suppkey)";
+	cout << " - init order" << endl;
+	init_SF_s (pred_s, 100);
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, "1");
+
+	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
+	char *pred_ps = "(ps_suppkey = ps_suppkey)";
+	cout << " - init part supply" << endl;
+	init_SF_ps (pred_ps, 100);
+	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps, "part_supplier");
+	// Join J;
+		// left _s
+		// right _ps
+		Pipe _s_ps (pipesz);
+		CNF cnf_p_ps;
+		Record lit_p_ps;
+		get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
+	cout << " - Got CNF" << endl;
+	int outAtts = sAtts + psAtts;
+	Attribute ps_supplycost = {"ps_supplycost", Double};
+	Attribute joinatt[] = {IA,SA,SA,IA,SA,DA,SA, IA,IA,IA,ps_supplycost,SA};
+	Schema join_sch ("join_sch", outAtts, joinatt);
+
+
+	cout << " - Starting Join" << endl;
+	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	// char *fwpath = "ps.test";
+	// FILE *writefile = fopen (fwpath, "w");
+	// char *fwpath2 = "s.test";
+	// FILE *writefile2 = fopen (fwpath2, "w");
+	
+
+	
+	// WriteOut W(_ps, writefile, *ps->schema(), true);
+	// WriteOut Ws(_s, writefile2, *s->schema(), false);
+
+	// SF_s.WaitUntilDone();
+	// SF_ps.WaitUntilDone ();
+	// Ws.WaitUntilDone();
+	// W.WaitUntilDone ();
+	//T.Run (_s_ps, _out, func);
+	cout << " - Waiting " << endl;
+	// SF_ps.WaitUntilDone ();
+	
+	
+	// int cnt = clear_pipe (_s, s->schema(), true);
+	Record temp;
+	cout << " - Printing" << endl;
+	while(_s_ps.Remove(&temp)) {
+		temp.Print(&join_sch);
+	}
+	J.WaitUntilDone ();
+
 }
+
+
 
 int main (int argc, char *argv[]) {
 
@@ -381,7 +447,7 @@ int main (int argc, char *argv[]) {
 	void (*query_ptr[]) () = {&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8};  
 	void (*query) ();
 	//int qindx = atoi (argv[1]);
-	int qindx = 5;
+	int qindx = 6;
 	if (qindx > 0 && qindx < 9) {
 		setup ();
 		query = query_ptr [qindx - 1];

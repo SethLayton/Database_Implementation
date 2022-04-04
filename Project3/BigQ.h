@@ -37,6 +37,7 @@ class BigQ {
 		void *DoWork();
 		void FinalSort();
 		pthread_t& getpt() {return threads;}
+		int GetPageCount() {return pageCount;}
 
 	class Compare {
 		private:

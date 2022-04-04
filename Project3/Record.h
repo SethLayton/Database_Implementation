@@ -79,6 +79,8 @@ public:
 	// that the schema also be given so that the record can be interpreted
 	void Print (Schema *mySchema, FILE* file);
 
+	int GetNumAtts();
+
 	std::string getValue(Type myType, int index);
 };
 
