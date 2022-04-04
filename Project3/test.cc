@@ -105,7 +105,7 @@ void q1 () {
 	
 
 	
-	WriteOut W(_ps, writefile, *ps->schema(), true);
+	WriteOut W(_ps, writefile, *ps->schema());
 	SF_ps.WaitUntilDone ();
 	W.WaitUntilDone();
 
@@ -260,7 +260,7 @@ void q5 () {
 	//P_ps.Run (_ps, __ps, keepMe, numAttsIn, numAttsOut);
 	DuplicateRemoval D(__ps, ___ps,__ps_sch, 1);
 	//D.Run (__ps, ___ps,__ps_sch);
-	WriteOut W(___ps, writefile, __ps_sch, true);
+	WriteOut W(___ps, writefile, __ps_sch);
 	//W.Run (___ps, writefile, __ps_sch);
 
 	SF_ps.WaitUntilDone ();

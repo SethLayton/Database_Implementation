@@ -140,9 +140,8 @@ class WriteOut : public RelationalOp {
 		Pipe& in;
 		FILE* file;
 		Schema& schema;
-		bool first;
 	public:
-		WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema, bool first);
+		WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);

@@ -680,26 +680,18 @@ void GroupBy::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  WriteOut */
-WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema, bool myf): in(inPipe), file(outFile), schema(mySchema) {
+WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema): in(inPipe), file(outFile), schema(mySchema) {
 	file = outFile;
-	first = myf;
 	Run();
 }
 
 void WriteOut::Run() {
 	
 	//create struct to pass to thread starter
-	if (first) {
-		thread = pthread_t();	
-		static threadutil tutil = {writeout, this};
-		//create thread
-		pthread_create(&thread, NULL, thread_starter, &tutil);
-	} else {
-		thread = pthread_t();
-		static threadutil tutil1 = {writeout, this};
-		//create thread
-		pthread_create(&thread, NULL, thread_starter, &tutil1);	
-	}
+	thread = pthread_t();	
+	static threadutil tutil = {writeout, this};
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 	
 
 }
