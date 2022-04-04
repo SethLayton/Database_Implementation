@@ -30,10 +30,8 @@ void * ts(void *arg)
 }
  
 void *BigQ::DoWork() {
-	cout << "Run Length: "<<  runlength << endl;
 	int numQs = std::rand();
 	std::string filename = "f_path" + std::to_string(numQs);
-	cout << filename << endl;
 	myFile.Open(0, filename.c_str()); //create our file that stores all the runs
 	// so.Print();
 	Record myRec; //create a record to store read in records from the input pipe
@@ -50,7 +48,7 @@ void *BigQ::DoWork() {
 		char *bytes = myRec.GetBits(); //get the size of that record in bytes
 		if (bytes == NULL) {
 			cout << endl;
-			so.Print();
+			cout << runlength<<filename << endl;
 			cout << "BigQ::DoWork -- BYTES NULL" << endl;
 			exit(1);
 		}

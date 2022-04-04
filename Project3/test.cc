@@ -279,7 +279,7 @@ void q6 () {
 	cout << " query6 \n";
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s,"");
+	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s,"1");
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -299,6 +299,8 @@ void q6 () {
 	Attribute joinatt[] = {IA,SA,SA,s_nationkey,SA,DA,SA,IA,IA,IA,ps_supplycost,SA};
 	Schema join_sch ("join_sch", outAtts, joinatt);
 
+	Attribute groupatt[] = {s_nationkey};
+	Schema group_sch("group_sch", 1,groupatt );
 	// GroupBy G;
 	// _s (input pipe)
 	Pipe _out (1);
@@ -306,7 +308,7 @@ void q6 () {
 	char *str_sum = "(ps_supplycost)";
 	get_cnf (str_sum, &join_sch, func);
 	func.Print ();
-	OrderMaker grp_order (&join_sch);
+	OrderMaker grp_order (&group_sch);
 	//G.Use_n_Pages (1);
 
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
@@ -320,7 +322,7 @@ void q6 () {
 	J.WaitUntilDone ();
 	G.WaitUntilDone ();
 
-	Schema sum_sch ("sum_sch", 1, &DA);
+	Schema sum_sch ("sum_sch", 2, groupatt);
 	int cnt = clear_pipe (_out, &sum_sch, true);
 	cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
 }
