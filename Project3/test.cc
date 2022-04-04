@@ -97,7 +97,7 @@ void q1 () {
 
 	char *pred_ps = "(ps_suppkey=ps_suppkey)";//"(ps_supplycost = 771.64)";
 	init_SF_ps (pred_ps, 100);
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, "");
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, true);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
 	char *fwpath = "ps.test";
 	FILE *writefile = fopen (fwpath, "w");
@@ -128,7 +128,7 @@ void q2 () {
 	int numAttsIn = pAtts;
 	int numAttsOut = 3;
 	//P_p.Use_n_Pages (buffsz);
-	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p, "");
+	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p, true);
 	
 	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
 	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
@@ -161,7 +161,7 @@ void q3 () {
 	get_cnf (str_sum, s->schema (), func);
 	func.Print ();
 	//T.Use_n_Pages (1);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, "");
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, true);
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s);
 	Sum T(_s, _out, func, 1);
 	//T.Run (_s, _out, func);
@@ -186,7 +186,7 @@ void q4 () {
 	cout << " query4 \n";
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s,"1");
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s,true);
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -214,7 +214,7 @@ void q4 () {
 
 	func.Print ();
 	//T.Use_n_Pages (1);
-	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps,"");
+	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps,false);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
@@ -254,7 +254,7 @@ void q5 () {
 	char *fwpath = "ps.w.tmp";
 	FILE *writefile = fopen (fwpath, "w");
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,true);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
 	Project P_ps(_ps, __ps, keepMe, numAttsIn, numAttsOut, buffsz);
 	//P_ps.Run (_ps, __ps, keepMe, numAttsIn, numAttsOut);
@@ -279,7 +279,7 @@ void q6 () {
 	cout << " query6 \n";
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s,"1");
+	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s, true);
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -311,7 +311,7 @@ void q6 () {
 	grp_order.AddAttr(Int, 3);
 	//G.Use_n_Pages (1);
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,"");
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,false );
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
@@ -385,13 +385,13 @@ possible plan:
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	cout << " - init order" << endl;
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, "1");
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, true);
 
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
 	cout << " - init part supply" << endl;
 	init_SF_ps (pred_ps, 100);
-	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps, "part_supplier");
+	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps, false);
 	// Join J;
 		// left _s
 		// right _ps

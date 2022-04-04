@@ -66,26 +66,22 @@ void* thread_starter(void* obj) {
 }
 
 /* #region  SelectFile */
-SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, std::string name): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
+SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, bool in_first): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
 	dbfile.MoveFirst();
-	filename = name;
+	first = in_first;
 	Run();
 }
 
 void SelectFile::Run() {
 	thread =  pthread_t();
 	//create the thread util to pass to the starter
-	if (filename == "1") {
+	if (first) {
 		static threadutil tutil1 = { selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil1);
 	} else {
 		static threadutil tutil2 = {selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil2);
 	}
-	
-	//create thread
-	
-
 }
 
 void* SelectFile::DoWork() {
@@ -114,10 +110,6 @@ void SelectFile::WaitUntilDone() {
 void SelectFile::Use_n_Pages(int runlen) {
 }
 /* #endregion */
-
-
-
-
 
 /* #region  SelectPipe */
 SelectPipe::SelectPipe(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal): in(inPipe), out(outPipe), op(selOp), lit(literal) {

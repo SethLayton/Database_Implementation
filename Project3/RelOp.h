@@ -26,9 +26,9 @@ class SelectFile : public RelationalOp {
 		Pipe& out;
 		CNF& op;
 		Record& lit;
-		std::string filename;
+		bool first;
 	public:
-		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, std::string name);
+		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, bool in_first);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);
