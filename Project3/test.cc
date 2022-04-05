@@ -96,10 +96,17 @@ void init_SF_c (char *pred_str, int numpgs) {
 void q1 () {
 
 
+<<<<<<< HEAD
 	char *pred_ps = "(ps_supplycost < 1.04)";
 	init_SF_ps (pred_ps, 100);
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, true);
 
+=======
+	char *pred_ps = "(ps_supplycost = 1.04)";
+	init_SF_ps (pred_ps, 100);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, "");
+	
+>>>>>>> 48e0a97fd7711a948c2806d61e6fdb78ab84c8e0
 	SF_ps.WaitUntilDone ();
 
 	int cnt = clear_pipe (_ps, ps->schema (), true);
