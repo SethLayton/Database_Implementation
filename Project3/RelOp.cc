@@ -66,46 +66,37 @@ void* thread_starter(void* obj) {
 }
 
 /* #region  SelectFile */
-SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, std::string name): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
+SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, bool in_first): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
 	dbfile.MoveFirst();
-	filename = name;
+	first = in_first;
 	Run();
 }
 
 void SelectFile::Run() {
 	thread =  pthread_t();
 	//create the thread util to pass to the starter
-	if (filename == "1") {
+	if (first) {
 		static threadutil tutil1 = { selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil1);
 	} else {
 		static threadutil tutil2 = {selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil2);
 	}
-	
-	//create thread
-	
-
 }
 
 void* SelectFile::DoWork() {
-	
-	cout << "SelectFile Thread started " << endl;
-
 	Record temp;
 	//scan all the records in the dbfile
 	//only grabbing those where the CNF op
 	//equates to true
 	int counter = 0;
 	while (dbfile.GetNext(temp, op, lit)) {
-		// cout << counter << endl;
 		//insert the selected record into the pipe
 		out.Insert(&temp);
 		//for sanity clear out the temp record
 		temp.SetNull();
 		counter++;
 	}
-	// cout << " ---- COUNTER: " << counter<< endl;
 	//shutdown the output pipe
 	out.ShutDown();
 	//exit the thread
@@ -119,10 +110,6 @@ void SelectFile::WaitUntilDone() {
 void SelectFile::Use_n_Pages(int runlen) {
 }
 /* #endregion */
-
-
-
-
 
 /* #region  SelectPipe */
 SelectPipe::SelectPipe(Pipe &inPipe, Pipe &outPipe, CNF &selOp, Record &literal): in(inPipe), out(outPipe), op(selOp), lit(literal) {
@@ -228,17 +215,10 @@ void Join::Run() {
 }
 
 void* Join::DoWork() {
-	cout << "DOWORK" << endl;
 	//--CREATE ORDERMAKER
-	cout << " - Creating OrderMakers" << endl;
 	OrderMaker omR;
 	OrderMaker omL;
-
-	
 	int sortFound = op.GetSortOrders(omL, omR);
-	
-	
-	cout << " - OPeration " << endl;
 	
 	//--INSTANTIATE TWO BIGQs
 	int pipeBufferSize = 200;
@@ -259,14 +239,9 @@ void* Join::DoWork() {
 	Pipe* inL_temp;
 	inL_temp = new Pipe(pipeBufferSize);
 	
-	cout << " - Create BigQs" << endl;
-
-
 	//Create the BigQs
 	BigQ bigQR (inR, *outputR, omR, npage);
 	BigQ bigQL (inL, *outputL, omL, npage+10);
-	//BigQ bqR_temp (*inR_temp, *outR_temp, omR, npage);
-	// BigQ bqL_temp (*inL_temp, *outL_temp, omL, npage);
 
 
 	//--JOIN
@@ -285,19 +260,6 @@ void* Join::DoWork() {
 	int totAtt = -1;
 	int *atts = new int[100];
 	int startR = -1;
-	//Case 1: OM has no equalities
-	// int c = 0;
-	// cout << "STARTING COUNT " << endl;
-	// while (outputR->Remove(&tempR)) {
-	// 	// cout << c << endl;
-	// 	c++;
-	// }
-	// cout << "COUNTER: " << c<< endl;
-	// c = 0;
-	// while (outputL->Remove(&tempL)) {
-	// 	c++;
-	// }
-	// cout << "COUNTER: " << c<< endl;
 
 	if (sortFound == 0) {
 		cout << "No sort order found" << endl;
@@ -331,15 +293,8 @@ void* Join::DoWork() {
 	//Joining right to left, thus outer loop is left
 	else {
 		cout << " - sort Order found" << endl;
-		int count = 0;
 		while (outputL->Remove(&tempL)) {
-			count++;
-			// if (count % 100 == 0){
-			// 	cout << "." << std::flush;
-			// }
-			
 			Schema S("catalog", "supplier");
-			// tempL.Print(&S);
 			if (tempPopulated) {
 				tempR.Consume(&prevR);
 				int result = ce.Compare(&tempL, &omL, &tempR, &omR);
@@ -349,39 +304,6 @@ void* Join::DoWork() {
 				}
 				tempPopulated = false;
 			}
-			//Check tempPipe
-			// if (tempPopulated) {
-			// 	while (outR_temp->Remove(&tempR)) {
-			// 		cout <<"+";
-			// 		if (totAtt == -1){
-			// 			lAtt = tempL.GetNumAtts();
-			// 			rAtt = tempR.GetNumAtts();
-			// 			totAtt = lAtt + rAtt;
-			// 			int* newArr = new int[totAtt];
-			// 			delete [] atts;
-			// 			atts = newArr;
-			// 			startR = lAtt;
-			// 			for (int i = 0; i < lAtt; i++) {
-			// 				atts[i] = i;
-			// 			}
-			// 			for (int i = 0; i < rAtt; i++) {
-			// 				atts[i+lAtt] = i;
-			// 			}
-			// 		}
-			// 		int result = ce.Compare(&tempL, &omL, &tempR, &omR);
-			// 		if ( result > 0) {
-			// 			continue;
-			// 		} else if (result < 0) {
-			// 			break;
-			// 		}
-			// 		else {
-			// 			merge.MergeRecords(&tempL, &tempR,lAtt, rAtt, atts, totAtt, startR );
-			// 			out.Insert(&merge);
-			// 			inR_temp->Insert(&tempR);
-			// 		}
-			// 	}
-			// 	tempPopulated = false;
-			// }
 			//After temp pipe is empty, go to right BigQ
 			while (outputR->Remove(&tempR)){
 				
@@ -403,27 +325,18 @@ void* Join::DoWork() {
 					continue;
 				} else if (result < 0) {
 					// Possibly add moving this record to the temp Q
-					
-					// inR_temp->Insert(&tempR);
-
 					tempPopulated = true;
 					prevR.Consume(&tempR);
 					break;
 				}
 				else {
-					// cout << "-" << std::flush;
 					merge.MergeRecords(&tempL, &tempR,lAtt, rAtt, atts, totAtt, startR );
 					out.Insert(&merge);
-					// tempPopulated = true;
-					// Schema s("catalog", "partsupp");
-					// tempR.Print(&s);
-					// inR_temp->Insert(&tempR);
 					
 				}
 				
 			}
 		}
-		cout << " - End Join" << endl;
 	}
 	out.ShutDown();
 	pthread_exit(NULL);	
@@ -536,12 +449,7 @@ void* Sum::DoWork() {
 	int intResultsTotal = 0;
 	double doubleResultsTotal = 0.0;
 	//remove all records from the input pipe
-	int counter = 0;
 	while (in.Remove(&temp)) {
-		// counter++;
-		// if (counter % 100) {
-		// 	cout << counter << endl;
-		// }
 		//set up intermediate results
 		int intResults = 0;
 		double doubleResults = 0.0;
@@ -639,14 +547,17 @@ void* GroupBy::DoWork() {
 	//out as nothing it'll always fail
 	//the first if statement below
 	bool init = false;
-	
 	int numGroups = groups.GetNumAtts() + 1;
 	//read in the values from the BigQ output pipe
-	while (output->Remove(&temp)) {		
+	while (output->Remove(&temp)) {	
 		//set up intermediate results
 		int intResults = 0;
 		double doubleResults = 0.0;
-		if (ce.Compare(&temp, &prev, &groups) == 0 || !init) {
+		if (!init) {
+			prev.Copy(&temp);
+			init = true;
+		}
+		if (ce.Compare(&temp, &prev, &groups) == 0) {
 			//this record is part of the grouping
 			//apply the function to the given record
 			func.Apply(temp, intResults, doubleResults);
@@ -690,7 +601,7 @@ void* GroupBy::DoWork() {
 				std::string attrnameFinal( string(attrname) + attrnum );
 				attr[i].name = attrnameFinal.c_str();
 				attr[i].myType = attsTypes[i-1];
-				value += prev.getValue(attsTypes[i-1], i-1) + "|";
+				value += prev.getValue(attsTypes[i-1], atts[i-1]) + "|";
 			}
 			//create the schema for this returning record
 			Schema returnSchema ("sum_sch", numGroups, attr);
@@ -712,6 +623,47 @@ void* GroupBy::DoWork() {
 		//for comparison with the next
 		prev.Copy(&temp);
 	}
+
+
+	Record returnRecord;
+	//create the attribute object to hold the type
+	Attribute attr[numGroups];
+	//name the attribute
+	const char* name = "Sum";
+	attr[0].name = name;	
+	//create the string to hold the value converted below
+	std::string value = "";
+	if (isInt) {
+		//create the tuple that contains the aggregated int value
+		//set the type
+		attr[0].myType = Int;
+		//convert the "Value" that gets strored in the record
+		value = std::to_string(intResultsTotal) + "|";	
+	}
+	else {
+		//create the tuple that contains the aggregated double value
+		//set the type
+		attr[0].myType = Double;
+		//convert the "Value" that gets strored in the record
+		value = std::to_string(doubleResultsTotal) + "|";				
+	}
+	
+	int *atts = groups.GetWhichAtts();
+	Type* attsTypes = groups.GetWhichTypes();
+	for (int i = 1; i < numGroups; i++) {
+		const char* attrname = "Attr";
+		std::string attrnum = std::to_string(i);
+		std::string attrnameFinal( string(attrname) + attrnum );
+		attr[i].name = attrnameFinal.c_str();
+		attr[i].myType = attsTypes[i-1];
+		value += prev.getValue(attsTypes[i-1], atts[i-1]) + "|";
+	}
+	//create the schema for this returning record
+	Schema returnSchema ("sum_sch", numGroups, attr);
+	//create the record
+	returnRecord.ComposeRecord(&returnSchema, value.c_str());
+	//put that record into the output pipe
+	out.Insert(&returnRecord);
 	//shutdown output pipe
 	out.ShutDown();
 	//exit thread
@@ -728,26 +680,18 @@ void GroupBy::Use_n_Pages(int runlen) {
 /* #endregion */
 
 /* #region  WriteOut */
-WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema, bool myf): in(inPipe), file(outFile), schema(mySchema) {
+WriteOut::WriteOut(Pipe &inPipe, FILE *outFile, Schema &mySchema): in(inPipe), file(outFile), schema(mySchema) {
 	file = outFile;
-	first = myf;
 	Run();
 }
 
 void WriteOut::Run() {
 	
 	//create struct to pass to thread starter
-	if (first) {
-		thread = pthread_t();	
-		static threadutil tutil = {writeout, this};
-		//create thread
-		pthread_create(&thread, NULL, thread_starter, &tutil);
-	} else {
-		thread = pthread_t();
-		static threadutil tutil1 = {writeout, this};
-		//create thread
-		pthread_create(&thread, NULL, thread_starter, &tutil1);	
-	}
+	thread = pthread_t();	
+	static threadutil tutil = {writeout, this};
+	//create thread
+	pthread_create(&thread, NULL, thread_starter, &tutil);
 	
 
 }
