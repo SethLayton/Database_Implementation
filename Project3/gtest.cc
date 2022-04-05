@@ -210,15 +210,15 @@ int gtest3 (relation table, char* pred, char* str_sum, int attNum) {
 int q1 () {
 
 
-	char *pred_ps = "(ps_supplycost < 1.04)";
-	init_SF_ps (pred_ps, 100);
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, true);
+	char *pred_ps = "(c_custkey < 100)";
+	init_SF_c (pred_ps, 100);
+	SelectFile SF_c(dbf_c, _c, cnf_c, lit_c, 1);
 
-	SF_ps.WaitUntilDone ();
+	SF_c.WaitUntilDone ();
 
-	int cnt = clear_pipe (_ps, ps->schema (), true);
+	int cnt = clear_pipe (_c, c->schema (), true);
 	// cout << "\n\n query1 returned " << cnt << " records \n";
-	dbf_ps.Close ();
+	dbf_c.Close ();
     return cnt;
 }
 
@@ -330,12 +330,12 @@ int q4 () {
 	Attribute groupatt[] = {sum, s_nationkey};
 	Schema sum_sch ("sum_sch", 2, groupatt);
 	int cnt = clear_pipe (_out, &sum_sch, true);
-	cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
+	// cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
     return cnt;
 }
 
-TEST(SELECT, PartSupplier) {
-    EXPECT_EQ(31,q1());
+TEST(SELECT, Customer) {
+    EXPECT_EQ(99,q1());
 }
  
  TEST(PROJECT, Part) {

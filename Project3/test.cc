@@ -96,17 +96,10 @@ void init_SF_c (char *pred_str, int numpgs) {
 void q1 () {
 
 
-<<<<<<< HEAD
 	char *pred_ps = "(ps_supplycost < 1.04)";
 	init_SF_ps (pred_ps, 100);
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, true);
 
-=======
-	char *pred_ps = "(ps_supplycost = 1.04)";
-	init_SF_ps (pred_ps, 100);
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, "");
-	
->>>>>>> 48e0a97fd7711a948c2806d61e6fdb78ab84c8e0
 	SF_ps.WaitUntilDone ();
 
 	int cnt = clear_pipe (_ps, ps->schema (), true);
@@ -215,12 +208,7 @@ void q4 () {
 	func.Print ();
 	//T.Use_n_Pages (1);
 	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps,false);
-	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
-	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-	Sum T(_s_ps, _out, func, 1);
-	//T.Run (_s_ps, _out, func);
-
+	//SF_ps.Run (dbf_
 	SF_ps.WaitUntilDone ();
 	J.WaitUntilDone ();
 	T.WaitUntilDone ();
