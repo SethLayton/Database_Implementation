@@ -208,7 +208,12 @@ void q4 () {
 	func.Print ();
 	//T.Use_n_Pages (1);
 	SelectFile SF_ps (dbf_ps, _ps, cnf_ps, lit_ps,false);
-	//SF_ps.Run (dbf_
+	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
+	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	Sum T(_s_ps, _out, func, 1);
+	//T.Run (_s_ps, _out, func);
+
 	SF_ps.WaitUntilDone ();
 	J.WaitUntilDone ();
 	T.WaitUntilDone ();
