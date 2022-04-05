@@ -69,6 +69,13 @@ void* thread_starter(void* obj) {
 SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, bool in_first): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
 	dbfile.MoveFirst();
 	first = in_first;
+	intfirst = 0;
+	Run();
+}
+SelectFile::SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, int in_first): dbfile(inFile), out(outPipe), op(selOp), lit(literal) {
+	dbfile.MoveFirst();
+	intfirst = in_first;
+	first = false;
 	Run();
 }
 
@@ -78,9 +85,21 @@ void SelectFile::Run() {
 	if (first) {
 		static threadutil tutil1 = { selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil1);
-	} else {
-		static threadutil tutil2 = {selectfile, this};
+	}else if (intfirst == 0) {
+		static threadutil tutil2 = { selectfile, this};
 		pthread_create(&thread, NULL, thread_starter, &tutil2);
+	} else if (intfirst == 1) {
+		static threadutil tutil0 = { selectfile, this};
+		pthread_create(&thread, NULL, thread_starter, &tutil0);
+	} else if (intfirst ==2) {
+		static threadutil tutil4 = { selectfile, this};
+		pthread_create(&thread, NULL, thread_starter, &tutil4);
+	} else if (intfirst ==3){
+		static threadutil tutil5 = {selectfile, this};
+		pthread_create(&thread, NULL, thread_starter, &tutil5);
+	} else if (intfirst == 7) {
+		static threadutil tutil7 = {selectfile, this};
+		pthread_create(&thread, NULL, thread_starter, &tutil7);
 	}
 }
 
@@ -292,7 +311,7 @@ void* Join::DoWork() {
 	//Case 2: OM is meaningful
 	//Joining right to left, thus outer loop is left
 	else {
-		cout << " - sort Order found" << endl;
+		// cout << " - sort Order found" << endl;
 		while (outputL->Remove(&tempL)) {
 			Schema S("catalog", "supplier");
 			if (tempPopulated) {

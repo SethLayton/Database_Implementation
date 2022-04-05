@@ -14,9 +14,9 @@ int clear_pipe (Pipe &in_pipe, Schema *schema, bool print) {
 	Record rec;
 	int cnt = 0;
 	while (in_pipe.Remove (&rec)) {
-		if (print) {
-			rec.Print (schema);
-		}
+		// if (print) {
+		// 	rec.Print (schema);
+		// }
 		cnt++;
 	}
 	return cnt;
@@ -111,83 +111,21 @@ void init_SF_c (char *pred_str, int numpgs) {
 int gtest1 ();
 int gtest2 ();
 int gtest3 ();
-// [0   1   2   3   4   5]
-// //  ps  p   s   o   li  c
-// void init_SF (int table, char* pred) {
-//         switch (table){
-//             case (0): {
-//                 init_SF_ps(pred, 100);
-//                 // currentDB = &dbf_ps;
-//                 // currentPipe = &_ps;
-//                 // currentCnf = &cnf_ps;
-//                 // currentRec = &lit_ps;
-//                 // currentFunc = &func_ps;
-//                 break;
-//             }
-//             case (1): {
-//                 init_SF_p(pred, 100);
-//                 // currentDB = &dbf_p;
-//                 // currentPipe = &_p;
-//                 // currentCnf = &cnf_p;
-//                 // currentRec = &lit_p;
-//                 // currentFunc = &func_p;
-//                 break;
-//             }
-//             case (2): {
-//                 init_SF_s(pred,100);
-//                 // currentDB = &dbf_s;
-//                 // currentPipe = &_s;
-//                 // currentCnf = &cnf_s;
-//                 // currentRec = &lit_s;
-//                 // currentFunc = &func_s;
-//                 break;
-//             }
-//             case (3): {
-//                 init_SF_o(pred,100);
-//                 // currentDB = &dbf_o;
-//                 // currentPipe = &_o;
-//                 // currentCnf = &cnf_o;
-//                 // currentRec = &lit_o;
-//                 // currentFunc = &func_o;
-//                 break;
-//             }
-//             case (4): {
-//                 init_SF_li(pred,100);
-//                 currentDB = &dbf_li;
-//                 currentPipe = &_li;
-//                 currentCnf = &cnf_li;
-//                 currentRec = &lit_li;
-//                 currentFunc = &func_li;
-//                 break;
-//             }
-//             case (5): {
-//                 init_SF_c(pred,100);
-//                 // currentDB = &dbf_c;
-//                 // currentPipe = &_c;
-//                 // currentCnf = &cnf_c;
-//                 // currentRec = &lit_c;
-//                 // currentFunc = &func_c;
-//                 break;
-//             }
-//             default:
-//                 break;
-//         }
-            
 
-// }
 
 //Duplicate Removal
 int gtest1 (relation table, char* pred) {
     init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, "1");
+	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, true);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
     Pipe out(pipesz);
+
 	DuplicateRemoval D( currentPipe, out, *table.schema(), 10);
-    
-    int cnt = clear_pipe (out, table.schema(), true);
+    SF_test1.WaitUntilDone();
 	D.WaitUntilDone();
 
-    
+    int cnt = clear_pipe (out, table.schema(), false);
+
 	
     currentDB.Close();
 
@@ -198,38 +136,44 @@ int gtest1 (relation table, char* pred) {
 //Test that the sum is correct
 int gtest2 (relation table, char* pred, char* str_sum) {
     init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, "1");
+	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, true);
 	
     Pipe _out (1);
 	Function func;
 	get_cnf (str_sum, table.schema (), func);
 	//T.Use_n_Pages (1);
     Sum T(currentPipe, _out, func, 1);
+    SF_test1.WaitUntilDone();
     T.WaitUntilDone ();
 	Schema out_sch ("out_sch", 1, &DA);
     Record temp;
 	_out.Remove(&temp);
     double cnt = std::stod(temp.getValue(Double, 0));
     currentDB.Close();
+    
     return cnt;
 
 }
 //Tests GroupBy
 int gtest3 (relation table, char* pred, char* str_sum, int attNum) {
     init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, "1");
+    Pipe _in(100);
+	SelectFile SF_test1 (currentDB, _in, currentCnf, currentRec, true);
 	OrderMaker grp_order;
 	grp_order.AddAttr(Int, attNum);
     Pipe _out (100);
 	Function func;
 	get_cnf (str_sum, table.schema (), func);
 	//T.Use_n_Pages (1);
-    Sum T(currentPipe, _out, func, 1);
-    T.WaitUntilDone ();
-	Schema out_sch ("out_sch", 1, &DA);
+    Attribute s_nationkey = {"s_nationkey", Int};
+    Attribute sum = {"sum", Double};
+	Attribute groupatt[] = {sum, s_nationkey};
+   
+	Schema out_sch ("out_sch", 2, groupatt);
 	GroupBy G(currentPipe, _out, grp_order, func, 10);
-
+    SF_test1.WaitUntilDone();
     G.WaitUntilDone();
+
 	int cnt = clear_pipe (_out, &out_sch, true);
 
 
@@ -239,88 +183,171 @@ int gtest3 (relation table, char* pred, char* str_sum, int attNum) {
 
 }
 
-TEST(SUM, PartSupplier) {
-    char* pred = "(ps_suppkey=ps_suppkey)";
-    char* str_sum = "(ps_supplycost)";
+// TEST(SUM, PartSupplier) {
+//     char* pred = "(ps_suppkey=ps_suppkey)";
+//     char* str_sum = "(ps_supplycost)";
     
-    EXPECT_EQ(400420638.0, gtest2(*ps, pred, str_sum));
+//     EXPECT_EQ(400420638.0, gtest2(*ps, pred, str_sum));
+// }
+
+// TEST(DUPLICATEREMOVAL, Supplier) {
+//     char * pred = "(s_suppkey < 10)";
+//     EXPECT_EQ(9, gtest1(*s, pred));
+// }
+// TEST(DUPLICATEREMOVAL, PartSupplier) {
+//     char * pred = "(ps_suppkey =10)";
+//     EXPECT_EQ(80, gtest1(*ps, pred));
+// }
+
+// TEST(GROUPBY, Supplier) {
+//     char * pred = "(s_suppkey < 10)";
+//     char * str_sum = "(s_acctbal)";
+//     EXPECT_EQ(25 ,gtest3(*s, pred, str_sum, 3));
+
+// }
+
+
+int q1 () {
+
+
+	char *pred_ps = "(ps_supplycost < 1.04)";
+	init_SF_ps (pred_ps, 100);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, true);
+
+	SF_ps.WaitUntilDone ();
+
+	int cnt = clear_pipe (_ps, ps->schema (), true);
+	// cout << "\n\n query1 returned " << cnt << " records \n";
+	dbf_ps.Close ();
+    return cnt;
 }
 
-TEST(DUPLICATEREMOVAL, Supplier) {
-    char * pred = "(s_suppkey = s_suppkey)";
-    EXPECT_EQ(10000, gtest1(*s, pred));
+int q2 () {
+
+	char *pred_p = "(p_retailprice > 931.00) AND (p_retailprice < 931.31)";
+	init_SF_p (pred_p, 100);
+	
+	Pipe _out (pipesz);
+	int keepMe[] = {0,1,7};
+	int numAttsIn = pAtts;
+	int numAttsOut = 3;
+	//P_p.Use_n_Pages (buffsz);
+	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p, false);
+	
+	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
+	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
+	//P_p.Run (_p, _out, keepMe, numAttsIn, numAttsOut);
+
+	SF_p.WaitUntilDone ();
+	P_p.WaitUntilDone ();
+
+	Attribute att3[] = {IA, SA, DA};
+	Schema out_sch ("out_sch", numAttsOut, att3);
+	int cnt = clear_pipe (_out, &out_sch, true);
+
+	// cout << "\n\n query2 returned " << cnt << " records \n";
+
+	dbf_p.Close ();
+    
+    return cnt;
+}
+int q3 () {
+
+	char *pred_s = "(s_suppkey = s_suppkey)";
+	init_SF_s (pred_s, 100);
+
+	//Sum T;
+	// _s (input pipe)
+	Pipe _out (1);
+	Function func;
+	char *str_sum = "(s_acctbal + (s_acctbal * 1.05))";
+	get_cnf (str_sum, s->schema (), func);
+	func.Print ();
+	//T.Use_n_Pages (1);
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, 2);
+	//SF_s.Run (dbf_s, _s, cnf_s, lit_s);
+	Sum T(_s, _out, func, 1);
+	//T.Run (_s, _out, func);
+
+	SF_s.WaitUntilDone ();
+	T.WaitUntilDone ();
+
+	Schema out_sch ("out_sch", 1, &DA);
+	int cnt = clear_pipe (_out, &out_sch, true);
+
+	// cout << "\n\n query3 returned " << cnt << " records \n";
+
+	dbf_s.Close ();
+    return cnt;
+}
+int q4 () {
+
+	char *pred_s = "(s_suppkey = s_suppkey)";
+	init_SF_s (pred_s, 100);
+	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s, 3);
+	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
+
+	char *pred_ps = "(ps_suppkey = ps_suppkey)";
+	init_SF_ps (pred_ps, 100);
+
+	// Join J;
+	// left _s
+	// right _ps
+	Pipe _s_ps (pipesz);
+	CNF cnf_p_ps;
+	Record lit_p_ps;
+	get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
+
+	int outAtts = sAtts + psAtts;
+	Attribute s_nationkey = {"s_nationkey", Int};
+	Attribute ps_supplycost = {"ps_supplycost", Double};
+	Attribute joinatt[] = {IA,SA,SA,s_nationkey,SA,DA,SA,IA,IA,IA,ps_supplycost,SA};
+	Schema join_sch ("join_sch", outAtts, joinatt);
+
+	
+	// GroupBy G;
+	// _s (input pipe)
+	Pipe _out (100);
+	Function func;
+	char *str_sum = "(ps_supplycost)";
+	get_cnf (str_sum, &join_sch, func);
+	func.Print ();
+	OrderMaker grp_order;
+	grp_order.AddAttr(Int, 3);
+	//G.Use_n_Pages (1);
+
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,7);
+	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
+	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	GroupBy G(_s_ps, _out, grp_order, func, 10);
+	//G.Run (_s_ps, _out, grp_order, func);
+
+	SF_ps.WaitUntilDone ();
+	J.WaitUntilDone ();
+	G.WaitUntilDone ();
+	Attribute sum = {"sum", Double};
+	Attribute groupatt[] = {sum, s_nationkey};
+	Schema sum_sch ("sum_sch", 2, groupatt);
+	int cnt = clear_pipe (_out, &sum_sch, true);
+	cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
+    return cnt;
 }
 
-// TEST(SortOnOne, Region_RegionKey){
-//     char* col = "(r_name)";
-//     EXPECT_EQ(1, gtest1(1,2, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-// TEST(SortOnOne, Nation_RegionKey){
-//     // rel=rel_ptr[0];
-//     char* col = "(n_regionkey)";
-//     EXPECT_EQ(1, gtest1(0,2, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-// TEST(SortOnOne, Customer_AcctBal){
-//     // rel=rel_ptr[2];
-//     char* col = "(c_acctbal)";
-//     EXPECT_EQ(1, gtest1(2,8, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-
-
-// TEST(SortOnTwo, Part_Price_AND_Size){
-//     // rel=rel_ptr[3];
-//     char* col = "(p_retailprice) AND (p_size)";
-//     EXPECT_EQ(1, gtest1(3,9, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-
-// TEST(SortOnTwo, Order_OPriority_AND_Status){
-//     // rel=rel_ptr[6];
-//     char* col = "(o_orderpriority) AND (o_orderstatus)";
-//     EXPECT_EQ(1, gtest1(6,7, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-
-// TEST(SortOnTwo, Supplier_Nation_AND_phone){
-//     // rel=rel_ptr[5];
-//     char* col = "(s_nationkey) AND (s_phone)";
-//     EXPECT_EQ(1, gtest1(5,15, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-
-// TEST(SortOnThree, PartSupp_){
-//     // rel=rel_ptr[4];
-//     char* col = "(ps_partkey) AND (ps_availqty) AND (ps_supplycost)";
-//     EXPECT_EQ(1, gtest1(4,11, col));
-//     EXPECT_EQ(0, gtest2(col));
-// }
-// TEST(ScanAndFilter, LoadsAllDatabase) {
-//     EXPECT_EQ(5, gtest3(r, ((char*) "(r_regionkey>-1)")));
-//     EXPECT_EQ(25, gtest3(n, ((char*) "(n_regionkey>-1)")));
-//     EXPECT_EQ(10000, gtest3(s, ((char*) "(s_suppkey>-1)")));
-//     EXPECT_EQ(800000, gtest3(ps, ((char*) "(ps_suppkey>-1)")));
-//     EXPECT_EQ(200000, gtest3(p, ((char*) "(p_partkey>-1)")));
-
-// }
-
-// TEST(ScanAndFilter, TestQueriesResultInCorrectSize) {
-	
-//     EXPECT_EQ(1, gtest3(r, ((char*) "(r_name = 'EUROPE')")));
-// 	EXPECT_EQ(2, gtest3(r, ((char*) "(r_name < 'MIDDLE EAST') AND (r_regionkey > 1)")));
-// 	EXPECT_EQ(3, gtest3(n, ((char*) "(n_regionkey = 3) AND (n_nationkey > 10) AND (n_name > 'JAPAN')")));
-// 	EXPECT_EQ(9, gtest3(s, ((char*) "(s_suppkey < 10)")));
-// 	EXPECT_EQ(19, gtest3(s, ((char*)"(s_nationkey = 18) AND (s_acctbal > 1000.0) AND (s_suppkey < 400)")));
-// 	EXPECT_EQ(10, gtest3(c, ((char*)"(c_nationkey = 23) AND (c_mktsegment = 'FURNITURE') AND (c_acctbal > 7023.99) AND (c_acctbal < 7110.83)")));
-// 	EXPECT_EQ(8, gtest3(p, ((char*)"(p_brand = 'Brand#13') AND (p_retailprice > 500.0) AND (p_retailprice < 930.0) AND (p_size > 28) AND (p_size < 1000000)")));
-// 	EXPECT_EQ(14, gtest3(ps, ((char*) "(ps_supplycost > 999.98)")));
-// 	EXPECT_EQ(14, gtest3(ps, ((char*) "(ps_availqty < 10) AND (ps_supplycost > 100.0) AND (ps_suppkey < 300)")));
-// 	EXPECT_EQ(10, gtest3(o, ((char*) "(o_orderpriority = '1-URGENT') AND (o_orderstatus = 'O') AND (o_shippriority = 0) AND (o_totalprice > 1015.68) AND (o_totalprice < 1051.89)")));
-	
-// }
+TEST(SELECT, PartSupplier) {
+    EXPECT_EQ(31,q1());
+}
  
+ TEST(PROJECT, Part) {
+    EXPECT_EQ(22,q2());
+}
+
+TEST(SUM, Part) {
+     EXPECT_EQ(1,q3());
+}
+TEST(JOIN, PartSupp_Supp) {
+     EXPECT_EQ(25,q4());
+}
 int main (int argc, char *argv[]) {
 
 	setup ();

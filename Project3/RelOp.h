@@ -27,8 +27,10 @@ class SelectFile : public RelationalOp {
 		CNF& op;
 		Record& lit;
 		bool first;
+		int intfirst;
 	public:
 		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, bool in_first);
+		SelectFile(DBFile &inFile, Pipe &outPipe, CNF &selOp, Record &literal, int intfirst);
 		void Run ();
 		void WaitUntilDone ();
 		void Use_n_Pages (int n);

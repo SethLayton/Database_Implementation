@@ -25,7 +25,7 @@ a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DB
 test.o: test.cc
 	$(CC) -g -c test.cc
 
-test.o: gtest.cc
+gtest.o: gtest.cc
 	$(CC) -g -c gtest.cc
 
 a2test.o: a2test.cc
