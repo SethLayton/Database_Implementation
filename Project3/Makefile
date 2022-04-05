@@ -10,6 +10,9 @@ endif
 test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -lfl -lgtest -lpthread
 	
+gtest.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o
+	$(CC) -o gtest.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o -lfl -lgtest -lpthread
+	
 a2-2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o
 	$(CC) -o a2-2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o -lfl -lgtest -lpthread
 	
@@ -21,7 +24,10 @@ a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DB
 	
 test.o: test.cc
 	$(CC) -g -c test.cc
-	
+
+test.o: gtest.cc
+	$(CC) -g -c gtest.cc
+
 a2test.o: a2test.cc
 	$(CC) -g -c a2test.cc
 

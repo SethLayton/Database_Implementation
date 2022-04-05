@@ -95,15 +95,13 @@ void init_SF_c (char *pred_str, int numpgs) {
 // expected output: 31 records
 void q1 () {
 
-	char *pred_ps = "(ps_suppkey=ps_suppkey)";//"(ps_supplycost = 771.64)";
+	char *pred_ps = "(ps_supplycost = 771.64)";
 	init_SF_ps (pred_ps, 100);
 	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps, "");
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
 	char *fwpath = "ps.test";
 	FILE *writefile = fopen (fwpath, "w");
 	
-	
-
 	
 	WriteOut W(_ps, writefile, *ps->schema(), true);
 	SF_ps.WaitUntilDone ();
@@ -315,7 +313,7 @@ void q6 () {
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
 	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-	GroupBy G(_s_ps, _out, grp_order, func, 1);
+	GroupBy G(_s_ps, _out, grp_order, func, 10);
 	//G.Run (_s_ps, _out, grp_order, func);
 
 	SF_ps.WaitUntilDone ();
