@@ -116,7 +116,7 @@ int gtest3 ();
 //Duplicate Removal
 int gtest1 (relation table, char* pred) {
     init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, true);
+	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
     Pipe out(pipesz);
 
@@ -136,7 +136,7 @@ int gtest1 (relation table, char* pred) {
 //Test that the sum is correct
 int gtest2 (relation table, char* pred, char* str_sum) {
     init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec, true);
+	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec);
 	
     Pipe _out (1);
 	Function func;
@@ -158,7 +158,7 @@ int gtest2 (relation table, char* pred, char* str_sum) {
 int gtest3 (relation table, char* pred, char* str_sum, int attNum) {
     init_SF_pt(table, pred, currentDB);
     Pipe _in(100);
-	SelectFile SF_test1 (currentDB, _in, currentCnf, currentRec, true);
+	SelectFile SF_test1 (currentDB, _in, currentCnf, currentRec);
 	OrderMaker grp_order;
 	grp_order.AddAttr(Int, attNum);
     Pipe _out (100);
@@ -212,7 +212,7 @@ int q1 () {
 
 	char *pred_ps = "(c_custkey < 100)";
 	init_SF_c (pred_ps, 100);
-	SelectFile SF_c(dbf_c, _c, cnf_c, lit_c, 1);
+	SelectFile SF_c(dbf_c, _c, cnf_c, lit_c);
 
 	SF_c.WaitUntilDone ();
 
@@ -232,7 +232,7 @@ int q2 () {
 	int numAttsIn = pAtts;
 	int numAttsOut = 3;
 	//P_p.Use_n_Pages (buffsz);
-	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p, false);
+	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p);
 	
 	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
 	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
@@ -264,7 +264,7 @@ int q3 () {
 	get_cnf (str_sum, s->schema (), func);
 	func.Print ();
 	//T.Use_n_Pages (1);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s, 2);
+	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s);
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s);
 	Sum T(_s, _out, func, 1);
 	//T.Run (_s, _out, func);
@@ -284,7 +284,7 @@ int q4 () {
 
 	char *pred_s = "(s_suppkey = s_suppkey)";
 	init_SF_s (pred_s, 100);
-	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s, 3);
+	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s);
 	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
 
 	char *pred_ps = "(ps_suppkey = ps_suppkey)";
@@ -316,9 +316,9 @@ int q4 () {
 	grp_order.AddAttr(Int, 3);
 	//G.Use_n_Pages (1);
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps,7);
+	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
 	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
-	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
+	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps, 10);
 	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 	GroupBy G(_s_ps, _out, grp_order, func, 10);
 	//G.Run (_s_ps, _out, grp_order, func);
