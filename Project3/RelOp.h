@@ -153,13 +153,5 @@ typedef struct {
 	void *context;
 }threadutil;
 
-typedef struct {
-	std::string myname;
-	DBFile &dbfiles;
-	Pipe &outpipe;
-	CNF &cnf;
-	Record &literal;
-}threadselect;
-
 void* thread_starter(void* obj);
 #endif
