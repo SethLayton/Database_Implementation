@@ -10,27 +10,27 @@ Statistics::~Statistics()
 {
 }
 
-void Statistics::AddRel(char *relName, int numTuples)
+void Statistics::AddRel(std::string relName, int numTuples)
 {
 }
-void Statistics::AddAtt(char *relName, char *attName, int numDistincts)
+void Statistics::AddAtt(std::string relName, std::string attName, int numDistincts)
 {
 }
-void Statistics::CopyRel(char *oldName, char *newName)
+void Statistics::CopyRel(std::string ldName, std::string newName)
 {
 }
 	
-void Statistics::Read(char *fromWhere)
+void Statistics::Read(std::string fromWhere)
 {
 }
-void Statistics::Write(char *fromWhere)
+void Statistics::Write(std::string fromWhere)
 {
 }
 
-void  Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoin)
+void  Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin)
 {
 }
-double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numToJoin)
+double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin)
 {
 }
 
