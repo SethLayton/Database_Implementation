@@ -10,17 +10,17 @@ using namespace std;
 typedef struct {
 	std::string name;
 	int numDistincts;
-}addatt;
+}att;
 
 typedef struct {
 	std::string name;
 	int numTuples;
-	std::unordered_map<std::string, addatt> atts;
-}addrel;
+	std::unordered_map<std::string, att> atts;
+}rel;
 
 class Statistics {
 private:
-	std::unordered_map<std::string, addrel> rels;
+	std::unordered_map<std::string, rel> rels;
 public:
 	Statistics();
 	Statistics(Statistics &copyMe);	 // Performs deep copy
