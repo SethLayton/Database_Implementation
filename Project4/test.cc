@@ -81,6 +81,13 @@ void q0 (){
 	s.AddRel(relName[1],800000);
 	s.AddAtt(relName[1], "ps_suppkey", 10000);	
 
+	s.CopyRel(relName[0], "test");
+	Statistics ss(s);
+
+	s.printRels();
+	cout << "--" << endl;
+	ss.printRels();
+	return;
 	std::string cnf = "(s_suppkey = ps_suppkey)";
 
 	yy_scan_string(cnf.c_str());
@@ -533,16 +540,16 @@ void q11 (){
 }
 
 int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		cerr << "You need to supply me the query number to run as a command-line arg.." << endl;
-		cerr << "Usage: ./test.out [0-11] >" << endl;
-		exit (1);
-	}
+	// if (argc < 2) {
+	// 	cerr << "You need to supply me the query number to run as a command-line arg.." << endl;
+	// 	cerr << "Usage: ./test.out [0-11] >" << endl;
+	// 	exit (1);
+	// }
 
 	void (*query_ptr[]) () = {&q0,&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8,&q9,&q10,&q11};  
 	void (*query) ();
-	int qindx = atoi (argv[1]);
-
+	// int qindx = atoi (argv[1]);
+	int qindx = 0;
 	if (qindx >=0 && qindx < 12) {
 		query = query_ptr [qindx ];
 		query ();
