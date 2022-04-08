@@ -81,13 +81,6 @@ void q0 (){
 	s.AddRel(relName[1],800000);
 	s.AddAtt(relName[1], "ps_suppkey", 10000);	
 
-	s.CopyRel(relName[0], "test");
-	Statistics ss(s);
-
-	s.printRels();
-	cout << "--" << endl;
-	ss.printRels();
-	return;
 	std::string cnf = "(s_suppkey = ps_suppkey)";
 
 	yy_scan_string(cnf.c_str());
