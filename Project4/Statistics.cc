@@ -15,9 +15,17 @@ Statistics::Statistics(Statistics &copyMe) {
             att att = {k.second.name, k.second.numDistincts};
             //add this copied attribute to the new relation
             Rel.atts[k.first] = att;
+            //add a map from the attribute to the relation for future lookup
+            att_to_rel[k.second.name] = Rel.name; 
         }
         //update or add the relation in the hashmap
         rels[i.first] = Rel;
+
+        //Copying a relation means that we need to add
+        //the newly copied rel as a singleton subset
+        vector<rel> vRels;
+        vRels.push_back(Rel);
+        subsets[Rel.name] = vRels;
     } 
 }
 
@@ -188,8 +196,16 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             
             //switch on the type of the operator in this OR operation
             if (Com->code == 3 && Com->right->code == NAME) {                
-                //if we're comparing to another column and not a literal value                       
-                rRel = att_to_rel.at(rAtt); 
+                //if we're comparing to another column and not a literal value 
+                try
+                {
+                    rRel = att_to_rel.at(rAtt); 
+                }
+                catch(const std::exception& e)
+                {
+                    cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
+                    exit(0);
+                }   
             }
             bool setSuccessL = relations.insert(lRel).second;
             bool setSuccessR = rRel == "" ? false : relations.insert(rRel).second;
