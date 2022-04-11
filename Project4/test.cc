@@ -87,7 +87,7 @@ void q0 (){
 	yyparse();
 	double result = s.Estimate(final, relName, 2);
 	if(result!=800000)
-		cout<<"error in estimating Q1 before apply \n ";
+		cout<<"error in estimating Q0 before apply \n ";
 	s.Apply(final, relName, 2);
 
 	// test write and read
@@ -123,7 +123,7 @@ void q1 (){
 	yyparse();
 
 	double result = s.Estimate(final, relName, 1);
-	cout<<"Your estimation Result  " <<result;
+	cout<<"Your estimation Result  " << result;
 	cout<<"\n Correct Answer: 8.5732e+5";
 
 	s.Apply(final, relName, 1);
@@ -179,7 +179,7 @@ void q3 (){
 	s.Read(fileName);
 	
 	s.AddRel(relName[0],10000);
-	s.AddAtt(relName[0], "s_nationey",25);
+	s.AddAtt(relName[0], "s_nationkey",25);
 
 	s.AddRel(relName[1],150000);
 	s.AddAtt(relName[1], "c_custkey",150000);
@@ -542,7 +542,7 @@ int main(int argc, char *argv[]) {
 	void (*query_ptr[]) () = {&q0,&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8,&q9,&q10,&q11};  
 	void (*query) ();
 	// int qindx = atoi (argv[1]);
-	int qindx = 0;
+	int qindx = 1;
 	if (qindx >=0 && qindx < 12) {
 		query = query_ptr [qindx ];
 		query ();

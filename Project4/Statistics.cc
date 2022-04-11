@@ -100,40 +100,52 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
     //check to see if the parseTree is valid
     CheckTree(parseTree, relNames, numToJoin);
 
+    double andMin = -1.0;
     //Loop through all the AND operations
     while (parseTree !=NULL) {
         struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
 
+        double orMax = 0.0;
         //loop through all the OR operations in this AND
         while (Or !=NULL) {
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
-			std::string rAtt(Com->right->value); //grab name of the right attribute
-            
+			std::string rAtt(Com->right->value); //grab name of the right attribute            
+            std::string lRel = att_to_rel.at(lAtt);
+            rel lRelation = rels.at(lRel);
+            att lAttribute = lRelation.atts.at(lAtt);
 
+            double tempMax = 0.0;
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
-                case LESS_THAN:
+                case LESS_THAN:         
+                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
                     break;
                 case GREATER_THAN:
+                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
                     break;
                 case EQUALS:
                     //if we're comparing to another column and not a literal value
                     if (Com->right->code == NAME) {
 
                     }
-                    else { //now we're comparing with a literal 
-
+                    else { //now we're comparing with a literal                         
+                        tempMax = lRelation.numTuples / lAttribute.numDistincts;                        
                     }
                     break;
             }
-
+            if (tempMax > orMax) {
+                orMax = tempMax;
+            }
             Or = Or->rightOr;
         }
-
+        
+        if (orMax < andMin || andMin == -1.0) {
+            andMin = orMax;
+        }
         parseTree = parseTree->rightAnd;
     }
-
+    return andMin;
 }
 
 void Statistics::printRels() {
