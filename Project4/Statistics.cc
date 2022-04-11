@@ -26,21 +26,39 @@ Statistics::~Statistics() {
 
 void Statistics::AddRel(std::string relName, int numTuples) {
     //create a relation structure to store in our relations hashmap
-    rel rel = {relName, numTuples};
+    rel Rel = {relName, numTuples};
     //update or add the structure in the hashmap
     //key is the relName
-    rels[relName] = rel;
+    rels[relName] = Rel;
+
+    //adding a new relation means that
+    //it gets its own singleton
+    //subset to start with
+    vector<rel> vRels;
+    vRels.push_back(Rel);
+    subsets[relName] = vRels;
+    maxSubsetSize = 1;
 }
 
 void Statistics::AddAtt(std::string relName, std::string attName, int numDistincts) {
-    //create a attribute structure to store in the relation attributes hashmap
-    att att = {attName, numDistincts};
+    
     //grab the required relation from the hashmap based on the given relName
     rel rel = rels.at(relName);
+    //create a attribute structure to store in the relation attributes hashmap
+    att att;
+    if (numDistincts == -1) {
+        att = {attName, rel.numTuples};
+    }
+    else {
+        att = {attName, numDistincts};
+    }
     //update or add the attribute structure to the hashmap
     rel.atts[attName] = att;
     //store the updates back in the relations hashmap
-    rels.at(relName) = rel;    
+    rels.at(relName) = rel;
+
+    //add a map from the attribute to the relation for future lookup
+    att_to_rel[attName] = rel.name;    
 }
 
 void Statistics::CopyRel(std::string oldName, std::string newName) {
@@ -57,6 +75,12 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
     }
     //update or add the relation in the hashmap
     rels[newName] = newRel;
+
+    //Copying a relation means that we need to add
+    //the newly copied rel as a singleton subset
+    vector<rel> vRels;
+    vRels.push_back(newRel);
+    subsets[newName] = vRels;
 }
 	
 void Statistics::Read(std::string fromWhere) {
@@ -69,6 +93,42 @@ void  Statistics::Apply(struct AndList *parseTree, std::string relNames[], int n
 }
 
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
+
+    //check to see if the parseTree is valid
+    if (CheckTree(parseTree, relNames, numToJoin) == -1) {
+        return -1.0;
+    }
+    //Loop through all the AND operations
+    while (parseTree !=NULL) {
+        struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
+
+        //loop through all the OR operations in this AND
+        while (Or !=NULL) {
+            struct ComparisonOp *Com = Or->left; //get the comparison operator
+            std::string lAtt(Com->left->value); //grab name of the left attribute
+			std::string rAtt(Com->right->value); //grab name of the right attribute
+            
+
+            //switch on the type of the operator in this OR operation
+            switch(Com->code) {
+                case LESS_THAN:
+                    break;
+                case GREATER_THAN:
+                    break;
+                case EQUALS:
+                    //if we're comparing to another column and not a literal value
+                    if (Com->right->code == NAME) {
+
+                    }
+                    break;
+            }
+
+            Or = Or->rightOr;
+        }
+
+        parseTree = parseTree->rightAnd;
+    }
+
 }
 
 void Statistics::printRels() {
@@ -79,4 +139,80 @@ void Statistics::printRels() {
             cout << "\tattName: " << k.second.name << " numDistincts: " << k.second.numDistincts << endl;
         }
     } 
+}
+
+int Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJoin) {
+
+    unordered_set<std::string> relations;
+    unordered_set<std::string> tempRelations;
+    for (int i = 0; i < numToJoin; i++) {
+       relations.insert(relNames[i]);
+    }
+
+    while (parseTree !=NULL) {
+        struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
+
+        //loop through all the OR operations in this AND
+        while (Or !=NULL) {
+            struct ComparisonOp *Com = Or->left; //get the comparison operator
+            std::string lAtt(Com->left->value); //grab name of the left attribute
+            std::string rAtt(Com->right->value); //grab name of the right attribute
+            
+
+            std::string lRel = att_to_rel.at(lAtt);
+            std::string rRel = "";            
+            
+            //switch on the type of the operator in this OR operation
+            if (Com->code == 3 && Com->right->code == NAME) {                
+                //if we're comparing to another column and not a literal value                       
+                rRel = att_to_rel.at(rAtt); 
+            }
+            bool setSuccessL = relations.insert(lRel).second;
+            bool setSuccessR = rRel == "" ? false : relations.insert(rRel).second;
+            if (setSuccessL || setSuccessR) {
+                //we were able to insert into the set
+                //this means this relation was not
+                //in the passed in list of relation names
+                cout << "Error in CheckTree. parseTree contains a relation that does not exist in the list of relations." << endl;
+                return -1;
+            }
+            tempRelations.insert(lRel);
+            if(rRel != "") {
+                tempRelations.insert(rRel);
+            }
+            
+            Or = Or->rightOr;
+            
+        }
+
+        parseTree = parseTree->rightAnd;
+    }
+
+    //check to see if there are any 'partially used' subsets in our relation
+    for (auto set : subsets) {
+        bool currentSet = false; 
+        bool found = false;
+        for (rel set_rel : set.second) {            
+            found = tempRelations.find(set_rel.name) != tempRelations.end();
+            
+            if (currentSet && !found) {
+                //we have a partially used subset
+                cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
+                return -1;
+            }
+            if (found) {
+                currentSet = true;
+            }
+            
+        }
+        //this is used to check the last element of the subset vector
+        if (found && !currentSet) {
+            //we have a partially used subset
+            cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
+            return -1;
+        }
+    }
+
+
+    return 0;
 }
