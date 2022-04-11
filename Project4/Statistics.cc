@@ -89,15 +89,17 @@ void Statistics::Read(std::string fromWhere) {
 void Statistics::Write(std::string fromWhere) {
 }
 
-void  Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin) {
+void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin) {
+
+    //check to see if the parseTree is valid
+    CheckTree(parseTree, relNames, numToJoin);
 }
 
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
 
     //check to see if the parseTree is valid
-    if (CheckTree(parseTree, relNames, numToJoin) == -1) {
-        return -1.0;
-    }
+    CheckTree(parseTree, relNames, numToJoin);
+
     //Loop through all the AND operations
     while (parseTree !=NULL) {
         struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
@@ -141,7 +143,7 @@ void Statistics::printRels() {
     } 
 }
 
-int Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJoin) {
+void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJoin) {
 
     unordered_set<std::string> relations;
     unordered_set<std::string> tempRelations;
@@ -174,7 +176,7 @@ int Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJo
                 //this means this relation was not
                 //in the passed in list of relation names
                 cout << "Error in CheckTree. parseTree contains a relation that does not exist in the list of relations." << endl;
-                return -1;
+                exit(0);
             }
             tempRelations.insert(lRel);
             if(rRel != "") {
@@ -198,7 +200,7 @@ int Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJo
             if (currentSet && !found) {
                 //we have a partially used subset
                 cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
-                return -1;
+                exit(0);
             }
             if (found) {
                 currentSet = true;
@@ -209,10 +211,7 @@ int Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJo
         if (found && !currentSet) {
             //we have a partially used subset
             cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
-            return -1;
+            exit(0);
         }
     }
-
-
-    return 0;
 }

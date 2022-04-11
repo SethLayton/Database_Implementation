@@ -26,7 +26,7 @@ private:
 	std::unordered_map<std::string, vector<rel>> subsets;
 	std::unordered_map<std::string, std::string> att_to_rel;
 	int maxSubsetSize = 0;
-	int CheckTree(AndList* parseTree, std::string *relNames, int numToJoin); 
+	void CheckTree(AndList* parseTree, std::string *relNames, int numToJoin); 
 public:
 	Statistics();
 	Statistics(Statistics &copyMe);	 // Performs deep copy
