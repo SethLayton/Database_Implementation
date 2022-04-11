@@ -117,7 +117,7 @@ void q1 (){
 	s.AddAtt(relName[0], "l_shipmode",7);
 
 		
-	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL') AND (s_suppkey = 0)";
+	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL')";
 
 	yy_scan_string(cnf.c_str());
 	yyparse();
@@ -542,7 +542,7 @@ int main(int argc, char *argv[]) {
 	void (*query_ptr[]) () = {&q0,&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8,&q9,&q10,&q11};  
 	void (*query) ();
 	// int qindx = atoi (argv[1]);
-	int qindx = 1;
+	int qindx = 0;
 	if (qindx >=0 && qindx < 12) {
 		query = query_ptr [qindx ];
 		query ();

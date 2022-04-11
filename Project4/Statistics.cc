@@ -89,6 +89,7 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
     vector<rel> vRels;
     vRels.push_back(newRel);
     subsets[newName] = vRels;
+    
 }
 	
 void Statistics::Read(std::string fromWhere) {
@@ -190,7 +191,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             }
             catch(const std::exception& e)
             {
-                cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
+                cout << "Error in CheckTree. parseTree contains a left relation that does not exist in the given list of relations." << endl;
                 exit(0);
             }                              
             
@@ -203,7 +204,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
                 }
                 catch(const std::exception& e)
                 {
-                    cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
+                    cout << "Error in CheckTree. parseTree contains a right relation that does not exist in the given list of relations." << endl;
                     exit(0);
                 }   
             }
@@ -232,9 +233,8 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
     for (auto set : subsets) {
         bool currentSet = false; 
         bool found = false;
-        for (rel set_rel : set.second) {            
+        for (rel set_rel : set.second) {     
             found = tempRelations.find(set_rel.name) != tempRelations.end();
-            
             if (currentSet && !found) {
                 //we have a partially used subset
                 cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with the given list of relations." << endl;
