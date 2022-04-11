@@ -8,16 +8,16 @@ Statistics::Statistics(Statistics &copyMe) {
     //loop through all the relations
     for (auto i : copyMe.rels) {
         //create a new relation structure for this relation
-        rel rel = {i.second.name, i.second.numTuples};
+        rel Rel = {i.second.name, i.second.numTuples};
         //loop through all the relations attributes
         for (auto k : i.second.atts) {
             //create a new copy of that attribute structure
             att att = {k.second.name, k.second.numDistincts};
             //add this copied attribute to the new relation
-            rel.atts[k.first] = att;
+            Rel.atts[k.first] = att;
         }
         //update or add the relation in the hashmap
-        rels[i.first] = rel;
+        rels[i.first] = Rel;
     } 
 }
 
@@ -43,22 +43,22 @@ void Statistics::AddRel(std::string relName, int numTuples) {
 void Statistics::AddAtt(std::string relName, std::string attName, int numDistincts) {
     
     //grab the required relation from the hashmap based on the given relName
-    rel rel = rels.at(relName);
+    rel Rel = rels.at(relName);
     //create a attribute structure to store in the relation attributes hashmap
-    att att;
+    att Att;
     if (numDistincts == -1) {
-        att = {attName, rel.numTuples};
+        Att = {attName, Rel.numTuples};
     }
     else {
-        att = {attName, numDistincts};
+        Att = {attName, numDistincts};
     }
     //update or add the attribute structure to the hashmap
-    rel.atts[attName] = att;
+    Rel.atts[attName] = Att;
     //store the updates back in the relations hashmap
-    rels.at(relName) = rel;
+    rels.at(relName) = Rel;
 
     //add a map from the attribute to the relation for future lookup
-    att_to_rel[attName] = rel.name;    
+    att_to_rel[attName] = Rel.name;    
 }
 
 void Statistics::CopyRel(std::string oldName, std::string newName) {
@@ -122,6 +122,9 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
                     if (Com->right->code == NAME) {
 
                     }
+                    else { //now we're comparing with a literal 
+
+                    }
                     break;
             }
 
@@ -159,8 +162,6 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
             std::string rAtt(Com->right->value); //grab name of the right attribute
-            
-
             std::string lRel = att_to_rel.at(lAtt);
             std::string rRel = "";            
             
@@ -175,7 +176,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
                 //we were able to insert into the set
                 //this means this relation was not
                 //in the passed in list of relation names
-                cout << "Error in CheckTree. parseTree contains a relation that does not exist in the list of relations." << endl;
+                cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
                 exit(0);
             }
             tempRelations.insert(lRel);
@@ -199,7 +200,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             
             if (currentSet && !found) {
                 //we have a partially used subset
-                cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
+                cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with the given list of relations." << endl;
                 exit(0);
             }
             if (found) {
