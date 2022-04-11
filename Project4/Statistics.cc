@@ -174,8 +174,17 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
             std::string rAtt(Com->right->value); //grab name of the right attribute
-            std::string lRel = att_to_rel.at(lAtt);
-            std::string rRel = "";            
+            std::string lRel = "";
+            std::string rRel = "";
+            try
+            {
+                lRel = att_to_rel.at(lAtt);
+            }
+            catch(const std::exception& e)
+            {
+                cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
+                exit(0);
+            }                              
             
             //switch on the type of the operator in this OR operation
             if (Com->code == 3 && Com->right->code == NAME) {                

@@ -117,7 +117,7 @@ void q1 (){
 	s.AddAtt(relName[0], "l_shipmode",7);
 
 		
-	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL')";
+	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL') AND (s_suppkey = 0)";
 
 	yy_scan_string(cnf.c_str());
 	yyparse();
