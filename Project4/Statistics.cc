@@ -107,7 +107,7 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
 
     //check to see if the parseTree is valid
-    CheckTree(parseTree, relNames, numToJoin);
+    //CheckTree(parseTree, relNames, numToJoin);
 
     double andMin = -1.0;
     //Loop through all the AND operations
@@ -128,10 +128,10 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
                 case LESS_THAN:         
-                    tempMax = 1 / 3;
+                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
                     break;
                 case GREATER_THAN:
-                    tempMax = 1 / 3;
+                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
                     break;
                 case EQUALS:
                     //if we're comparing to another column and not a literal value

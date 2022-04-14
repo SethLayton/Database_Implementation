@@ -363,7 +363,7 @@ void q7(){
 	Statistics s;
 	std::string relName[] = { "orders", "lineitem"};
 
-	s.Read(fileName);
+	//s.Read(fileName);
 	
 
 	s.AddRel(relName[0],1500000);
@@ -372,6 +372,7 @@ void q7(){
 	
 	s.AddRel(relName[1],6001215);
 	s.AddAtt(relName[1], "l_orderkey",1500000);
+	s.AddAtt(relName[1], "l_receiptdate",3);
 	
 
 	std::string cnf = "(l_receiptdate >'1995-02-01' ) AND (l_orderkey = o_orderkey)";
@@ -379,7 +380,7 @@ void q7(){
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	double result = s.Estimate(final, relName, 2);
-
+	cout << result << endl;
 	if(fabs(result-2000405)>0.1)
 		cout<<"error in estimating Q7\n";
 
