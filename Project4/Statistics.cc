@@ -128,15 +128,19 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
                 case LESS_THAN:         
-                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
+                    tempMax = 1 / 3;
                     break;
                 case GREATER_THAN:
-                    tempMax = lRelation.numTuples / lAttribute.numDistincts;
+                    tempMax = 1 / 3;
                     break;
                 case EQUALS:
                     //if we're comparing to another column and not a literal value
                     if (Com->right->code == NAME) {
-
+                        std::string rRel = att_to_rel.at(rAtt);
+                        rel rRelation = rels.at(rRel);
+                        att rAttribute = rRelation.atts.at(rAtt);
+                        double join_ratio = (rRelation.numTuples / rAttribute.numDistincts) * (lRelation.numTuples / lAttribute.numDistincts);
+                        tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? rAttribute.numDistincts : lAttribute.numDistincts);
                     }
                     else { //now we're comparing with a literal                         
                         tempMax = lRelation.numTuples / lAttribute.numDistincts;                        

@@ -80,7 +80,6 @@ void q0 (){
 
 	s.AddRel(relName[1],800000);
 	s.AddAtt(relName[1], "ps_suppkey", 10000);	
-
 	std::string cnf = "(s_suppkey = ps_suppkey)";
 
 	yy_scan_string(cnf.c_str());
@@ -88,6 +87,8 @@ void q0 (){
 	double result = s.Estimate(final, relName, 2);
 	if(result!=800000)
 		cout<<"error in estimating Q0 before apply \n ";
+	else
+		cout << "correct result" << endl;
 	s.Apply(final, relName, 2);
 
 	// test write and read
@@ -533,16 +534,16 @@ void q11 (){
 }
 
 int main(int argc, char *argv[]) {
-	// if (argc < 2) {
-	// 	cerr << "You need to supply me the query number to run as a command-line arg.." << endl;
-	// 	cerr << "Usage: ./test.out [0-11] >" << endl;
-	// 	exit (1);
-	// }
+	if (argc < 2) {
+		cerr << "You need to supply me the query number to run as a command-line arg.." << endl;
+		cerr << "Usage: ./test.out [0-11] >" << endl;
+		exit (1);
+	}
 
 	void (*query_ptr[]) () = {&q0,&q1, &q2, &q3, &q4, &q5, &q6, &q7, &q8,&q9,&q10,&q11};  
 	void (*query) ();
-	// int qindx = atoi (argv[1]);
-	int qindx = 0;
+	int qindx = atoi (argv[1]);
+	//int qindx = 1;
 	if (qindx >=0 && qindx < 12) {
 		query = query_ptr [qindx ];
 		query ();
