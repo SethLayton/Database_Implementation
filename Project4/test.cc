@@ -89,21 +89,21 @@ void q0 (){
 		cout<<"error in estimating Q0 before apply \n ";
 	else
 		cout << "correct result" << endl;
-	s.Apply(final, relName, 2);
+	// s.Apply(final, relName, 2);
 
-	// test write and read
-	s.Write(fileName);
+	// // test write and read
+	// s.Write(fileName);
 
-	//reload the statistics object from file
-	Statistics s1;
-	s1.Read(fileName);	
-	cnf = "(s_suppkey>1000)";	
-	yy_scan_string(cnf.c_str());
-	yyparse();
-	double dummy = s1.Estimate(final, relName, 2);
-	if(fabs(dummy*3.0-result) >0.1)	{
-		cout<<"Read or write or last apply is not correct\n";
-	}	
+	// //reload the statistics object from file
+	// Statistics s1;
+	// s1.Read(fileName);	
+	// cnf = "(s_suppkey>1000)";	
+	// yy_scan_string(cnf.c_str());
+	// yyparse();
+	// double dummy = s1.Estimate(final, relName, 2);
+	// if(fabs(dummy*3.0-result) >0.1)	{
+	// 	cout<<"Read or write or last apply is not correct\n";
+	// }	
 	
 }
 
@@ -117,7 +117,6 @@ void q1 (){
 	s.AddAtt(relName[0], "l_discount",11);
 	s.AddAtt(relName[0], "l_shipmode",7);
 
-		
 	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL')";
 
 	yy_scan_string(cnf.c_str());
@@ -415,6 +414,8 @@ void q8 (){
 
 	if(fabs(result-48000)>0.1)
 		cout<<"error in estimating Q8\n";
+	else
+		cout << "correct" << endl;
 
 	s.Apply(final, relName,2);
 	

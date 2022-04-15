@@ -108,14 +108,16 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
 
     //check to see if the parseTree is valid
     //CheckTree(parseTree, relNames, numToJoin);
-    unordered_map<std::string, double> and_ratio_map;
-    double andMin = -1.0;
+    unordered_set<std::string> comp_relations;
+    unordered_set<std::string> comp_attributes;
+    double ratio = 1;
+    bool isSameCols = true;
+    bool join = false;
     //Loop through all the AND operations
     while (parseTree !=NULL) {
         struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
-        unordered_set<std::string> comp_relations;
-        unordered_map<std::string, double> or_ratio_map;
-        double orMax = 0.0;
+        double orRatio = 0.0;
+        vector<double> orRatioVector;
         //loop through all the OR operations in this AND
         while (Or !=NULL) {
             
@@ -125,74 +127,55 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
             std::string lRel = att_to_rel.at(lAtt);
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
-            bool newrelation = comp_relations.insert(lRel).second;
-            double tempMax = 0.0;
+            isSameCols = !comp_attributes.insert(lAtt).second;
+            comp_relations.insert(lRel);
+            double tempMax = 1.0;
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
-                case LESS_THAN: 
-                    tempMax = 1.0 / 3.0;        
-                    //tempMax = lRelation.numTuples / lAttribute.numDistincts;
-                    break;
-                case GREATER_THAN:
-                    tempMax = 1.0 / 3.0;   
-                    //tempMax = lRelation.numTuples / lAttribute.numDistincts;
-                    break;
                 case EQUALS:
                     //if we're comparing to another column and not a literal value
                     if (Com->right->code == NAME) {
                         std::string rRel = att_to_rel.at(rAtt);
                         rel rRelation = rels.at(rRel);
                         att rAttribute = rRelation.atts.at(rAtt);
-                        double join_ratio = (rRelation.numTuples / rAttribute.numDistincts) * (lRelation.numTuples / lAttribute.numDistincts);
-                        tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? rAttribute.numDistincts : lAttribute.numDistincts);
+                        double join_ratio = ((double)rRelation.numTuples / (double)lAttribute.numDistincts) * ((double)lRelation.numTuples / (double)lAttribute.numDistincts);
+                        tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
+                        join = true;
                     }
                     else { //now we're comparing with a literal
-                        tempMax = 1.0 / lAttribute.numDistincts;                            
-                        //tempMax = lRelation.numTuples / lAttribute.numDistincts;                        
+                        tempMax = tempMax / lAttribute.numDistincts;                      
                     }
                     break;
+                default:
+                    tempMax = 1.0 / 3.0;
+                    break;
             }
-
-            or_ratio_map[lRel] += tempMax;
-
-            if (or_ratio_map.find(lRel) != or_ratio_map.end()) {
-                if (or_ratio_map.at(lRel) < tempMax) {
-                    or_ratio_map[lRel] = tempMax;
-                }
-            }
-            else
-            {
-                or_ratio_map[lRel] = tempMax;
-            }
-            
+            orRatioVector.push_back (tempMax);
             Or = Or->rightOr;
         }
-        for (auto i : or_ratio_map) {
-            cout << i.first <<  " ratio: " << i.second <<  endl;
-            if (and_ratio_map.find(i.first) != and_ratio_map.end()) {
-                cout << "and_map relation found" << endl;
-                if (i.second < and_ratio_map.at(i.first)) {
-                    cout << "updating and_map to smaller ratio" << endl;
-                    and_ratio_map[i.first] = i.second;
-                }
+        if(isSameCols) {
+			for (auto x : orRatioVector) {
+                orRatio += x;
             }
-            else
-            {
-                cout << "and_map relation not found" << endl;
-                and_ratio_map[i.first] = i.second;
+		}	
+        else {
+            orRatio = 1.0;
+            for (auto x : orRatioVector) {
+                orRatio *= (1 - x);
             }
-            cout << "and_ratio value = " << and_ratio_map[i.first] << endl;
-        }
-        // if (orMax < andMin || andMin == -1.0) {
-        //     andMin = orMax;
-        // }
+            orRatio  = 1 - orRatio;
+		}
+		ratio *= orRatio;
         parseTree = parseTree->rightAnd;
     }
-    double result = 0.0;
-    for (auto i : and_ratio_map) {
-        result += i.second * rels.at(i.first).numTuples; 
+    
+    if (!join) {
+        for (auto i : comp_relations) {
+            ratio *= rels.at(i).numTuples; 
+        }
     }
-    return result;
+    
+    return ratio;
 }
 
 void Statistics::printRels() {
