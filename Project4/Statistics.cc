@@ -17,9 +17,17 @@ Statistics::Statistics(Statistics &copyMe) {
             att att = {k.second.name, k.second.numDistincts};
             //add this copied attribute to the new relation
             Rel.atts[k.first] = att;
+            //add a map from the attribute to the relation for future lookup
+            att_to_rel[k.second.name] = Rel.name; 
         }
         //update or add the relation in the hashmap
         rels[i.first] = Rel;
+
+        //Copying a relation means that we need to add
+        //the newly copied rel as a singleton subset
+        vector<rel> vRels;
+        vRels.push_back(Rel);
+        subsets[Rel.name] = vRels;
     } 
 }
 
@@ -83,6 +91,7 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
     vector<rel> vRels;
     vRels.push_back(newRel);
     subsets[newName] = vRels;
+    
 }
 	
 void Statistics::Read(std::string fromWhere) {
@@ -122,41 +131,74 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
 
     //check to see if the parseTree is valid
     CheckTree(parseTree, relNames, numToJoin);
-
+    unordered_set<std::string> comp_relations;
+    unordered_set<std::string> comp_attributes;
+    double ratio = 1;
+    bool isSameCols = true;
+    bool join = false;
     //Loop through all the AND operations
     while (parseTree !=NULL) {
         struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
-
+        double orRatio = 0.0;
+        vector<double> orRatioVector;
         //loop through all the OR operations in this AND
         while (Or !=NULL) {
+            
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
-			std::string rAtt(Com->right->value); //grab name of the right attribute
-            
-
+			std::string rAtt(Com->right->value); //grab name of the right attribute            
+            std::string lRel = att_to_rel.at(lAtt);
+            rel lRelation = rels.at(lRel);
+            att lAttribute = lRelation.atts.at(lAtt);
+            isSameCols = !comp_attributes.insert(lAtt).second;
+            comp_relations.insert(lRel);
+            double tempMax = 1.0;
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
-                case LESS_THAN:
-                    break;
-                case GREATER_THAN:
-                    break;
                 case EQUALS:
                     //if we're comparing to another column and not a literal value
                     if (Com->right->code == NAME) {
-
+                        std::string rRel = att_to_rel.at(rAtt);
+                        rel rRelation = rels.at(rRel);
+                        att rAttribute = rRelation.atts.at(rAtt);
+                        double join_ratio = ((double)rRelation.numTuples / (double)lAttribute.numDistincts) * ((double)lRelation.numTuples / (double)lAttribute.numDistincts);
+                        tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
+                        join = true;
                     }
-                    else { //now we're comparing with a literal 
-
+                    else { //now we're comparing with a literal
+                        tempMax = tempMax / lAttribute.numDistincts;                      
                     }
                     break;
+                default:
+                    tempMax = 1.0 / 3.0;
+                    break;
             }
-
+            orRatioVector.push_back (tempMax);
             Or = Or->rightOr;
         }
-
+        if(isSameCols) {
+			for (auto x : orRatioVector) {
+                orRatio += x;
+            }
+		}	
+        else {
+            orRatio = 1.0;
+            for (auto x : orRatioVector) {
+                orRatio *= (1 - x);
+            }
+            orRatio  = 1 - orRatio;
+		}
+		ratio *= orRatio;
         parseTree = parseTree->rightAnd;
     }
-
+    
+    if (!join) {
+        for (auto i : comp_relations) {
+            ratio *= rels.at(i).numTuples; 
+        }
+    }
+    
+    return ratio;
 }
 
 void Statistics::printRels() {
@@ -185,13 +227,30 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
             std::string rAtt(Com->right->value); //grab name of the right attribute
-            std::string lRel = att_to_rel.at(lAtt);
-            std::string rRel = "";            
+            std::string lRel = "";
+            std::string rRel = "";
+            try
+            {
+                lRel = att_to_rel.at(lAtt);
+            }
+            catch(const std::exception& e)
+            {
+                cout << "Error in CheckTree. parseTree contains a left relation that does not exist in the given list of relations." << endl;
+                exit(0);
+            }                              
             
             //switch on the type of the operator in this OR operation
             if (Com->code == 3 && Com->right->code == NAME) {                
-                //if we're comparing to another column and not a literal value                       
-                rRel = att_to_rel.at(rAtt); 
+                //if we're comparing to another column and not a literal value 
+                try
+                {
+                    rRel = att_to_rel.at(rAtt); 
+                }
+                catch(const std::exception& e)
+                {
+                    cout << "Error in CheckTree. parseTree contains a right relation that does not exist in the given list of relations." << endl;
+                    exit(0);
+                }   
             }
             bool setSuccessL = relations.insert(lRel).second;
             bool setSuccessR = rRel == "" ? false : relations.insert(rRel).second;
@@ -218,9 +277,8 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
     for (auto set : subsets) {
         bool currentSet = false; 
         bool found = false;
-        for (rel set_rel : set.second) {            
+        for (rel set_rel : set.second) {     
             found = tempRelations.find(set_rel.name) != tempRelations.end();
-            
             if (currentSet && !found) {
                 //we have a partially used subset
                 cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with the given list of relations." << endl;
