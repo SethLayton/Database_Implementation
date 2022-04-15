@@ -1,4 +1,6 @@
 #include "Statistics.h"
+#include <iostream>
+#include <fstream>
 
 Statistics::Statistics() {
 }
@@ -84,9 +86,30 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
 }
 	
 void Statistics::Read(std::string fromWhere) {
+    ifstream file(fromWhere);
+    string line;
+    while (getline (file, line)) {
+        
+        if (line.find("relName: ",0) != -1){
+            
+        } else if (line.find("attName: ", 0)!= -1)
+        {
+            /* code */
+        }
+        
+    }
+    file.close();
 }
 
 void Statistics::Write(std::string fromWhere) {
+    ofstream file(fromWhere);
+     for (auto i : rels) {
+        file << "relName: " << i.second.name << " numTuples: " << i.second.numTuples << endl;
+        for (auto k : i.second.atts) {
+            file << "\tattName: " << k.second.name << " numDistincts: " << k.second.numDistincts << endl;
+        }
+    } 
+    file.close();
 }
 
 void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin) {
