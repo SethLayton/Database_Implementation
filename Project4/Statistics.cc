@@ -113,7 +113,7 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
     //Loop through all the AND operations
     while (parseTree !=NULL) {
         struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
-
+        unordered_set<std::string> comp_columns;
         double orMax = 0.0;
         //loop through all the OR operations in this AND
         while (Or !=NULL) {
@@ -123,7 +123,7 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
             std::string lRel = att_to_rel.at(lAtt);
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
-
+            bool newColumn = comp_columns.insert(lRel).second;
             double tempMax = 0.0;
             //switch on the type of the operator in this OR operation
             switch(Com->code) {
@@ -147,7 +147,11 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
                     }
                     break;
             }
-            if (tempMax > orMax) {
+            
+            if (newColumn) {
+                orMax += tempMax;
+            }
+            else if (tempMax > orMax ) {
                 orMax = tempMax;
             }
             Or = Or->rightOr;
