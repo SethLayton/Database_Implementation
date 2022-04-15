@@ -107,7 +107,7 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
 
     //check to see if the parseTree is valid
-    //CheckTree(parseTree, relNames, numToJoin);
+    CheckTree(parseTree, relNames, numToJoin);
     unordered_set<std::string> comp_relations;
     unordered_set<std::string> comp_attributes;
     double ratio = 1;
