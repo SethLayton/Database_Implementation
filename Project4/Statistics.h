@@ -24,9 +24,12 @@ class Statistics {
 private:
 	std::unordered_map<std::string, rel> rels;
 	std::unordered_map<std::string, vector<rel>> subsets;
+	std::unordered_map<std::string, int> subsets_n;
 	std::unordered_map<std::string, std::string> att_to_rel;
 	int maxSubsetSize = 0;
+	int numSubsets = 0;
 	void CheckTree(AndList* parseTree, std::string *relNames, int numToJoin); 
+	int GetNumTuples(std::string name);
 public:
 	Statistics();
 	Statistics(Statistics &copyMe);	 // Performs deep copy

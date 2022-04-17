@@ -68,6 +68,15 @@ void PrintAndList(struct AndList *pAnd) {
 	}
 }
 
+void checkResult(double correct, double result) {
+	if(fabs(result-correct)>0.5) {
+		cout<<"error in estimation\nExpected: "<< correct<< "\nEstimation: " << result;
+	} else {
+		cout << "Correct Estimation!";
+	}
+
+}
+
 std::string fileName = "Statistics.txt";
 void q0 (){
 
@@ -155,15 +164,17 @@ void q2 (){
 	yyparse();
 
 	// Join the first two relations in relName
-	s.Apply(final, relName, 2);
 	
-	cnf = " (c_nationkey = n_nationkey)";
-	yy_scan_string(cnf.c_str());
-	yyparse();
+	// s.Apply(final, relName, 2);
+	
+	// cnf = " (c_nationkey = n_nationkey)";
+	// yy_scan_string(cnf.c_str());
+	// yyparse();
 	
 	double result = s.Estimate(final, relName, 3);
-	if(fabs(result-1500000)>0.1)
-		cout<<"error in estimating Q2\n" << result;
+	checkResult(1500000, result);
+	// if(fabs(result-1500000)>0.1)
+	// 	cout<<"error in estimating Q2\n" << result;
 	s.Apply(final, relName, 3);
 	// cout << final << endl;
 	s.Write(fileName);
@@ -199,6 +210,7 @@ void q3 (){
 	yyparse();	
 	s.Apply(final, set1, 2);
 	
+
 	std::string set2[] ={"c","n2"};
 	cnf = "(c.c_nationkey = n2.n_nationkey)";
 	yy_scan_string(cnf.c_str());
@@ -211,8 +223,9 @@ void q3 (){
 	yyparse();
 
 	double result = s.Estimate(final, set3, 4);
-	if(fabs(result-60000000.0)>0.1)
-		cout<<"error in estimating Q3\n";
+	checkResult(60000000.0, result);
+	// if(fabs(result-60000000.0)>0.1)
+	// 	cout<<"error in estimating Q3\n";
 
 	s.Apply(final, set3, 4);
 
@@ -256,27 +269,31 @@ void q4 (){
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	cout << "1st apply" << endl;
-	s.Apply(final, relName, 2);
+	std::string names[] = {"p"};
+	s.Apply(final, names, 2);
 
 	cnf ="(s.s_suppkey = ps.ps_suppkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	cout << "2nd apply" << endl;
-	s.Apply(final, relName, 3);
+	std::string names1[] = {"p","s","ps" };
+	s.Apply(final, names1, 3);
 
 	cnf =" (s.s_nationkey = n.n_nationkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	cout << "3rd apply" << endl;
-	s.Apply(final, relName, 4);
+	std::string names2[] = {"p","s","ps", "n"};
+	s.Apply(final, names2, 4);
 
 	cnf ="(n.n_regionkey = r.r_regionkey) AND (r.r_name = 'AMERICA') ";
 	yy_scan_string(cnf.c_str());
 	yyparse();
-
-	double result = s.Estimate(final, relName, 5);
-	if(fabs(result-3200)>0.1)
-		cout<<"error in estimating Q4\n";
+	std::string names3[] = {"p","s","ps", "n", "r"};
+	double result = s.Estimate(final, names3, 5);
+	checkResult(3200, result);
+	// if(fabs(result-3200)>0.1)
+	// 	cout<<"error in estimating Q4\n";
 
 	cout << "4th apply" << endl;
 	s.Apply(final, relName, 5);	
@@ -297,6 +314,8 @@ void q5 (){
 	s.AddRel(relName[1],1500000);
 	s.AddAtt(relName[1], "o_orderkey",1500000);
 	s.AddAtt(relName[1], "o_custkey",150000);
+
+	s.AddAtt(relName[1], "o_orderdate",150000);
 	
 	s.AddRel(relName[2],6001215);
 	s.AddAtt(relName[2], "l_orderkey",1500000);
@@ -314,9 +333,10 @@ void q5 (){
 
 
 	double result = s.Estimate(final, relName, 3);
-
-	if(fabs(result-400081)>0.1)
-		cout<<"error in estimating Q5\n";
+	checkResult(400081, result);
+	// if(fabs(result-400081)>0.1)
+	// 	cout<<"error in estimating Q5\n";
+	// 	cout << result;
 
 	s.Apply(final, relName, 3);
 
@@ -353,8 +373,9 @@ void q6 (){
 
 	double result = s.Estimate(final, relName, 3);
 
-	if(fabs(result-32000)>0.1)
-		cout<<"error in estimating Q6\n";
+	// if(fabs(result-32000)>0.1)
+	// 	cout<<"error in estimating Q6\n";
+	checkResult(32000, result);
 	s.Apply(final, relName, 3);
 	
 	s.Write(fileName);
@@ -383,9 +404,10 @@ void q7(){
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	double result = s.Estimate(final, relName, 2);
-	cout << result << endl;
-	if(fabs(result-2000405)>0.1)
-		cout<<"error in estimating Q7\n";
+	// cout << result << endl;
+	// if(fabs(result-2000405)>0.1)
+	// 	cout<<"error in estimating Q7\n";
+	checkResult(2000405, result);
 
 	s.Apply(final, relName, 2);
 	s.Write(fileName);
@@ -416,10 +438,11 @@ void q8 (){
 		
 	double result = s.Estimate(final, relName,2);
 
-	if(fabs(result-48000)>0.1)
-		cout<<"error in estimating Q8\n";
-	else
-		cout << "correct" << endl;
+	checkResult(48000, result);
+	// if(fabs(result-48000)>0.1)
+	// 	cout<<"error in estimating Q8\n";
+	// else
+	// 	cout << "correct" << endl;
 
 	s.Apply(final, relName,2);
 	
@@ -453,8 +476,9 @@ void q9(){
 	yyparse();
 
 	double result = s.Estimate(final, relName,3);
-	if(fabs(result-4)>0.5)
-		cout<<"error in estimating Q9\n";
+	checkResult(4, result);
+	// if(fabs(result-4)>0.5)
+	// 	cout<<"error in estimating Q9\n";
 
 	s.Apply(final, relName,3);
 	
@@ -476,7 +500,7 @@ void q10 (){
 	s.AddRel(relName[1],1500000);
 	s.AddAtt(relName[1], "o_orderkey",1500000);
 	s.AddAtt(relName[1], "o_custkey",150000);
-	
+	s.AddAtt(relName[1], "o_orderdate",150000);
 	s.AddRel(relName[2],6001215);
 	s.AddAtt(relName[2], "l_orderkey",1500000);
 	
@@ -499,8 +523,12 @@ void q10 (){
 	yyparse();	
 	
 	double result = s.Estimate(final, relName, 4);
-	if(fabs(result-2000405)>0.1)
-		cout<<"error in estimating Q10\n";
+	// if(fabs(result-2000405)>0.1)
+	// 	cout<<"error in estimating Q10\n";
+	cout << std::fixed;
+	checkResult(2000405, result);
+	cout << std::scientific;
+
 
 	s.Apply(final, relName, 4);  
 	
@@ -517,7 +545,7 @@ void q11 (){
 	
 	s.AddRel(relName[0],200000);
 	s.AddAtt(relName[0], "p_partkey",200000);
-	s.AddAtt(relName[0], "p_conatiner",40);
+	s.AddAtt(relName[0], "p_container",40);
 
 	s.AddRel(relName[1],6001215);
 	s.AddAtt(relName[1], "l_partkey",200000);
@@ -531,8 +559,9 @@ void q11 (){
 	
 	double result = s.Estimate(final, relName,2);
 
-	if(fabs(result-21432.9)>0.5)
-		cout<<"error in estimating Q11\n";
+	// if(fabs(result-21432.9)>0.5)
+	// 	cout<<"error in estimating Q11\n";
+	checkResult(21432.9, result);
 	s.Apply(final, relName,2);
 	
 	s.Write(fileName);

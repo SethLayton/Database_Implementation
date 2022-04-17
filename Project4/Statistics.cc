@@ -1,6 +1,7 @@
 #include "Statistics.h"
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 Statistics::Statistics() {
 }
@@ -28,6 +29,7 @@ Statistics::Statistics(Statistics &copyMe) {
         vector<rel> vRels;
         vRels.push_back(Rel);
         subsets[Rel.name] = vRels;
+        subsets_n[Rel.name] = 0;
     } 
 }
 
@@ -47,6 +49,7 @@ void Statistics::AddRel(std::string relName, int numTuples) {
     vector<rel> vRels;
     vRels.push_back(Rel);
     subsets[relName] = vRels;
+    subsets_n[relName] = 0;
     maxSubsetSize = 1;
 }
 
@@ -91,6 +94,7 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
     vector<rel> vRels;
     vRels.push_back(newRel);
     subsets[newName] = vRels;
+    subsets_n[newName] = 0;
     
 }
 	
@@ -100,14 +104,18 @@ void Statistics::Read(std::string fromWhere) {
     while (getline (file, line)) {
         
         if (line.find("relName: ",0) != -1){
-            std::string relName = line.substr(line.find("relName: ")+9, line.find("!"));
-            std::string numtups = line.substr(line.find("!numTuples: "+12));
+            int pos1 = line.find("relName: ")+9;
+            int pos2 = line.find("!");
+            std::string relName = line.substr( pos1, pos2-pos1 );
+            std::string numtups = line.substr(line.find("!numTuples: ")+12);
             int nt = std::stoi(numtups);
             AddRel(relName, nt);
         } else if (line.find("attName: ", 0)!= -1)
         {
-            std::string attName = line.substr(line.find("attName: ")+9, line.find("!"));
-            std::string numdis = line.substr(line.find("!numDistincts: "+15));
+            int pos1 = line.find("attName: ")+9;
+            int pos2 = line.find("!");
+            std::string attName = line.substr( pos1, pos2-pos1 );
+            std::string numdis = line.substr(line.find("!numDistincts: ")+15);
             int nd = std::stoi(numdis);
             AddRel(attName, nd);
         }
@@ -127,10 +135,21 @@ void Statistics::Write(std::string fromWhere) {
     file.close();
 }
 
+int Statistics::GetNumTuples(std::string name) {
+    if (subsets_n[name] == 0 ){
+        return rels.at(name).numTuples;
+    } else {
+        std::string intName = std::to_string(subsets_n[name]);
+        return rels.at(intName).numTuples;
+    }
+    
+
+
+}
+
 void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin) {
-    return;
      //check to see if the parseTree is valid
-    //CheckTree(parseTree, relNames, numToJoin);
+    CheckTree(parseTree, relNames, numToJoin);
     unordered_set<std::string> comp_relations;
     unordered_set<std::string> comp_attributes;
     double ratio = 1;
@@ -148,6 +167,7 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
             std::string lAtt(Com->left->value); //grab name of the left attribute
 			std::string rAtt(Com->right->value); //grab name of the right attribute            
             std::string lRel = att_to_rel.at(lAtt);
+            // Modify this bitch
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
             isSameCols = !comp_attributes.insert(lAtt).second;
@@ -161,7 +181,10 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
                         std::string rRel = att_to_rel.at(rAtt);
                         rel rRelation = rels.at(rRel);
                         att rAttribute = rRelation.atts.at(rAtt);
-                        double join_ratio = ((double)rRelation.numTuples / (double)lAttribute.numDistincts) * ((double)lRelation.numTuples / (double)lAttribute.numDistincts);
+                        int rNumTups = GetNumTuples(rRelation.name);
+                        int lNumTups = GetNumTuples(lRelation.name);
+                        
+                        double join_ratio = ((double)rNumTups / (double)lAttribute.numDistincts) * ((double)lNumTups / (double)lAttribute.numDistincts);
                         tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
                         join = true;
                     }
@@ -195,19 +218,20 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
     if (!join) {
         for (auto i : comp_relations) {
             // Look up subset to get numTuples
-            ratio *= rels.at(i).numTuples; 
+            //ratio *= rels.at(i).numTuples; 
+            ratio *= GetNumTuples(i);
         }
 
-    } 
-    
-    
-   
+    } else { // If there was a join, we need to create the new relationship
+        numSubsets++;
+        for (int i = 0; i < numToJoin; i++) {
+            //rels.at(relNames[i]);
+            subsets_n[relNames[i]] = numSubsets;
+        }
+        std::string intName = std::to_string(numSubsets);
+        AddRel(intName, round(ratio));
+    }    
 
-    // Create a new relation that is the resulted join
-    std::string newRelName = "";
-    for (int i = 0; i < numToJoin; i++) {
-        newRelName += relNames[i];
-    }
 
 }
 
@@ -217,7 +241,7 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
     CheckTree(parseTree, relNames, numToJoin);
     unordered_set<std::string> comp_relations;
     unordered_set<std::string> comp_attributes;
-    double ratio = 1;
+    double ratio = 1.0;
     bool isSameCols = true;
     bool join = false;
     //Loop through all the AND operations
@@ -245,7 +269,10 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
                         std::string rRel = att_to_rel.at(rAtt);
                         rel rRelation = rels.at(rRel);
                         att rAttribute = rRelation.atts.at(rAtt);
-                        double join_ratio = ((double)rRelation.numTuples / (double)lAttribute.numDistincts) * ((double)lRelation.numTuples / (double)lAttribute.numDistincts);
+                        int rNumTups = GetNumTuples(rRelation.name);
+                        int lNumTups = GetNumTuples(lRelation.name);
+                        double join_ratio = ((double)rNumTups / (double)lAttribute.numDistincts) * ((double)lNumTups / (double)lAttribute.numDistincts);
+                 
                         tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
                         join = true;
                     }
@@ -264,19 +291,25 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
 			for (auto x : orRatioVector) {
                 orRatio += x;
             }
+            
 		}	
         else {
             orRatio = 1.0;
             for (auto x : orRatioVector) {
+                cout << " - orRatio: " << (1 - x) << endl;
                 orRatio *= (1 - x);
             }
             orRatio  = 1 - orRatio;
 		}
+        cout << "orRatio: "<< orRatio<< endl;
+    
 		ratio *= orRatio;
+        cout << "Ratio: "<< ratio<< endl;
         parseTree = parseTree->rightAnd;
     }
     
     if (!join) {
+        cout << "notjoin" << endl;
         for (auto i : comp_relations) {
             ratio *= rels.at(i).numTuples; 
         }
@@ -301,7 +334,6 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
     unordered_set<std::string> tempRelations;
     for (int i = 0; i < numToJoin; i++) {
        relations.insert(relNames[i]);
-       cout << "added "<< relNames[i] << endl;
     }
 
     while (parseTree !=NULL) {
