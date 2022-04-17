@@ -163,9 +163,9 @@ void q2 (){
 	
 	double result = s.Estimate(final, relName, 3);
 	if(fabs(result-1500000)>0.1)
-		cout<<"error in estimating Q2\n";
+		cout<<"error in estimating Q2\n" << result;
 	s.Apply(final, relName, 3);
-
+	// cout << final << endl;
 	s.Write(fileName);
 
 }
@@ -255,16 +255,19 @@ void q4 (){
 	std::string cnf = "(p.p_partkey=ps.ps_partkey) AND (p.p_size = 2)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
+	cout << "1st apply" << endl;
 	s.Apply(final, relName, 2);
 
 	cnf ="(s.s_suppkey = ps.ps_suppkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
+	cout << "2nd apply" << endl;
 	s.Apply(final, relName, 3);
 
 	cnf =" (s.s_nationkey = n.n_nationkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
+	cout << "3rd apply" << endl;
 	s.Apply(final, relName, 4);
 
 	cnf ="(n.n_regionkey = r.r_regionkey) AND (r.r_name = 'AMERICA') ";
@@ -275,6 +278,7 @@ void q4 (){
 	if(fabs(result-3200)>0.1)
 		cout<<"error in estimating Q4\n";
 
+	cout << "4th apply" << endl;
 	s.Apply(final, relName, 5);	
 	
 	s.Write(fileName);

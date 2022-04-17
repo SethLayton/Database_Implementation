@@ -128,9 +128,87 @@ void Statistics::Write(std::string fromWhere) {
 }
 
 void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int numToJoin) {
+    return;
+     //check to see if the parseTree is valid
+    //CheckTree(parseTree, relNames, numToJoin);
+    unordered_set<std::string> comp_relations;
+    unordered_set<std::string> comp_attributes;
+    double ratio = 1;
+    bool isSameCols = true;
+    bool join = false;
+    //Loop through all the AND operations
+    while (parseTree !=NULL) {
+        struct OrList *Or = parseTree->left; //grab all the OR operations from this AND
+        double orRatio = 0.0;
+        vector<double> orRatioVector;
+        //loop through all the OR operations in this AND
+        while (Or !=NULL) {
+            
+            struct ComparisonOp *Com = Or->left; //get the comparison operator
+            std::string lAtt(Com->left->value); //grab name of the left attribute
+			std::string rAtt(Com->right->value); //grab name of the right attribute            
+            std::string lRel = att_to_rel.at(lAtt);
+            rel lRelation = rels.at(lRel);
+            att lAttribute = lRelation.atts.at(lAtt);
+            isSameCols = !comp_attributes.insert(lAtt).second;
+            comp_relations.insert(lRel);
+            double tempMax = 1.0;
+            //switch on the type of the operator in this OR operation
+            switch(Com->code) {
+                case EQUALS:
+                    //if we're comparing to another column and not a literal value
+                    if (Com->right->code == NAME) {
+                        std::string rRel = att_to_rel.at(rAtt);
+                        rel rRelation = rels.at(rRel);
+                        att rAttribute = rRelation.atts.at(rAtt);
+                        double join_ratio = ((double)rRelation.numTuples / (double)lAttribute.numDistincts) * ((double)lRelation.numTuples / (double)lAttribute.numDistincts);
+                        tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
+                        join = true;
+                    }
+                    else { //now we're comparing with a literal
+                        tempMax = tempMax / lAttribute.numDistincts;                      
+                    }
+                    break;
+                default:
+                    tempMax = 1.0 / 3.0;
+                    break;
+            }
+            orRatioVector.push_back (tempMax);
+            Or = Or->rightOr;
+        }
+        if(isSameCols) {
+			for (auto x : orRatioVector) {
+                orRatio += x;
+            }
+		}	
+        else {
+            orRatio = 1.0;
+            for (auto x : orRatioVector) {
+                orRatio *= (1 - x);
+            }
+            orRatio  = 1 - orRatio;
+		}
+		ratio *= orRatio;
+        parseTree = parseTree->rightAnd;
+    }
+    
+    if (!join) {
+        for (auto i : comp_relations) {
+            // Look up subset to get numTuples
+            ratio *= rels.at(i).numTuples; 
+        }
 
-    //check to see if the parseTree is valid
-    CheckTree(parseTree, relNames, numToJoin);
+    } 
+    
+    
+   
+
+    // Create a new relation that is the resulted join
+    std::string newRelName = "";
+    for (int i = 0; i < numToJoin; i++) {
+        newRelName += relNames[i];
+    }
+
 }
 
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
@@ -223,6 +301,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
     unordered_set<std::string> tempRelations;
     for (int i = 0; i < numToJoin; i++) {
        relations.insert(relNames[i]);
+       cout << "added "<< relNames[i] << endl;
     }
 
     while (parseTree !=NULL) {
@@ -240,8 +319,10 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
                 lRel = att_to_rel.at(lAtt);
             }
             catch(const std::exception& e)
-            {
+            {   
+                
                 cout << "Error in CheckTree. parseTree contains a left relation that does not exist in the given list of relations." << endl;
+                cout << lAtt << endl;
                 exit(0);
             }                              
             
