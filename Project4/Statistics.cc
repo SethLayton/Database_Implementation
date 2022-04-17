@@ -82,9 +82,11 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
     //loop through all the old relations attributes
     for (auto k : oldRel.atts) {
         //create a copy of that attribute
-        att att = {k.second.name, k.second.numDistincts};
+        std::string newattName = newName+"." + k.second.name;
+        att att = {newattName, k.second.numDistincts};
         //add this copied attribute to the new relation
-        newRel.atts[k.first] = att;
+        newRel.atts[newattName] = att;
+        att_to_rel[newattName] = newName;
     }
     //update or add the relation in the hashmap
     rels[newName] = newRel;
@@ -123,14 +125,23 @@ void Statistics::Read(std::string fromWhere) {
     }
     file.close();
 }
-
+bool isNumber(const string& str)
+{
+    for (char const &c : str) {
+        if (std::isdigit(c) == 0) return false;
+    }
+    return true;
+}
 void Statistics::Write(std::string fromWhere) {
     ofstream file(fromWhere);
      for (auto i : rels) {
-        file << "relName: " << i.second.name << "!numTuples: " << i.second.numTuples << endl;
-        for (auto k : i.second.atts) {
-            file << "\tattName: " << k.second.name << "!numDistincts: " << k.second.numDistincts << endl;
+        if (!isNumber(i.second.name)){
+            file << "relName: " << i.second.name << "!numTuples: " << i.second.numTuples << endl;
+            for (auto k : i.second.atts) {
+                file << "\tattName: " << k.second.name << "!numDistincts: " << k.second.numDistincts << endl;
+            }
         }
+        
     } 
     file.close();
 }
@@ -165,9 +176,8 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
             
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
-			std::string rAtt(Com->right->value); //grab name of the right attribute            
+			std::string rAtt(Com->right->value); //grab name of the right attribute  
             std::string lRel = att_to_rel.at(lAtt);
-            // Modify this bitch
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
             isSameCols = !comp_attributes.insert(lAtt).second;
@@ -183,7 +193,7 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
                         att rAttribute = rRelation.atts.at(rAtt);
                         int rNumTups = GetNumTuples(rRelation.name);
                         int lNumTups = GetNumTuples(lRelation.name);
-                        
+
                         double join_ratio = ((double)rNumTups / (double)lAttribute.numDistincts) * ((double)lNumTups / (double)lAttribute.numDistincts);
                         tempMax = join_ratio * (lAttribute.numDistincts > rAttribute.numDistincts ? (double)rAttribute.numDistincts : (double)lAttribute.numDistincts);
                         join = true;
@@ -296,20 +306,16 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
         else {
             orRatio = 1.0;
             for (auto x : orRatioVector) {
-                cout << " - orRatio: " << (1 - x) << endl;
                 orRatio *= (1 - x);
             }
             orRatio  = 1 - orRatio;
 		}
-        cout << "orRatio: "<< orRatio<< endl;
     
 		ratio *= orRatio;
-        cout << "Ratio: "<< ratio<< endl;
         parseTree = parseTree->rightAnd;
     }
     
     if (!join) {
-        cout << "notjoin" << endl;
         for (auto i : comp_relations) {
             ratio *= rels.at(i).numTuples; 
         }

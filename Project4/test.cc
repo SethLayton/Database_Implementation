@@ -268,35 +268,33 @@ void q4 (){
 	std::string cnf = "(p.p_partkey=ps.ps_partkey) AND (p.p_size = 2)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
-	cout << "1st apply" << endl;
-	std::string names[] = {"p"};
-	s.Apply(final, names, 2);
+	std::string set1[] = {"p", "ps"};
+	s.Apply(final, set1, 2);
 
 	cnf ="(s.s_suppkey = ps.ps_suppkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
-	cout << "2nd apply" << endl;
-	std::string names1[] = {"p","s","ps" };
-	s.Apply(final, names1, 3);
+	std::string set2[] = {"p", "ps", "s"};
+	s.Apply(final, set2, 3);
 
 	cnf =" (s.s_nationkey = n.n_nationkey)";
 	yy_scan_string(cnf.c_str());
 	yyparse();
-	cout << "3rd apply" << endl;
-	std::string names2[] = {"p","s","ps", "n"};
-	s.Apply(final, names2, 4);
+	std::string set3[] = {"p", "ps", "s", "n"};
+
+	s.Apply(final, set3, 4);
 
 	cnf ="(n.n_regionkey = r.r_regionkey) AND (r.r_name = 'AMERICA') ";
 	yy_scan_string(cnf.c_str());
 	yyparse();
-	std::string names3[] = {"p","s","ps", "n", "r"};
-	double result = s.Estimate(final, names3, 5);
+	std::string set4[] = {"p", "ps", "s", "n", "r"};
+
+	double result = s.Estimate(final, set4, 5);
 	checkResult(3200, result);
 	// if(fabs(result-3200)>0.1)
 	// 	cout<<"error in estimating Q4\n";
 
-	cout << "4th apply" << endl;
-	s.Apply(final, relName, 5);	
+	s.Apply(final, set4, 5);	
 	
 	s.Write(fileName);
 
