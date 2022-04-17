@@ -100,10 +100,16 @@ void Statistics::Read(std::string fromWhere) {
     while (getline (file, line)) {
         
         if (line.find("relName: ",0) != -1){
-            
+            std::string relName = line.substr(line.find("relName: ")+9, line.find("!"));
+            std::string numtups = line.substr(line.find("!numTuples: "+12));
+            int nt = std::stoi(numtups);
+            AddRel(relName, nt);
         } else if (line.find("attName: ", 0)!= -1)
         {
-            /* code */
+            std::string attName = line.substr(line.find("attName: ")+9, line.find("!"));
+            std::string numdis = line.substr(line.find("!numDistincts: "+15));
+            int nd = std::stoi(numdis);
+            AddRel(attName, nd);
         }
         
     }
@@ -113,9 +119,9 @@ void Statistics::Read(std::string fromWhere) {
 void Statistics::Write(std::string fromWhere) {
     ofstream file(fromWhere);
      for (auto i : rels) {
-        file << "relName: " << i.second.name << " numTuples: " << i.second.numTuples << endl;
+        file << "relName: " << i.second.name << "!numTuples: " << i.second.numTuples << endl;
         for (auto k : i.second.atts) {
-            file << "\tattName: " << k.second.name << " numDistincts: " << k.second.numDistincts << endl;
+            file << "\tattName: " << k.second.name << "!numDistincts: " << k.second.numDistincts << endl;
         }
     } 
     file.close();
