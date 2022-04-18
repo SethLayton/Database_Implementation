@@ -15,7 +15,7 @@ int add_data (FILE *src, int numrecs, int &res) {
 	DBFile dbfile;
 	dbfile.Open(rel->path ());
 	Record temp;
-	
+	  
 	int proc = 0;
 	int xx = 20000; 
 	while (proc < numrecs) {
@@ -68,11 +68,10 @@ void test1 () {
 	int proc = 1, res = 1, tot = 0;
 	while (proc && res) {		
 		int x = 0;
-		while (x < 1 || x > 3) {
+		while (x < 1 || x > 2) {
 			cout << "\n select option for : " << rel->path () << endl;
 			cout << " \t 1. add a few (1 to 1k recs)\n";
 			cout << " \t 2. add a lot (1k to 1e+06 recs) \n";
-			cout << " \t 3. run some query \n \t";
 			cin >> x;
 		}
 		if (x == 1 || x == 2) {
@@ -86,9 +85,6 @@ void test1 () {
 			cout << proc << endl;
 			if (proc) 
 				cout << "\n\t added " << proc << " recs..so far " << tot << endl;
-		}
-		else {
-			test3 ();
 		}
 	}
 	cout << "\n create finished.. " << tot << " recs inserted\n";
@@ -116,39 +112,13 @@ void test2 () {
 	cout << "\n scanned " << cnt << " recs \n";
 	dbfile.Close ();
 }
-
-void test3 () {
-
-	cout << " Filter with CNF for : " << rel->name() << "\n";
-	CNF cnf; 
-	Record literal;
-	rel->get_cnf (cnf, literal);
-
-	DBFile dbfile;
-	dbfile.Open (rel->path());
-	dbfile.MoveFirst ();
-	Record temp;
-
-	int cnt = 0;
-	while (dbfile.GetNext (temp, cnf, literal) && ++cnt) {
-		cout << "\t";
-		temp.Print (rel->schema());
-		cout << endl;
-		if (cnt % 10000 == 0) {
-			// cerr << ".";
-		}
-	}
-	cout << "\n query over " << rel->path () << " returned " << cnt << " recs\n";
-	dbfile.Close ();
-
-}
  
 int main (int argc, char *argv[]) {
 
 	setup ();
 
 	relation *rel_ptr[] = {n, r, c, p, ps, s, o, li};
-	void (*test_ptr[]) () = {&test1, &test2, &test3};  
+	void (*test_ptr[]) () = {&test1, &test2};  
 	void (*test) ();
 
 	int tindx = 0;

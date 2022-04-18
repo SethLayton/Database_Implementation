@@ -12,10 +12,13 @@
 using namespace std;
 
 // make sure that the information below is correct
+const char *settings = "test.cat";
 
-const char *catalog_path = "catalog"; 
-const char *dbfile_dir = ""; 
-const char *tpch_dir =  "../1gbdb/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
+// donot change this information here
+char *catalog_path, *dbfile_dir, *tpch_dir = NULL;
+// const char *catalog_path = "catalog"; 
+// const char *dbfile_dir = ""; 
+// const char *tpch_dir =  "../1gbdb/" ;//"/cise/tmp/dbi_sp11/DATA/1G/"; 
 //const char *dbfile_dir = ""; 
 //const char *tpch_dir ="../1gbdb/"; 
 
@@ -102,6 +105,27 @@ const char *lineitem = "lineitem";
 relation *s, *p, *ps, *n, *li, *r, *o, *c;
 
 void setup () {
+
+	FILE *fp = fopen (settings, "r");
+	if (fp) {
+		char *mem = (char *) malloc (80 * 3);
+		catalog_path = &mem[0];
+		dbfile_dir = &mem[80];
+		tpch_dir = &mem[160];
+		char line[80];
+		fgets (line, 80, fp);
+		sscanf (line, "%s\n", catalog_path);
+		fgets (line, 80, fp);
+		sscanf (line, "%s\n", dbfile_dir);
+		fgets (line, 80, fp);
+		sscanf (line, "%s\n", tpch_dir);
+		fclose (fp);
+		if (! (catalog_path && dbfile_dir && tpch_dir)) {
+			cerr << " Test settings file 'test.cat' not in correct format.\n";
+			free (mem);
+			exit (1);
+		}
+	}
 	cout << " \n** IMPORTANT: MAKE SURE THE INFORMATION BELOW IS CORRECT **\n";
 	cout << " catalog location: \t" << catalog_path << endl;
 	cout << " tpch files dir: \t" << tpch_dir << endl;

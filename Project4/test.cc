@@ -301,7 +301,7 @@ void q4 (){
 }
 
 void q5 (){
-
+ 
 	Statistics s;
     std::string relName[] = { "customer", "orders", "lineitem"};
 
