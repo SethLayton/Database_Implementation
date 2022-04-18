@@ -567,8 +567,10 @@ void q11 (){
 	
 }
 
-double selectRows (std::string relNames[], std::string cnf[], int numToJoin[], int size) {
-	Statistics s;
+double selectRows (Statistics s, std::string relNames[],std::string cnf[], int numToJoin[], int size) {
+	
+	 
+	
 	for (int i = 0; i < size-1; i++) {
 		yy_scan_string(cnf[i].c_str());
 		yyparse();
@@ -583,12 +585,27 @@ double selectRows (std::string relNames[], std::string cnf[], int numToJoin[], i
 }
 
 TEST(SELECT, NoJoin) {
+	Statistics s;
 	std::string rName[] = { "part"};
+	std::string rNameAtts[] = {"part"};
+	int numT[] = {200000};
+
+	std::string attNames[] = {"p_partkey"};
+	int attDist [] = {200000};
+	for (int i =0; i < sizeof(rName); i++){
+		s.AddRel(rName[i], numT[i]);
+	}
+	for (int i = 0; i < sizeof(rNameAtts))
+
 	int n[] = {1};
 	std::string cnfs[] = {
 		"(p_partkey >-1)"
 	};
-	EXPECT_EQ(200000, selectRows(rName, cnfs, n, 1));
+	
+	
+
+
+	EXPECT_EQ(200000, selectRows(s,rName, cnfs, n, 1));
 
 }
 

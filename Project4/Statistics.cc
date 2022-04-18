@@ -103,6 +103,7 @@ void Statistics::CopyRel(std::string oldName, std::string newName) {
 void Statistics::Read(std::string fromWhere) {
     ifstream file(fromWhere);
     string line;
+    std::string currentRel = "";
     while (getline (file, line)) {
         
         if (line.find("relName: ",0) != -1){
@@ -119,7 +120,7 @@ void Statistics::Read(std::string fromWhere) {
             std::string attName = line.substr( pos1, pos2-pos1 );
             std::string numdis = line.substr(line.find("!numDistincts: ")+15);
             int nd = std::stoi(numdis);
-            AddRel(attName, nd);
+            AddAtt(attName, nd);
         }
         
     }
