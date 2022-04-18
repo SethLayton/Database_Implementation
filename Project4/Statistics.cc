@@ -113,6 +113,7 @@ void Statistics::Read(std::string fromWhere) {
             std::string numtups = line.substr(line.find("!numTuples: ")+12);
             int nt = std::stoi(numtups);
             AddRel(relName, nt);
+            currentRel = relName;
         } else if (line.find("attName: ", 0)!= -1)
         {
             int pos1 = line.find("attName: ")+9;
@@ -120,7 +121,7 @@ void Statistics::Read(std::string fromWhere) {
             std::string attName = line.substr( pos1, pos2-pos1 );
             std::string numdis = line.substr(line.find("!numDistincts: ")+15);
             int nd = std::stoi(numdis);
-            AddAtt(attName, nd);
+            AddAtt(currentRel, attName, nd);
         }
         
     }
