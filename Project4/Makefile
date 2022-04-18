@@ -13,8 +13,8 @@ test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Stat
 a3test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 	$(CC) -o a3test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -lfl -lgtest -lpthread
 	
-gtest.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o
-	$(CC) -o gtest.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o -lfl -lgtest -lpthread
+gtest.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o Statistics.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o
+	$(CC) -o gtest.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o gtest.o -lfl -lgtest -lpthread
 	
 a2-2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o
 	$(CC) -o a2-2test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a2-2test.o -lfl -lgtest -lpthread

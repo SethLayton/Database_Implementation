@@ -234,12 +234,18 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
 
     } else { // If there was a join, we need to create the new relationship
         numSubsets++;
+        std::string intName = std::to_string(numSubsets);
+        AddRel(intName, round(ratio));
+        std::vector<rel> tempRel;
+        
         for (int i = 0; i < numToJoin; i++) {
             //rels.at(relNames[i]);
             subsets_n[relNames[i]] = numSubsets;
+            rel r = rels.at(relNames[i]);
+            tempRel.push_back(r);
         }
-        std::string intName = std::to_string(numSubsets);
-        AddRel(intName, round(ratio));
+        subsets[intName] = tempRel;
+        
     }    
 
 
@@ -399,13 +405,17 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
     }
 
     //check to see if there are any 'partially used' subsets in our relation
+    
+        
     for (auto set : subsets) {
         bool currentSet = false; 
         bool found = false;
+        
         for (rel set_rel : set.second) {     
-            found = tempRelations.find(set_rel.name) != tempRelations.end();
+            found = relations.find(set_rel.name) != relations.end();
             if (currentSet && !found) {
                 //we have a partially used subset
+                
                 cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with the given list of relations." << endl;
                 exit(0);
             }
@@ -417,7 +427,8 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
         //this is used to check the last element of the subset vector
         if (found && !currentSet) {
             //we have a partially used subset
-            cout << "Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
+            
+            cout << "!!!!Error in CheckTree. Found a 'partially used' subset of relations. Mismatch with list of relations." << endl;
             exit(0);
         }
     }

@@ -70,9 +70,9 @@ void PrintAndList(struct AndList *pAnd) {
 
 void checkResult(double correct, double result) {
 	if(fabs(result-correct)>0.5) {
-		cout<<"error in estimation\nExpected: "<< correct<< "\nEstimation: " << result;
+		cout<<"error in estimation\nExpected: "<< correct<< "\nEstimation: " << result << endl;;
 	} else {
-		cout << "Correct Estimation!";
+		cout << "Correct Estimation!" << endl;
 	}
 
 }

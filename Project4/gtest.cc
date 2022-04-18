@@ -1,367 +1,600 @@
-#include "gtest.h"
-#include "BigQ.h"
-#include "RelOp.h"
-#include <pthread.h>
+// #include "y.tab.h"
+#include <iostream>
+#include <stdlib.h>
+#include "Statistics.h"
+#include "ParseTree.h"
 #include <gtest/gtest.h>
+#include <math.h>
+extern "C" { 
+	struct YY_BUFFER_STATE *yy_scan_string(const char*);
+	int yyparse(void);
+}
+extern struct AndList *final;
+
+using namespace std;
 
 
-
-Attribute IA = {"int", Int};
-Attribute SA = {"string", String};
-Attribute DA = {"double", Double};
-
-int clear_pipe (Pipe &in_pipe, Schema *schema, bool print) {
-	Record rec;
-	int cnt = 0;
-	while (in_pipe.Remove (&rec)) {
-		// if (print) {
-		// 	rec.Print (schema);
-		// }
-		cnt++;
+void PrintOperand(struct Operand *pOperand) {
+	if(pOperand!=NULL) {
+		cout<<pOperand->value<<" ";
 	}
-	return cnt;
+	else
+		return;
 }
 
-int clear_pipe (Pipe &in_pipe, Schema *schema, Function &func, bool print) {
-	Record rec;
-	int cnt = 0;
-	double sum = 0;
-	while (in_pipe.Remove (&rec)) {
-		if (print) {
-			rec.Print (schema);
+void PrintComparisonOp(struct ComparisonOp *pCom) {
+	if(pCom!=NULL) {
+		PrintOperand(pCom->left);
+		switch(pCom->code) {
+			case 1:
+				cout<<" < "; break;
+			case 2:
+				cout<<" > "; break;
+			case 3:
+				cout<<" = ";
 		}
-		int ival = 0; double dval = 0;
-		func.Apply (rec, ival, dval);
-		sum += (ival + dval);
-		cnt++;
+		PrintOperand(pCom->right);
+
 	}
-	cout << " Sum: " << sum << endl;
-	return cnt;
+	else {
+		return;
+	}
 }
-int pipesz = 100; // buffer sz allowed for each pipe
-int buffsz = 100; // pages of memory allowed for operations
+void PrintOrList(struct OrList *pOr) {
+	if(pOr !=NULL) {
+		struct ComparisonOp *pCom = pOr->left;
+		PrintComparisonOp(pCom);
 
-
-// SelectFile SF_ps, SF_p, SF_s, SF_o, SF_li, SF_c;
-DBFile dbf_ps, dbf_p, dbf_s, dbf_o, dbf_li, dbf_c;
-Pipe _ps (pipesz), _p (pipesz), _s (pipesz), _o (pipesz), _li (pipesz), _c (pipesz);
-CNF cnf_ps, cnf_p, cnf_s, cnf_o, cnf_li, cnf_c;
-Record lit_ps, lit_p, lit_s, lit_o, lit_li, lit_c;
-Function func_ps, func_p, func_s, func_o, func_li, func_c;
-
-DBFile currentDB;
-Pipe  currentPipe(pipesz);
-CNF currentCnf;
-Record currentRec;
-Function currentFunc;
-
-int pAtts = 9;
-int psAtts = 5;
-int liAtts = 16;
-int oAtts = 9;
-int sAtts = 7;
-int cAtts = 8;
-int nAtts = 4;
-int rAtts = 3;
-relation *rel_ptr[] = {n, r, c, p, ps, s, o, li};
-
-void init_SF_pt (relation rel, char*pred, DBFile &db) {
-    db.Open(rel.path());
-    get_cnf(pred, rel.schema (),currentCnf, currentRec);
-
+		if(pOr->rightOr)
+		{
+				cout<<" OR ";
+				PrintOrList(pOr->rightOr);
+		}
+	}
+	else {
+		return;
+	}
+}
+void PrintAndList(struct AndList *pAnd) {
+	if(pAnd !=NULL) {
+		struct OrList *pOr = pAnd->left;
+		PrintOrList(pOr);
+		if(pAnd->rightAnd) {
+			cout<<" AND ";
+			PrintAndList(pAnd->rightAnd);
+		}
+	}
+	else {
+		return;
+	}
 }
 
-void init_SF_ps (char *pred_str, int numpgs) {
-	dbf_ps.Open (ps->path());
-	get_cnf (pred_str, ps->schema (), cnf_ps, lit_ps);
-	//SF_ps.Use_n_Pages (numpgs);
+void checkResult(double correct, double result) {
+	if(fabs(result-correct)>0.5) {
+		cout<<"error in estimation\nExpected: "<< correct<< "\nEstimation: " << result << endl;;
+	} else {
+		cout << "Correct Estimation!" << endl;
+	}
+
 }
 
-void init_SF_p (char *pred_str, int numpgs) {
-	dbf_p.Open (p->path());
-	get_cnf (pred_str, p->schema (), cnf_p, lit_p);
-	//SF_p.Use_n_Pages (numpgs);
-}
+std::string fileName = "Statistics.txt";
+void q0 (){
 
-void init_SF_s (char *pred_str, int numpgs) {
-	dbf_s.Open (s->path());
-	get_cnf (pred_str, s->schema (), cnf_s, lit_s);
-	//SF_s.Use_n_Pages (numpgs);
-}
-
-void init_SF_o (char *pred_str, int numpgs) {
-	dbf_o.Open (o->path());
-	get_cnf (pred_str, o->schema (), cnf_o, lit_o);
-	//SF_o.Use_n_Pages (numpgs);
-}
-
-void init_SF_li (char *pred_str, int numpgs) {
-	dbf_li.Open (li->path());
-	get_cnf (pred_str, li->schema (), cnf_li, lit_li);
-	//SF_li.Use_n_Pages (numpgs);
-}
-
-void init_SF_c (char *pred_str, int numpgs) {
-	dbf_c.Open (c->path());
-	get_cnf (pred_str, c->schema (), cnf_c, lit_c);
-	//SF_c.Use_n_Pages (numpgs);
-}
-
-
-int gtest1 ();
-int gtest2 ();
-int gtest3 ();
-
-
-//Duplicate Removal
-int gtest1 (relation table, char* pred) {
-    init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec);
-	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
-    Pipe out(pipesz);
-
-	DuplicateRemoval D( currentPipe, out, *table.schema(), 10);
-    SF_test1.WaitUntilDone();
-	D.WaitUntilDone();
-
-    int cnt = clear_pipe (out, table.schema(), false);
+	Statistics s;
+	std::string relName[] = {"supplier","partsupp"};
 
 	
-    currentDB.Close();
+	s.AddRel(relName[0],10000);
+	s.AddAtt(relName[0], "s_suppkey",10000);
 
-    return cnt;
+	s.AddRel(relName[1],800000);
+	s.AddAtt(relName[1], "ps_suppkey", 10000);	
+	std::string cnf = "(s_suppkey = ps_suppkey)";
 
-}
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	double result = s.Estimate(final, relName, 2);
+	if(result!=800000)
+		cout<<"error in estimating Q0 before apply \n ";
+	else
+		cout << "correct result" << endl;
+	// s.Apply(final, relName, 2);
 
-//Test that the sum is correct
-int gtest2 (relation table, char* pred, char* str_sum) {
-    init_SF_pt(table, pred, currentDB);
-	SelectFile SF_test1( currentDB, currentPipe, currentCnf, currentRec);
+	// // test write and read
+	// s.Write(fileName);
+
+	// //reload the statistics object from file
+	// Statistics s1;
+	// s1.Read(fileName);	
+	// cnf = "(s_suppkey>1000)";	
+	// yy_scan_string(cnf.c_str());
+	// yyparse();
+	// double dummy = s1.Estimate(final, relName, 2);
+	// if(fabs(dummy*3.0-result) >0.1)	{
+	// 	cout<<"Read or write or last apply is not correct\n";
+	// }	
 	
-    Pipe _out (1);
-	Function func;
-	get_cnf (str_sum, table.schema (), func);
-	//T.Use_n_Pages (1);
-    Sum T(currentPipe, _out, func, 1);
-    SF_test1.WaitUntilDone();
-    T.WaitUntilDone ();
-	Schema out_sch ("out_sch", 1, &DA);
-    Record temp;
-	_out.Remove(&temp);
-    double cnt = std::stod(temp.getValue(Double, 0));
-    currentDB.Close();
-    
-    return cnt;
-
-}
-//Tests GroupBy
-int gtest3 (relation table, char* pred, char* str_sum, int attNum) {
-    init_SF_pt(table, pred, currentDB);
-    Pipe _in(100);
-	SelectFile SF_test1 (currentDB, _in, currentCnf, currentRec);
-	OrderMaker grp_order;
-	grp_order.AddAttr(Int, attNum);
-    Pipe _out (100);
-	Function func;
-	get_cnf (str_sum, table.schema (), func);
-	//T.Use_n_Pages (1);
-    Attribute s_nationkey = {"s_nationkey", Int};
-    Attribute sum = {"sum", Double};
-	Attribute groupatt[] = {sum, s_nationkey};
-   
-	Schema out_sch ("out_sch", 2, groupatt);
-	GroupBy G(currentPipe, _out, grp_order, func, 10);
-    SF_test1.WaitUntilDone();
-    G.WaitUntilDone();
-
-	int cnt = clear_pipe (_out, &out_sch, true);
-
-
-
-    currentDB.Close();
-    return cnt;
-
 }
 
-// TEST(SUM, PartSupplier) {
-//     char* pred = "(ps_suppkey=ps_suppkey)";
-//     char* str_sum = "(ps_supplycost)";
-    
-//     EXPECT_EQ(400420638.0, gtest2(*ps, pred, str_sum));
-// }
+void q1 (){
 
-// TEST(DUPLICATEREMOVAL, Supplier) {
-//     char * pred = "(s_suppkey < 10)";
-//     EXPECT_EQ(9, gtest1(*s, pred));
-// }
-// TEST(DUPLICATEREMOVAL, PartSupplier) {
-//     char * pred = "(ps_suppkey =10)";
-//     EXPECT_EQ(80, gtest1(*ps, pred));
-// }
+	Statistics s;
+	std::string relName[] = {"lineitem"};
 
-// TEST(GROUPBY, Supplier) {
-//     char * pred = "(s_suppkey < 10)";
-//     char * str_sum = "(s_acctbal)";
-//     EXPECT_EQ(25 ,gtest3(*s, pred, str_sum, 3));
+	s.AddRel(relName[0],6001215);
+	s.AddAtt(relName[0], "l_returnflag",3);
+	s.AddAtt(relName[0], "l_discount",11);
+	s.AddAtt(relName[0], "l_shipmode",7);
 
-// }
+	std::string cnf = "(l_returnflag = 'R') AND (l_discount < 0.04 OR l_shipmode = 'MAIL')";
 
+	yy_scan_string(cnf.c_str());
+	yyparse();
 
-int q1 () {
+	double result = s.Estimate(final, relName, 1);
+	cout<<"Your estimation Result  " << result;
+	cout<<"\n Correct Answer: 8.5732e+5";
 
+	s.Apply(final, relName, 1);
 
-	char *pred_ps = "(c_custkey < 100)";
-	init_SF_c (pred_ps, 100);
-	SelectFile SF_c(dbf_c, _c, cnf_c, lit_c);
-
-	SF_c.WaitUntilDone ();
-
-	int cnt = clear_pipe (_c, c->schema (), true);
-	// cout << "\n\n query1 returned " << cnt << " records \n";
-	dbf_c.Close ();
-    return cnt;
+	// test write and read
+	s.Write(fileName);
 }
 
-int q2 () {
 
-	char *pred_p = "(p_retailprice > 931.00) AND (p_retailprice < 931.31)";
-	init_SF_p (pred_p, 100);
-	
-	Pipe _out (pipesz);
-	int keepMe[] = {0,1,7};
-	int numAttsIn = pAtts;
-	int numAttsOut = 3;
-	//P_p.Use_n_Pages (buffsz);
-	SelectFile SF_p (dbf_p, _p, cnf_p, lit_p);
-	
-	//SF_p.Run (dbf_p, _p, cnf_p, lit_p);
-	Project P_p(_p, _out, keepMe, numAttsIn, numAttsOut, buffsz);
-	//P_p.Run (_p, _out, keepMe, numAttsIn, numAttsOut);
 
-	SF_p.WaitUntilDone ();
-	P_p.WaitUntilDone ();
+void q2 (){
 
-	Attribute att3[] = {IA, SA, DA};
-	Schema out_sch ("out_sch", numAttsOut, att3);
-	int cnt = clear_pipe (_out, &out_sch, true);
-
-	// cout << "\n\n query2 returned " << cnt << " records \n";
-
-	dbf_p.Close ();
-    
-    return cnt;
-}
-int q3 () {
-
-	char *pred_s = "(s_suppkey = s_suppkey)";
-	init_SF_s (pred_s, 100);
-
-	//Sum T;
-	// _s (input pipe)
-	Pipe _out (1);
-	Function func;
-	char *str_sum = "(s_acctbal + (s_acctbal * 1.05))";
-	get_cnf (str_sum, s->schema (), func);
-	func.Print ();
-	//T.Use_n_Pages (1);
-	SelectFile SF_s (dbf_s, _s, cnf_s, lit_s);
-	//SF_s.Run (dbf_s, _s, cnf_s, lit_s);
-	Sum T(_s, _out, func, 1);
-	//T.Run (_s, _out, func);
-
-	SF_s.WaitUntilDone ();
-	T.WaitUntilDone ();
-
-	Schema out_sch ("out_sch", 1, &DA);
-	int cnt = clear_pipe (_out, &out_sch, true);
-
-	// cout << "\n\n query3 returned " << cnt << " records \n";
-
-	dbf_s.Close ();
-    return cnt;
-}
-int q4 () {
-
-	char *pred_s = "(s_suppkey = s_suppkey)";
-	init_SF_s (pred_s, 100);
-	SelectFile SF_s(dbf_s, _s, cnf_s, lit_s);
-	//SF_s.Run (dbf_s, _s, cnf_s, lit_s); // 10k recs qualified
-
-	char *pred_ps = "(ps_suppkey = ps_suppkey)";
-	init_SF_ps (pred_ps, 100);
-
-	// Join J;
-	// left _s
-	// right _ps
-	Pipe _s_ps (pipesz);
-	CNF cnf_p_ps;
-	Record lit_p_ps;
-	get_cnf ("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
-
-	int outAtts = sAtts + psAtts;
-	Attribute s_nationkey = {"s_nationkey", Int};
-	Attribute ps_supplycost = {"ps_supplycost", Double};
-	Attribute joinatt[] = {IA,SA,SA,s_nationkey,SA,DA,SA,IA,IA,IA,ps_supplycost,SA};
-	Schema join_sch ("join_sch", outAtts, joinatt);
+	Statistics s;
+	std::string relName[] = {"orders","customer","nation"};
 
 	
-	// GroupBy G;
-	// _s (input pipe)
-	Pipe _out (100);
-	Function func;
-	char *str_sum = "(ps_supplycost)";
-	get_cnf (str_sum, &join_sch, func);
-	func.Print ();
-	OrderMaker grp_order;
-	grp_order.AddAttr(Int, 3);
-	//G.Use_n_Pages (1);
+	s.AddRel(relName[0],1500000);
+	s.AddAtt(relName[0], "o_custkey",150000);
 
-	SelectFile SF_ps(dbf_ps, _ps, cnf_ps, lit_ps);
-	//SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps); // 161 recs qualified
-	Join J(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps, 10);
-	//J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-	GroupBy G(_s_ps, _out, grp_order, func, 10);
-	//G.Run (_s_ps, _out, grp_order, func);
+	s.AddRel(relName[1],150000);
+	s.AddAtt(relName[1], "c_custkey",150000);
+	s.AddAtt(relName[1], "c_nationkey",25);
+	
+	s.AddRel(relName[2],25);
+	s.AddAtt(relName[2], "n_nationkey",25);
 
-	SF_ps.WaitUntilDone ();
-	J.WaitUntilDone ();
-	G.WaitUntilDone ();
-	Attribute sum = {"sum", Double};
-	Attribute groupatt[] = {sum, s_nationkey};
-	Schema sum_sch ("sum_sch", 2, groupatt);
-	int cnt = clear_pipe (_out, &sum_sch, true);
-	// cout << " query6 returned sum for " << cnt << " groups (expected 25 groups)\n"; 
-    return cnt;
+	std::string cnf = "(c_custkey = o_custkey)";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+	// Join the first two relations in relName
+	
+	// s.Apply(final, relName, 2);
+	
+	// cnf = " (c_nationkey = n_nationkey)";
+	// yy_scan_string(cnf.c_str());
+	// yyparse();
+	
+	double result = s.Estimate(final, relName, 3);
+	checkResult(1500000, result);
+	// if(fabs(result-1500000)>0.1)
+	// 	cout<<"error in estimating Q2\n" << result;
+	s.Apply(final, relName, 3);
+	// cout << final << endl;
+	s.Write(fileName);
+
 }
 
-TEST(SELECT, Customer) {
-    EXPECT_EQ(99,q1());
-}
- 
- TEST(PROJECT, Part) {
-    EXPECT_EQ(22,q2());
+// Note there is a self join
+void q3 (){
+
+	Statistics s;
+	std::string relName[] = {"supplier","customer","nation"};
+
+	s.Read(fileName);
+	
+	s.AddRel(relName[0],10000);
+	s.AddAtt(relName[0], "s_nationkey",25);
+
+	s.AddRel(relName[1],150000);
+	s.AddAtt(relName[1], "c_custkey",150000);
+	s.AddAtt(relName[1], "c_nationkey",25);
+	
+	s.AddRel(relName[2],25);
+	s.AddAtt(relName[2], "n_nationkey",25);
+
+	s.CopyRel("nation","n1");
+	s.CopyRel("nation","n2");
+	s.CopyRel("supplier","s");
+	s.CopyRel("customer","c");
+
+	std::string set1[] ={"s","n1"};
+	std::string cnf = "(s.s_nationkey = n1.n_nationkey)";
+	yy_scan_string(cnf.c_str());
+	yyparse();	
+	s.Apply(final, set1, 2);
+	
+
+	std::string set2[] ={"c","n2"};
+	cnf = "(c.c_nationkey = n2.n_nationkey)";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	s.Apply(final, set2, 2);
+
+	std::string set3[] = {"c","s","n1","n2"};
+	cnf = " (n1.n_nationkey = n2.n_nationkey )";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+	double result = s.Estimate(final, set3, 4);
+	checkResult(60000000.0, result);
+	// if(fabs(result-60000000.0)>0.1)
+	// 	cout<<"error in estimating Q3\n";
+
+	s.Apply(final, set3, 4);
+
+	s.Write(fileName);
+
 }
 
-TEST(SUM, Part) {
-     EXPECT_EQ(1,q3());
-}
-TEST(JOIN, PartSupp_Supp) {
-     EXPECT_EQ(25,q4());
-}
-int main (int argc, char *argv[]) {
 
-	setup ();
-    cout << "There are three tests:\n" 
-    "  1. It can create the sorted database with the given CNF\n"
-    "  2. The database is actually sorted\n"
-    "  3. Query with CNF returns expected number of records\n"
-    "Each test suite tests (1) and (2). The final two test suite tests 3, where:\n"
-    "  - One tests the correct number of records in the full database\n" 
-    "  - One tests the correct number of records from queries in Project 1: output.log\n\n"<< endl;
-	relation *rel_ptr[] = {n, r, c, p, ps, s, o, li};
-    testing::InitGoogleTest();
+void q4 (){
+
+	Statistics s;
+    std::string relName[] = { "part", "partsupp", "supplier", "nation", "region"};
+
+	s.AddRel(relName[0],200000);
+	s.AddAtt(relName[0], "p_partkey",200000);
+	s.AddAtt(relName[0], "p_size",50);
+
+	s.AddRel(relName[1], 800000);
+	s.AddAtt(relName[1], "ps_suppkey",10000);
+	s.AddAtt(relName[1], "ps_partkey", 200000);
+	
+	s.AddRel(relName[2],10000);
+	s.AddAtt(relName[2], "s_suppkey",10000);
+	s.AddAtt(relName[2], "s_nationkey",25);
+	
+	s.AddRel(relName[3],25);
+	s.AddAtt(relName[3], "n_nationkey",25);
+	s.AddAtt(relName[3], "n_regionkey",5);
+
+	s.AddRel(relName[4],5);
+	s.AddAtt(relName[4], "r_regionkey",5);
+	s.AddAtt(relName[4], "r_name",5);
+
+	s.CopyRel("part","p");
+	s.CopyRel("partsupp","ps");
+	s.CopyRel("supplier","s");
+	s.CopyRel("nation","n");
+	s.CopyRel("region","r");
+
+	std::string cnf = "(p.p_partkey=ps.ps_partkey) AND (p.p_size = 2)";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	std::string set1[] = {"p", "ps"};
+	s.Apply(final, set1, 2);
+
+	cnf ="(s.s_suppkey = ps.ps_suppkey)";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	std::string set2[] = {"p", "ps", "s"};
+	s.Apply(final, set2, 3);
+
+	cnf =" (s.s_nationkey = n.n_nationkey)";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	std::string set3[] = {"p", "ps", "s", "n"};
+
+	s.Apply(final, set3, 4);
+
+	cnf ="(n.n_regionkey = r.r_regionkey) AND (r.r_name = 'AMERICA') ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	std::string set4[] = {"p", "ps", "s", "n", "r"};
+
+	double result = s.Estimate(final, set4, 5);
+	checkResult(3200, result);
+	// if(fabs(result-3200)>0.1)
+	// 	cout<<"error in estimating Q4\n";
+
+	s.Apply(final, set4, 5);	
+	
+	s.Write(fileName);
+
+}
+
+void q5 (){
+
+	Statistics s;
+    std::string relName[] = { "customer", "orders", "lineitem"};
+
+	s.AddRel(relName[0],150000);
+	s.AddAtt(relName[0], "c_custkey",150000);
+	s.AddAtt(relName[0], "c_mktsegment",5);
+
+	s.AddRel(relName[1],1500000);
+	s.AddAtt(relName[1], "o_orderkey",1500000);
+	s.AddAtt(relName[1], "o_custkey",150000);
+
+	s.AddAtt(relName[1], "o_orderdate",150000);
+	
+	s.AddRel(relName[2],6001215);
+	s.AddAtt(relName[2], "l_orderkey",1500000);
+	
+
+	std::string cnf = "(c_mktsegment = 'BUILDING')  AND (c_custkey = o_custkey)  AND (o_orderdate < '1995-03-1')";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	s.Apply(final, relName, 2);
+	
+	
+	cnf = " (l_orderkey = o_orderkey) ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+
+	double result = s.Estimate(final, relName, 3);
+	checkResult(400081, result);
+	// if(fabs(result-400081)>0.1)
+	// 	cout<<"error in estimating Q5\n";
+	// 	cout << result;
+
+	s.Apply(final, relName, 3);
+
+	s.Write(fileName);
+}
+
+void q6 (){
+
+	Statistics s;
+    std::string relName[] = { "partsupp", "supplier", "nation"};
+
+	s.Read(fileName);
+	
+	s.AddRel(relName[0],800000);
+	s.AddAtt(relName[0], "ps_suppkey",10000);
+
+	s.AddRel(relName[1],10000);
+	s.AddAtt(relName[1], "s_suppkey",10000);
+	s.AddAtt(relName[1], "s_nationkey",25);
+	
+	s.AddRel(relName[2],25);
+	s.AddAtt(relName[2], "n_nationkey",25);
+	s.AddAtt(relName[2], "n_name",25);
+
+
+	std::string cnf = " (s_suppkey = ps_suppkey) ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	s.Apply(final, relName, 2);
+	
+	cnf = " (s_nationkey = n_nationkey)  AND (n_name = 'AMERICA')   ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+	double result = s.Estimate(final, relName, 3);
+
+	// if(fabs(result-32000)>0.1)
+	// 	cout<<"error in estimating Q6\n";
+	checkResult(32000, result);
+	s.Apply(final, relName, 3);
+	
+	s.Write(fileName);
+
+}
+
+void q7(){
+
+	Statistics s;
+	std::string relName[] = { "orders", "lineitem"};
+
+	//s.Read(fileName);
+	
+
+	s.AddRel(relName[0],1500000);
+	s.AddAtt(relName[0], "o_orderkey",1500000);
+	
+	
+	s.AddRel(relName[1],6001215);
+	s.AddAtt(relName[1], "l_orderkey",1500000);
+	s.AddAtt(relName[1], "l_receiptdate",3);
+	
+
+	std::string cnf = "(l_receiptdate >'1995-02-01' ) AND (l_orderkey = o_orderkey)";
+
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	double result = s.Estimate(final, relName, 2);
+	// cout << result << endl;
+	// if(fabs(result-2000405)>0.1)
+	// 	cout<<"error in estimating Q7\n";
+	checkResult(2000405, result);
+
+	s.Apply(final, relName, 2);
+	s.Write(fileName);
+	
+}
+
+// Note  OR conditions are not independent.
+void q8 (){
+
+	Statistics s;
+	std::string relName[] = { "part",  "partsupp"};
+
+	s.Read(fileName);
+	
+	s.AddRel(relName[0],200000);
+	s.AddAtt(relName[0], "p_partkey",200000);
+	s.AddAtt(relName[0], "p_size",50);
+
+	s.AddRel(relName[1],800000);
+	s.AddAtt(relName[1], "ps_partkey",200000);
+	
+
+	std::string cnf = "(p_partkey=ps_partkey) AND (p_size =3 OR p_size=6 OR p_size =19)";
+
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	
+		
+	double result = s.Estimate(final, relName,2);
+
+	checkResult(48000, result);
+	// if(fabs(result-48000)>0.1)
+	// 	cout<<"error in estimating Q8\n";
+	// else
+	// 	cout << "correct" << endl;
+
+	s.Apply(final, relName,2);
+	
+	s.Write(fileName);
+
+}
+void q9(){
+
+	Statistics s;
+	std::string relName[] = { "part",  "partsupp","supplier"};
+
+	
+	s.AddRel(relName[0],200000);
+	s.AddAtt(relName[0], "p_partkey",200000);
+	s.AddAtt(relName[0], "p_name", 199996);
+
+	s.AddRel(relName[1],800000);
+	s.AddAtt(relName[1], "ps_partkey",200000);
+	s.AddAtt(relName[1], "ps_suppkey",10000);
+	
+	s.AddRel(relName[2],10000);
+	s.AddAtt(relName[2], "s_suppkey",10000);
+	
+	std::string cnf = "(p_partkey=ps_partkey) AND (p_name = 'dark green antique puff wheat') ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	s.Apply(final, relName,2);
+	
+	cnf = " (s_suppkey = ps_suppkey) ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+	double result = s.Estimate(final, relName,3);
+	checkResult(4, result);
+	// if(fabs(result-4)>0.5)
+	// 	cout<<"error in estimating Q9\n";
+
+	s.Apply(final, relName,3);
+	
+	s.Write(fileName);
+
+}
+
+void q10 (){
+
+	Statistics s;
+    std::string relName[] = { "customer", "orders", "lineitem","nation"};
+
+	s.Read(fileName);
+	
+	s.AddRel(relName[0],150000);
+	s.AddAtt(relName[0], "c_custkey",150000);
+	s.AddAtt(relName[0], "c_nationkey",25);
+
+	s.AddRel(relName[1],1500000);
+	s.AddAtt(relName[1], "o_orderkey",1500000);
+	s.AddAtt(relName[1], "o_custkey",150000);
+	s.AddAtt(relName[1], "o_orderdate",150000);
+	s.AddRel(relName[2],6001215);
+	s.AddAtt(relName[2], "l_orderkey",1500000);
+	
+	s.AddRel(relName[3],25);
+	s.AddAtt(relName[3], "n_nationkey",25);
+	
+	std::string cnf = "(c_custkey = o_custkey)  AND (o_orderdate > '1994-01-23') ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	s.Apply(final, relName, 2);
+
+	cnf = " (l_orderkey = o_orderkey) ";
+	yy_scan_string(cnf.c_str());
+	yyparse();
+
+	s.Apply(final, relName, 3);  
+	
+	cnf = "(c_nationkey = n_nationkey) ";
+	yy_scan_string(cnf.c_str());
+	yyparse();	
+	
+	double result = s.Estimate(final, relName, 4);
+	// if(fabs(result-2000405)>0.1)
+	// 	cout<<"error in estimating Q10\n";
+	cout << std::fixed;
+	checkResult(2000405, result);
+	cout << std::scientific;
+
+
+	s.Apply(final, relName, 4);  
+	
+	s.Write(fileName);
+
+}
+
+void q11 (){
+
+	Statistics s;
+	std::string relName[] = { "part",  "lineitem"};
+
+	s.Read(fileName);
+	
+	s.AddRel(relName[0],200000);
+	s.AddAtt(relName[0], "p_partkey",200000);
+	s.AddAtt(relName[0], "p_container",40);
+
+	s.AddRel(relName[1],6001215);
+	s.AddAtt(relName[1], "l_partkey",200000);
+	s.AddAtt(relName[1], "l_shipinstruct",4);
+	s.AddAtt(relName[1], "l_shipmode",7);
+
+	std::string cnf = "(l_partkey = p_partkey) AND (l_shipmode = 'AIR' OR l_shipmode = 'AIR REG') AND (p_container ='SM BOX' OR p_container = 'SM PACK')  AND (l_shipinstruct = 'DELIVER IN PERSON')";
+
+	yy_scan_string(cnf.c_str());
+	yyparse();
+	
+	double result = s.Estimate(final, relName,2);
+
+	// if(fabs(result-21432.9)>0.5)
+	// 	cout<<"error in estimating Q11\n";
+	checkResult(21432.9, result);
+	s.Apply(final, relName,2);
+	
+	s.Write(fileName);
+	
+}
+
+double selectRows (std::string relNames[], std::string cnf[], int numToJoin[], int size) {
+	Statistics s;
+	for (int i = 0; i < size-1; i++) {
+		yy_scan_string(cnf[i].c_str());
+		yyparse();
+
+		s.Apply(final, relNames, numToJoin[i]);
+
+	}
+	yy_scan_string(cnf[size-1].c_str());
+	yyparse();
+	return s.Estimate(final, relNames, numToJoin[size-1]);
+
+}
+
+TEST(SELECT, NoJoin) {
+	std::string rName[] = { "part"};
+	int n[] = {1};
+	std::string cnfs[] = {
+		"(p_partkey >-1)"
+	};
+	EXPECT_EQ(200000, selectRows(rName, cnfs, n, 1));
+
+}
+
+int main(int argc, char *argv[]) {
+	testing::InitGoogleTest();
   	int ret_val = RUN_ALL_TESTS();
-
-	cleanup ();
 	return ret_val;
+
 }
