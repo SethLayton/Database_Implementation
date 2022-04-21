@@ -7,6 +7,9 @@ ifdef linux
 tag = -n
 endif
 
+a42.out:Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o
+	$(CC) -o a42.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o -lfl -lgtest -lpthread
+
 test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -lfl -lgtest -lpthread
 
