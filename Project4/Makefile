@@ -78,6 +78,12 @@ Record.o: Record.cc
 
 Schema.o: Schema.cc
 	$(CC) -g -c Schema.cc
+
+main:   y.tab.o lex.yy.o main.o
+	$(CC) -o main y.tab.o lex.yy.o main.o -lfl
+	
+main.o : main.cc
+	$(CC) -g -c main.cc
 	
 y.tab.o: Parser.y
 	yacc -d Parser.y
@@ -90,7 +96,7 @@ yyfunc.tab.o: ParserFunc.y
 	g++ -c yyfunc.tab.c
 	
 lex.yy.o: Lexer.l
-	lex Lexer.l
+	lex  Lexer.l
 	gcc  -c lex.yy.c
 
 lex.yyfunc.o: LexerFunc.l
