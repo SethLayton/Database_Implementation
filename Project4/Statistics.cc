@@ -75,28 +75,36 @@ void Statistics::AddAtt(std::string relName, std::string attName, int numDistinc
 }
 
 void Statistics::CopyRel(std::string oldName, std::string newName) {
-    //grab the old relation structure
-    rel oldRel = rels.at(oldName);
-    //create the new relation structure
-    rel newRel = {newName, oldRel.numTuples};
-    //loop through all the old relations attributes
-    for (auto k : oldRel.atts) {
-        //create a copy of that attribute
-        std::string newattName = newName+"." + k.second.name;
-        att att = {newattName, k.second.numDistincts};
-        //add this copied attribute to the new relation
-        newRel.atts[newattName] = att;
-        att_to_rel[newattName] = newName;
+    //check to see if the newName already exists or not
+    try
+    {
+        rels.at(newName);
     }
-    //update or add the relation in the hashmap
-    rels[newName] = newRel;
+    catch(const std::exception& e)
+    {
+        //grab the old relation structure
+        rel oldRel = rels.at(oldName);
+        //create the new relation structure
+        rel newRel = {newName, oldRel.numTuples};
+        //loop through all the old relations attributes
+        for (auto k : oldRel.atts) {
+            //create a copy of that attribute
+            std::string newattName = newName+"." + k.second.name;
+            att att = {newattName, k.second.numDistincts};
+            //add this copied attribute to the new relation
+            newRel.atts[newattName] = att;
+            att_to_rel[newattName] = newName;
+        }
+        //update or add the relation in the hashmap
+        rels[newName] = newRel;
 
-    //Copying a relation means that we need to add
-    //the newly copied rel as a singleton subset
-    vector<rel> vRels;
-    vRels.push_back(newRel);
-    subsets[newName] = vRels;
-    subsets_n[newName] = 0;
+        //Copying a relation means that we need to add
+        //the newly copied rel as a singleton subset
+        vector<rel> vRels;
+        vRels.push_back(newRel);
+        subsets[newName] = vRels;
+        subsets_n[newName] = 0;
+    }
     
 }
 	

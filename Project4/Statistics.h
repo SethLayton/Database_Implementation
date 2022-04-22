@@ -35,6 +35,7 @@ public:
 	Statistics(Statistics &copyMe);	 // Performs deep copy
 	~Statistics();
 
+	std::string GetRelFromAtt(std::string att) { return att_to_rel.at(att); };
 
 	void AddRel(std::string relName, int numTuples);
 	void AddAtt(std::string relName, std::string attName, int numDistincts);
