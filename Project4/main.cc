@@ -19,7 +19,7 @@ extern int distinctFunc;
 
 void PrintOperand(struct Operand *pOperand) {
 	if(pOperand!=NULL) {
-		cout<<pOperand->value<<" ";
+		cout<<pOperand->value;
 	}
 	else
 		return;
@@ -28,13 +28,13 @@ void PrintOperand(struct Operand *pOperand) {
 void PrintComparisonOp(struct ComparisonOp *pCom) {
 	if(pCom!=NULL) {
 		PrintOperand(pCom->left);
-		cout << "code: " << pCom->code << endl;
+		// cout << "code: " << pCom->code << endl;
 		switch(pCom->code) {
-			case 1:
+			case 5:
 				cout<<" < "; break;
-			case 2:
+			case 6:
 				cout<<" > "; break;
-			case 3:
+			case 7:
 				cout<<" = ";
 		}
 		PrintOperand(pCom->right);
