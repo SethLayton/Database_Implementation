@@ -160,3 +160,39 @@ Schema :: ~Schema () {
 	myAtts = 0;
 }
 
+void Schema::Print() {
+
+	for(int i = 0; i < numAtts; i++) {
+
+		cout << "\tAtt " << myAtts[i].name << ": ";
+		if(myAtts[i].myType == INT) {
+
+			cout<<"INT"<<endl;
+		}
+		else if(myAtts[i].myType == DOUBLE) {
+			cout<<"DOUBLE"<<endl;
+		}			
+		else {
+			cout<<"STRING"<<endl;
+		}
+		
+	}
+}
+
+
+Schema::Schema(Schema *first, Schema *second) {
+
+	myAtts = new Attribute[first->numAtts + second->numAtts];
+
+	for(int i = 0; i < first->numAtts; i++) {
+
+		myAtts[i] = first->myAtts[i];
+	}
+
+	for(int i = 0; i < second->numAtts; i++) {
+
+		myAtts[first->numAtts+i] = second->myAtts[i];  
+	}
+	
+}
+

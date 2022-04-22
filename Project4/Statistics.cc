@@ -186,7 +186,15 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
             
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
-			std::string rAtt(Com->right->value); //grab name of the right attribute  
+			std::string rAtt(Com->right->value); //grab name of the right attribute
+            if (lAtt.find(".") != std::string::npos)
+            {
+                lAtt = split(lAtt, ".").at(1);
+            }
+            if (rAtt.find(".") != std::string::npos)
+            {
+                rAtt = split(rAtt, ".").at(1);
+            }  
             std::string lRel = att_to_rel.at(lAtt);
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
@@ -262,7 +270,6 @@ void Statistics::Apply(struct AndList *parseTree, std::string relNames[], int nu
 }
 
 double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin) {
-
     //check to see if the parseTree is valid
     CheckTree(parseTree, relNames, numToJoin);
     unordered_set<std::string> comp_relations;
@@ -280,7 +287,15 @@ double Statistics::Estimate(struct AndList *parseTree, std::string *relNames, in
             
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
-			std::string rAtt(Com->right->value); //grab name of the right attribute            
+			std::string rAtt(Com->right->value); //grab name of the right attribute
+            if (lAtt.find(".") != std::string::npos)
+            {
+                lAtt = split(lAtt, ".").at(1);
+            }
+            if (rAtt.find(".") != std::string::npos)
+            {
+                rAtt = split(rAtt, ".").at(1);
+            }            
             std::string lRel = att_to_rel.at(lAtt);
             rel lRelation = rels.at(lRel);
             att lAttribute = lRelation.atts.at(lAtt);
@@ -366,6 +381,14 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             struct ComparisonOp *Com = Or->left; //get the comparison operator
             std::string lAtt(Com->left->value); //grab name of the left attribute
             std::string rAtt(Com->right->value); //grab name of the right attribute
+            if (lAtt.find(".") != std::string::npos)
+            {
+                lAtt = split(lAtt, ".").at(1);
+            }
+            if (rAtt.find(".") != std::string::npos)
+            {
+                rAtt = split(rAtt, ".").at(1);
+            }
             std::string lRel = "";
             std::string rRel = "";
             try
@@ -390,6 +413,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
                 catch(const std::exception& e)
                 {
                     cout << "Error in CheckTree. parseTree contains a right relation that does not exist in the given list of relations." << endl;
+                    cout << lAtt << endl;
                     exit(0);
                 }   
             }
@@ -400,6 +424,7 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
                 //this means this relation was not
                 //in the passed in list of relation names
                 cout << "Error in CheckTree. parseTree contains a relation that does not exist in the given list of relations." << endl;
+                cout << lRel << " " << rRel << endl;
                 exit(0);
             }
             tempRelations.insert(lRel);
@@ -442,4 +467,19 @@ void Statistics::CheckTree(AndList* parseTree, std::string* relNames, int numToJ
             exit(0);
         }
     }
+}
+
+std::vector<std::string> Statistics::split(string s, string del = " ")
+{
+	std::vector<std::string> ret;
+    int start = 0;
+    int end = s.find(del);
+    while (end != -1) {
+        ret.push_back(s.substr(start, end - start));
+        start = end + del.size();
+        end = s.find(del, start);
+    }
+   ret.push_back(s.substr(start, end - start));
+
+   return ret;
 }

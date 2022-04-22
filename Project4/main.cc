@@ -3,6 +3,7 @@
 #include "ParseTree.h"
 #include "Statistics.h"
 #include "string.h"
+#include <array>
 using namespace std;
 
 extern "C" {
@@ -18,7 +19,8 @@ extern int distinctAtts;
 extern int distinctFunc; 
 
 void writeStat(std::string, Statistics);
-std::vector<std::string> split(string, string);
+std::vector<std::string> msplit(string, string);
+std::unordered_map<std::string, std::string> alias_to_rel;
 
 void PrintOperand(struct Operand *pOperand) {
 	if(pOperand!=NULL) {
@@ -78,9 +80,50 @@ void PrintAndList(struct AndList *pAnd) {
 	}
 }
 
+std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s) {
+
+	std::vector<AndList*> ret;
+	while (joins.size() > 1) {
+		AndList temp = *joins[0]; 
+		std::string lAttrel(temp.left->left->left->value); //grab name of the left attribute
+		std::string rAttrel(temp.left->left->right->value); //grab name of the right attribute
+		std::string lAtt = msplit(lAttrel, ".").at(1);
+		std::string rAtt = msplit(rAttrel, ".").at(1);
+		std::string lRel = s->GetRelFromAtt(lAtt);
+		std::string rRel = s->GetRelFromAtt(rAtt);
+		std::string relations[] = {lRel, rRel};
+		temp.rightAnd = NULL;
+		double lowest_cost = s->Estimate(&temp, relations, 2);	
+		cout << "estimate: " << lowest_cost << endl;	
+		int index = 0;
+		for (int i = 1; i < joins.size(); i++) {
+			AndList temp = *joins[i];
+			lAttrel = temp.left->left->left->value; //grab name of the left attribute
+			rAttrel = temp.left->left->right->value; //grab name of the right attribute
+			lAtt = msplit(lAttrel, ".").at(1);
+			rAtt = msplit(rAttrel, ".").at(1);
+			lRel = s->GetRelFromAtt(lAtt);
+			rRel = s->GetRelFromAtt(rAtt);
+			std::string relations[] = {lRel, rRel};
+			temp.rightAnd = NULL;
+			double temp_lowest_cost = s->Estimate(&temp, relations, 2);
+			cout << "new estimate: " << lowest_cost << endl;
+			if (temp_lowest_cost < lowest_cost) {
+				index = i;
+			}
+
+		}
+		ret.push_back(joins[index]);
+		joins.erase(joins.begin() + index);
+
+	}
+
+	return ret;
+}
+
 int main () {
 	
-	std::unordered_map<std::string, std::string> alias_to_rel;
+	
 	std::string fileName = "Statistics.txt";
 	std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
 	yy_scan_string(cnf.c_str());
@@ -116,8 +159,8 @@ int main () {
 	}
 
 
-	std::vector<ComparisonOp*> joins;
-	std::vector<ComparisonOp*> selects;
+	std::vector<AndList*> joins;
+	std::vector<AndList*> selects;
 
 	while (boolean != NULL) {
 
@@ -125,18 +168,18 @@ int main () {
 		while (Or !=NULL) {
 			struct ComparisonOp *Com = Or->left; //get the comparison operator
 
-			if (Com->code == 7){ //this an equality check
+			if (Com->code == EQUALS){ //this an equality check
 
 				if (Com->right->code == NAME) { //this means we're doing a join
-					joins.push_back(Com);
+					joins.push_back(boolean);
 				}
 				else {
-					selects.push_back(Com);
+					selects.push_back(boolean);
 				}
 			}
 			else //this is > or <
 			{
-				selects.push_back(Com);
+				selects.push_back(boolean);
 			}
 
 			Or = Or->rightOr;
@@ -146,30 +189,33 @@ int main () {
 		
 	}
 
-	for (auto x : joins) {
-		std::string lAttrel(x->left->value); //grab name of the left attribute
-		std::string rAttrel(x->right->value); //grab name of the right attribute
-		std::string lAtt = split(lAttrel, ".").at(1);
-		std::string rAtt = split(rAttrel, ".").at(1);
-		std::string lRel = s.GetRelFromAtt(lAtt);
-		std::string rRel = s.GetRelFromAtt(rAtt);		
-		cout << "join: (" << lRel << ") " << lAtt << " " << x->code << " (" << rRel << ") " << rAtt << endl;
-	}
+	//OptimizeQuery(joins, &s);
+	// for (auto x : joins) {
+	// 	std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
+	// 	std::string rAttrel(x->left->left->right->value); //grab name of the right attribute
+	// 	std::string lAtt = msplit(lAttrel, ".").at(1);
+	// 	std::string rAtt = msplit(rAttrel, ".").at(1);
+	// 	std::string lRel = s.GetRelFromAtt(lAtt);
+	// 	std::string rRel = s.GetRelFromAtt(rAtt);		
+	// 	cout << "join: (" << lRel << ") " << lAtt << " " << x->left->left->code << " (" << rRel << ") " << rAtt << endl;
+	// }
 
-	for (auto x : selects) { 
-		std::string lAttrel(x->left->value); //grab name of the left attribute
-		std::string lAtt = split(lAttrel, ".").at(1);
-		std::string rAtt(x->right->value); //grab name of the right attribute
-		std::string lRel = s.GetRelFromAtt(lAtt);
-		cout << "select: (" << lRel << ") " << lAtt << " " << x->code << " " << rAtt << endl;
-	}
+	// for (auto x : selects) { 
+	// 	std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
+	// 	std::string lAtt = msplit(lAttrel, ".").at(1);
+	// 	std::string rAtt(x->left->left->right->value); //grab name of the right attribute
+	// 	std::string lRel = s.GetRelFromAtt(lAtt);
+	// 	cout << "select: (" << lRel << ") " << lAtt << " " << x->left->left->code << " " << rAtt << endl;
+	// }
 
 	
 	
 
 }
 
-std::vector<std::string> split(string s, string del = " ")
+
+
+std::vector<std::string> msplit(string s, string del = " ")
 {
 	std::vector<std::string> ret;
     int start = 0;

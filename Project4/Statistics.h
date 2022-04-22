@@ -30,6 +30,8 @@ private:
 	int numSubsets = 0;
 	void CheckTree(AndList* parseTree, std::string *relNames, int numToJoin); 
 	int GetNumTuples(std::string name);
+	
+
 public:
 	Statistics();
 	Statistics(Statistics &copyMe);	 // Performs deep copy
@@ -48,6 +50,8 @@ public:
 	double Estimate(struct AndList *parseTree, std::string *relNames, int numToJoin);
 
 	void printRels();
+
+	std::vector<std::string> split(string, string);
 
 };
 
