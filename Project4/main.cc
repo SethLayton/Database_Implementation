@@ -207,16 +207,18 @@ int main () {
 		std::string rRel = s.GetRelFromAtt(rAtt);		
 		TreeNode* leftChild = tree_nodes.at(lRel);
 		TreeNode* rightChild = tree_nodes.at(rRel);
-		char * joinName = (char*)(lRel + "|" + rRel).c_str();
+		std::string joinName = lRel + "|" + rRel;
 		AndList tempList = *x;
 		tempList.rightAnd = NULL;
 		tree_nodes[joinName] = new JoinNode(&tempList, leftChild, rightChild);
-		// for (auto f : tree_nodes) {
-		// 	cout << f.first << endl;
-		// }
-		rootNode = tree_nodes.at(joinName);
+		auto iter = tree_nodes.find(joinName);
+		if(iter != tree_nodes.end())
+		{
+			rootNode = iter->second;
+			rootNode->PrintTree();
+		}
 
-		rootNode->PrintTree();
+		
 		break;
 	}
 
