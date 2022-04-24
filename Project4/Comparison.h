@@ -7,7 +7,7 @@
 #include "Comparison.h"
 #include "ComparisonEngine.h"
 #include <iostream>
-
+#include "Statistics.h"
 
 // This stores an individual comparison that is part of a CNF
 class Comparison {
@@ -116,6 +116,8 @@ public:
 	void GrowFromParseTree (struct AndList *parseTree, Schema *mySchema, Record &literal);
 
 	bool GetSubExpressions(int attr);
+
+	std::vector<std::string> comsplit(std::string, std::string);
 
 };
 

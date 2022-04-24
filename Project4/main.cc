@@ -3,7 +3,8 @@
 #include "ParseTree.h"
 #include "Statistics.h"
 #include "string.h"
-#include <array>
+#include "TreeNode.h"
+
 using namespace std;
 
 extern "C" {
@@ -94,7 +95,7 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 		std::string relations[] = {lRel, rRel};
 		temp.rightAnd = NULL;
 		double lowest_cost = s->Estimate(&temp, relations, 2);	
-		cout << "estimate: " << lowest_cost << endl;	
+		//cout << "estimate: " << lowest_cost << endl;	
 		int index = 0;
 		for (int i = 1; i < joins.size(); i++) {
 			AndList temp = *joins[i];
@@ -107,7 +108,7 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 			std::string relations[] = {lRel, rRel};
 			temp.rightAnd = NULL;
 			double temp_lowest_cost = s->Estimate(&temp, relations, 2);
-			cout << "new estimate: " << lowest_cost << endl;
+			//cout << "new estimate: " << lowest_cost << endl;
 			if (temp_lowest_cost < lowest_cost) {
 				index = i;
 			}
@@ -137,12 +138,7 @@ int main () {
 	
 	PrintAndList(boolean);
 	cout << endl;
-	while (tables != NULL) {
-		cout << "table name: " << tables->tableName;
-		cout << " alias: " << tables->aliasAs << endl;
-		alias_to_rel[tables->tableName] = tables->aliasAs;
-		tables = tables->next;
-	}
+	
 
 	while (attsToSelect != NULL) {
 
@@ -189,16 +185,40 @@ int main () {
 		
 	}
 
-	//OptimizeQuery(joins, &s);
-	// for (auto x : joins) {
-	// 	std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
-	// 	std::string rAttrel(x->left->left->right->value); //grab name of the right attribute
-	// 	std::string lAtt = msplit(lAttrel, ".").at(1);
-	// 	std::string rAtt = msplit(rAttrel, ".").at(1);
-	// 	std::string lRel = s.GetRelFromAtt(lAtt);
-	// 	std::string rRel = s.GetRelFromAtt(rAtt);		
-	// 	cout << "join: (" << lRel << ") " << lAtt << " " << x->left->left->code << " (" << rRel << ") " << rAtt << endl;
-	// }
+	std::vector<AndList*> optimized_joins = OptimizeQuery(joins, &s);
+	unordered_map<std::string, TreeNode*> tree_nodes;
+	TreeNode *rootNode = NULL;
+
+	int sf_count = 0;
+	while (tables != NULL) {
+		Schema *tbl_schema = new Schema ("catalog", tables->tableName);
+		tree_nodes[tables->tableName] = new SelectFileNode(tbl_schema, sf_count++);
+		alias_to_rel[tables->tableName] = tables->aliasAs;
+		rootNode = tree_nodes.at(tables->tableName);
+		tables = tables->next;
+	}
+
+	for (auto x : optimized_joins) {
+		std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
+		std::string rAttrel(x->left->left->right->value); //grab name of the right attribute
+		std::string lAtt = msplit(lAttrel, ".").at(1);
+		std::string rAtt = msplit(rAttrel, ".").at(1);
+		std::string lRel = s.GetRelFromAtt(lAtt);
+		std::string rRel = s.GetRelFromAtt(rAtt);		
+		TreeNode* leftChild = tree_nodes.at(lRel);
+		TreeNode* rightChild = tree_nodes.at(rRel);
+		char * joinName = (char*)(lRel + "|" + rRel).c_str();
+		AndList tempList = *x;
+		tempList.rightAnd = NULL;
+		tree_nodes[joinName] = new JoinNode(&tempList, leftChild, rightChild);
+		// for (auto f : tree_nodes) {
+		// 	cout << f.first << endl;
+		// }
+		rootNode = tree_nodes.at(joinName);
+
+		rootNode->PrintTree();
+		break;
+	}
 
 	// for (auto x : selects) { 
 	// 	std::string lAttrel(x->left->left->left->value); //grab name of the left attribute

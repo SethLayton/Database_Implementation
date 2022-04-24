@@ -7,8 +7,8 @@ ifdef linux
 tag = -n
 endif
 
-a42.out:Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o
-	$(CC) -o a42.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o -lfl -lgtest -lpthread
+a42.out:Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o TreeNode.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o
+	$(CC) -o a42.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o TreeNode.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o -lfl -lgtest -lpthread
 
 test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o Statistics.o DBFileHeap.o DBFileSorted.o Pipe.o BigQ.o RelOp.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -lfl -lgtest -lpthread
@@ -28,6 +28,9 @@ a2test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFi
 a1test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o
 	$(CC) -o a1test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o DBFileHeap.o DBFileSorted.o Pipe.o y.tab.o lex.yy.o a1-test.o -lfl -lgtest
 	
+TreeNode.o: TreeNode.cc
+	$(CC) -g -c TreeNode.cc	
+
 Statistics.o: Statistics.cc
 	$(CC) -g -c Statistics.cc	
 	

@@ -533,7 +533,11 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 			if (myOr->left->left->code == NAME) {
 				
 				// see if we can find this attribute in the schema
-				if (mySchema->Find (myOr->left->left->value) != -1) {
+				std::string leftVal(myOr->left->left->value);
+    			if (leftVal.find('.') != std::string::npos) {
+					leftVal = comsplit(leftVal, ".").at(1);
+				}
+				if (mySchema->Find ((char*)leftVal.c_str()) != -1) {
 					cnf.orList[whichAnd][whichOr].operand1 = Left;
 					cnf.orList[whichAnd][whichOr].whichAtt1 =
 						mySchema->Find (myOr->left->left->value);	
@@ -582,7 +586,11 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 			if (myOr->left->right->code == NAME) {
 				
 				// see if we can find this attribute in the left schema
-				if (mySchema->Find (myOr->left->right->value) != -1) {
+				std::string rightVal(myOr->left->right->value);
+    			if (rightVal.find('.') != std::string::npos) {
+					rightVal = comsplit(rightVal, ".").at(1);
+				}
+				if (mySchema->Find ((char*)rightVal.c_str()) != -1) {
 					cnf.orList[whichAnd][whichOr].operand2 = Left;
 					cnf.orList[whichAnd][whichOr].whichAtt2 =
 						mySchema->Find (myOr->left->right->value);	
@@ -673,3 +681,17 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 	remove("hkljdfgkSDFSDF");
 }
 
+std::vector<std::string> CNF::comsplit(std::string s, std::string del = " ")
+{
+	std::vector<std::string> ret;
+    int start = 0;
+    int end = s.find(del);
+    while (end != -1) {
+        ret.push_back(s.substr(start, end - start));
+        start = end + del.size();
+        end = s.find(del, start);
+    }
+   ret.push_back(s.substr(start, end - start));
+
+   return ret;
+}

@@ -161,9 +161,7 @@ Schema :: ~Schema () {
 }
 
 void Schema::Print() {
-
-	for(int i = 0; i < numAtts; i++) {
-
+ 	for(int i = 0; i < numAtts; i++) {
 		cout << "\tAtt " << myAtts[i].name << ": ";
 		if(myAtts[i].myType == INT) {
 
@@ -180,10 +178,11 @@ void Schema::Print() {
 }
 
 
-Schema::Schema(Schema *first, Schema *second) {
+Schema::Schema(Schema* first, Schema* second) {
 
-	myAtts = new Attribute[first->numAtts + second->numAtts];
-
+	numAtts = first->numAtts + second->numAtts;
+	myAtts = new Attribute[numAtts];
+	
 	for(int i = 0; i < first->numAtts; i++) {
 
 		myAtts[i] = first->myAtts[i];
@@ -195,4 +194,5 @@ Schema::Schema(Schema *first, Schema *second) {
 	}
 	
 }
+
 
