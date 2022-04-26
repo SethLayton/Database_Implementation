@@ -123,26 +123,26 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 	return ret;
 }
 
-int main () {
-	
-
-	
+int main (int argc, char *argv[]) {
+	std::string cnf(argv[0]);
+	cout << cnf << endl;
 	std::string fileName = "Statistics.txt";
 	//std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
 	//std::string cnf = "SELECT SUM DISTINCT (n.n_nationkey + r.r_regionkey)\nFROM nation AS n, region AS r, customer AS c\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey = c.c_nationkey) AND (n.n_nationkey > 10)\nGROUP BY r.r_regionkey";
 	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')\nGROUP BY n.n_regionkey";
 	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')";
 	//std::string cnf = "SELECT n.n_name\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)";
-	std::string cnf = "SELECT n.n_nationkey\nFROM nation AS n\nWHERE (n.n_name = 'UNITED STATES')";
+	//std::string cnf = "SELECT n.n_nationkey\nFROM nation AS n\nWHERE (n.n_name = 'UNITED STATES')";
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	Statistics s;
-	//writeStat(fileName, s);
+	writeStat(fileName, s);
 	s.Read(fileName);
 	
 	std::vector<AndList*> joins;
 	std::vector<AndList*> selects;
-
+	bool isSum = false;
+	std::string sumFunc;
 	while (boolean != NULL) {
 
 		struct OrList *Or = boolean->left;
@@ -170,6 +170,10 @@ int main () {
 		
 	}
 	
+	if (cnf.find("SUM") != std::string::npos) {
+    	isSum = true;
+		sumFunc = "(" + msplit(msplit(cnf, "(")[1], ")")[0] + ")";
+	}
 
 	std::vector<AndList*> optimized_joins = OptimizeQuery(joins, &s);
 	unordered_map<std::string, TreeNode*> tree_nodes;
@@ -250,12 +254,12 @@ int main () {
 			leftAncestor = leftChild;
 		}
 		std::string groupbyName = "groupby|" + lRel;
-		TreeNode* temp = new GroupByNode(leftAncestor, groupingAtts, &s, finalfunc, nodeCount++);
+		TreeNode* temp = new GroupByNode(leftAncestor, groupingAtts, &s, sumFunc, nodeCount++);
 		tree_nodes[groupbyName] = temp;
 		rootNode = temp;
 	}
 
-	if (groupingAtts == NULL && false) { //change this if statement to be a check if the SQL contains "SUM"
+	if (groupingAtts == NULL && isSum) { 
 		std::string lRel = start;	
 		TreeNode* leftChild = tree_nodes.at(lRel);
 		TreeNode* leftAncestor = leftChild->GetOldestParent();
@@ -264,8 +268,7 @@ int main () {
 			leftAncestor = leftChild;
 		}
 		std::string sumName = "sum|" + lRel; 
-		std::string function = "";
-		TreeNode* temp = new SumNode(leftAncestor, function, nodeCount++);
+		TreeNode* temp = new SumNode(leftAncestor, sumFunc, &s, nodeCount++);
 		tree_nodes[sumName] = temp;
 		rootNode = temp;
 	}

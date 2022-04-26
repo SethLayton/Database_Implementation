@@ -1,0 +1,8 @@
+TC1
+./a42.out
+1: LEX_ERROR: invalid character at .
+1: syntax error at /
+Number of selects: 0
+Number of joins: 0
+Printing Tree in order -- 
+***************************************************************************************************************************

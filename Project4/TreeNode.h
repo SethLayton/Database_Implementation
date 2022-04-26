@@ -105,7 +105,7 @@ class SumNode : public TreeNode {
         Function func;
         std::string sfun = "";
     public:
-        SumNode(TreeNode *l, std::string fun, int);
+        SumNode(TreeNode *l, std::string fun, Statistics *, int);
         void Print() override;
 
 };
@@ -115,9 +115,10 @@ class GroupByNode : public TreeNode {
     private: 
         OrderMaker groups;
 		Function func;
-        std::string sfun = "";
+        std::string sumfun = "";
+        std::string groupfun = "";
     public:
-        GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics *, FuncOperator* fun, int);
+        GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics *, std::string fun, int);
         void Print() override;
 
 };

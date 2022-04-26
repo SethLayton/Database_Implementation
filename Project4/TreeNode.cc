@@ -137,12 +137,14 @@ void DuplicateRemovalNode::Print() {
 
 }
 
-SumNode::SumNode(TreeNode *l, std::string fun, int nodeId) {
+SumNode::SumNode(TreeNode *l, std::string fun, Statistics* s, int nodeId) {
 
     setLeft(l);
-    Attribute sum = {"sum", Double};
-    Schema out_sch ("out_sch", 1, &sum);
-    op_schema = &out_sch;
+    std::string att = s->split(s->split(s->split(s->split(fun, "(")[1], ")")[0], " ")[0], ".")[1];
+    cout << "att: " << att << endl;
+    Type t = left->op_schema->FindType((char*)att.c_str());
+    Attribute sum = {"sum", t};
+    op_schema = new Schema ("out_sch", 1, &sum);
     sfun = fun;
     ourId = nodeId;
     leftPipeId = left->ourId;
@@ -163,11 +165,11 @@ void SumNode::Print() {
 
 }
 
-GroupByNode::GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics* s, FuncOperator* fun, int nodeId) {
+GroupByNode::GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics* s, std::string fun, int nodeId) {
 
     setLeft(l);
     op_schema = left->op_schema;
-    sfun = "(";
+    groupfun = "(";
 	
     while (groupingAtts != NULL) {
 
@@ -177,11 +179,10 @@ GroupByNode::GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics* s, Fun
         Type t = op_schema->FindType((char*)lAtt.c_str());
         int i = op_schema->Find((char*)lAtt.c_str());
         groups.AddAttr(t, i);
-        sfun += groupingAtts->next == NULL ? lAtt + ")" : lAtt + ",";
+        groupfun += groupingAtts->next == NULL ? lAtt + ")" : lAtt + ",";
         groupingAtts = groupingAtts->next;
     }
-    if (fun != NULL) 
-        func.GrowFromParseTree(fun, *op_schema);
+    sumfun = fun;
     ourId = nodeId;
 	leftPipeId = left->ourId;
 }
@@ -196,9 +197,10 @@ void GroupByNode::Print() {
     op_schema->Print();
     cout << endl << "GROUP BY ORDER MAKER: " << endl;
     groups.Print();
+    cout << endl << "GROUP ON: " << endl;
+    cout << groupfun << endl;
     cout << endl << "GROUP BY FUNCTION: " << endl;
-    cout << sfun << endl;
-    func.Print ();
+    cout << sumfun << endl;
 
 }
 
