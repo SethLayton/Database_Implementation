@@ -2,6 +2,22 @@
 #include "Function.h"
 #include <iostream>
 #include <stdlib.h>
+
+std::vector<std::string> fsplit(string s, string del = " ")
+{
+	std::vector<std::string> ret;
+    int start = 0;
+    int end = s.find(del);
+    while (end != -1) {
+        ret.push_back(s.substr(start, end - start));
+        start = end + del.size();
+        end = s.find(del, start);
+    }
+   ret.push_back(s.substr(start, end - start));
+
+   return ret;
+}
+
 Function :: Function () {
 
 	opList = new Arithmatic[MAX_DEPTH];
@@ -39,14 +55,15 @@ Type Function :: RecursivelyBuild (struct FuncOperator *parseTree, Schema &mySch
 		if (parseTree->leftOperand->code == NAME) {
 
 			// first, make sure that the attribute is there
-			int myNum = mySchema.Find (parseTree->leftOperand->value);
+			char * val = (char*)(fsplit(std::string(parseTree->leftOperand->value)).at(1)).c_str();
+			int myNum = mySchema.Find (val);
 			if (myNum == -1) {
 				cerr << "Error!  Attribute in arithmatic expression was not found.\n";
 				exit (1);
 			}
 
 			// it is there, so get the type
-			int myType = mySchema.FindType (parseTree->leftOperand->value);
+			int myType = mySchema.FindType (val);
 
 			// see if it is a string
 			if (myType == String) {

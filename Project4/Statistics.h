@@ -37,6 +37,8 @@ public:
 	Statistics(Statistics &copyMe);	 // Performs deep copy
 	~Statistics();
 
+	std::unordered_map<std::string, std::string> GetAts() {return att_to_rel;}	
+
 	std::string GetRelFromAtt(std::string att) { return att_to_rel.at(att); };
 
 	void AddRel(std::string relName, int numTuples);

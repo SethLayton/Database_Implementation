@@ -18,6 +18,7 @@ extern struct NameList *groupingAtts;
 extern struct NameList *attsToSelect;
 extern int distinctAtts; 
 extern int distinctFunc; 
+extern FuncOperator * finalfunc;
 
 void writeStat(std::string, Statistics);
 std::vector<std::string> msplit(string, string);
@@ -84,7 +85,7 @@ void PrintAndList(struct AndList *pAnd) {
 std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s) {
 
 	std::vector<AndList*> ret;
-	while (joins.size() > 1) {
+	while (joins.size() > 0) {
 		AndList temp = *joins[0]; 
 		std::string lAttrel(temp.left->left->left->value); //grab name of the left attribute
 		std::string rAttrel(temp.left->left->right->value); //grab name of the right attribute
@@ -124,37 +125,21 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 
 int main () {
 	
+
 	
 	std::string fileName = "Statistics.txt";
-	std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
+	//std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
+	//std::string cnf = "SELECT SUM DISTINCT (n.n_nationkey + r.r_regionkey)\nFROM nation AS n, region AS r, customer AS c\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey = c.c_nationkey) AND (n.n_nationkey > 10)\nGROUP BY r.r_regionkey";
+	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')\nGROUP BY n.n_regionkey";
+	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')";
+	//std::string cnf = "SELECT n.n_name\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)";
+	std::string cnf = "SELECT n.n_nationkey\nFROM nation AS n\nWHERE (n.n_name = 'UNITED STATES')";
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	Statistics s;
 	//writeStat(fileName, s);
 	s.Read(fileName);
-
-	cout << "distinct atts: " << distinctAtts << endl;
-	cout << "distinct func: " << distinctFunc << endl;
 	
-	PrintAndList(boolean);
-	cout << endl;
-	
-
-	while (attsToSelect != NULL) {
-
-		cout << "project name: " << attsToSelect->name << endl;
-
-		attsToSelect = attsToSelect->next;
-	}
-
-	while (groupingAtts != NULL) {
-
-		cout << "group name: " << groupingAtts->name << endl;
-
-		groupingAtts = groupingAtts->next;
-	}
-
-
 	std::vector<AndList*> joins;
 	std::vector<AndList*> selects;
 
@@ -184,18 +169,44 @@ int main () {
 		boolean = boolean->rightAnd;
 		
 	}
+	
 
 	std::vector<AndList*> optimized_joins = OptimizeQuery(joins, &s);
 	unordered_map<std::string, TreeNode*> tree_nodes;
 	TreeNode *rootNode = NULL;
-
-	int sf_count = 0;
+	std::string start = "";
+	int nodeCount = 1;
 	while (tables != NULL) {
-		Schema *tbl_schema = new Schema ("catalog", tables->tableName);
-		tree_nodes[tables->tableName] = new SelectFileNode(tbl_schema, sf_count++);
-		alias_to_rel[tables->tableName] = tables->aliasAs;
-		rootNode = tree_nodes.at(tables->tableName);
+		std::string tName (tables->tableName);
+		if (start == "") {
+			start = tName;
+		}
+		Schema *tbl_schema = new Schema ("catalog", (char*)tName.c_str());
+		TreeNode* temp = new SelectFileNode(tbl_schema, nodeCount++);
+		tree_nodes[tName] = temp;
+		//cout << tables->tableName << " id: " << temp->ourId << endl;
+		alias_to_rel[tName] = tables->aliasAs;
+		rootNode = temp;
 		tables = tables->next;
+	}
+
+
+	for (auto select : selects) {
+		std::string lAttrel(select->left->left->left->value); //grab name of the left attribute
+		std::string lAtt = msplit(lAttrel, ".").at(1);
+		std::string lRel = s.GetRelFromAtt(lAtt);
+		std::string op = select->left->left->code == 7 ? "=" : select->left->left->code == 6 ? ">" : "<";
+		std::string lval (select->left->left->right->value);
+		std::string selectCNF = "(" + lAtt + " " + op + " " + lval + ")";
+		TreeNode* leftChild = tree_nodes.at(lRel);
+		std::string selectName = "select|" + lRel;
+		AndList tempList = *select;
+		tempList.rightAnd = NULL;
+		TreeNode * temp = new SelectPipeNode(&tempList, leftChild, selectCNF, nodeCount++);
+		
+		tree_nodes[selectName] = temp;
+		rootNode = temp;
+		
 	}
 
 	for (auto x : optimized_joins) {
@@ -206,30 +217,95 @@ int main () {
 		std::string lRel = s.GetRelFromAtt(lAtt);
 		std::string rRel = s.GetRelFromAtt(rAtt);		
 		TreeNode* leftChild = tree_nodes.at(lRel);
+		TreeNode* leftAncestor = leftChild->GetOldestParent();
 		TreeNode* rightChild = tree_nodes.at(rRel);
-		std::string joinName = lRel + "|" + rRel;
+		TreeNode* rightAncestor = rightChild->GetOldestParent();
+		if (leftAncestor == nullptr) {
+
+			leftAncestor = leftChild;
+		}
+		if (rightAncestor == nullptr) {
+
+			rightAncestor = rightChild;
+		}
+		std::string op = x->left->left->code == 7 ? "=" : x->left->left->code == 6 ? ">" : "<";
+		std::string joinCNF = "(" + lAttrel + " " + op + " " + rAttrel + ")";
+		std::string joinName = "join|" + lRel + "|" + rRel;
 		AndList tempList = *x;
 		tempList.rightAnd = NULL;
-		tree_nodes[joinName] = new JoinNode(&tempList, leftChild, rightChild);
-		auto iter = tree_nodes.find(joinName);
-		if(iter != tree_nodes.end())
-		{
-			rootNode = iter->second;
-			rootNode->PrintTree();
-		}
-
-		
-		break;
+		TreeNode * temp = new JoinNode(&tempList, leftAncestor, rightAncestor, joinCNF, nodeCount++);
+		tree_nodes[joinName] = temp;
+		rootNode = temp;
 	}
 
-	// for (auto x : selects) { 
-	// 	std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
-	// 	std::string lAtt = msplit(lAttrel, ".").at(1);
-	// 	std::string rAtt(x->left->left->right->value); //grab name of the right attribute
-	// 	std::string lRel = s.GetRelFromAtt(lAtt);
-	// 	cout << "select: (" << lRel << ") " << lAtt << " " << x->left->left->code << " " << rAtt << endl;
-	// }
+	if (groupingAtts != NULL) {
 
+		std::string lAttrel(groupingAtts->name); //grab name of the left attribute
+		std::string lAtt = msplit(lAttrel, ".").at(1);
+		std::string lRel = s.GetRelFromAtt(lAtt);	
+		TreeNode* leftChild = tree_nodes.at(lRel);
+		TreeNode* leftAncestor = leftChild->GetOldestParent();
+		if (leftAncestor == nullptr) {
+
+			leftAncestor = leftChild;
+		}
+		std::string groupbyName = "groupby|" + lRel;
+		TreeNode* temp = new GroupByNode(leftAncestor, groupingAtts, &s, finalfunc, nodeCount++);
+		tree_nodes[groupbyName] = temp;
+		rootNode = temp;
+	}
+
+	if (groupingAtts == NULL && false) { //change this if statement to be a check if the SQL contains "SUM"
+		std::string lRel = start;	
+		TreeNode* leftChild = tree_nodes.at(lRel);
+		TreeNode* leftAncestor = leftChild->GetOldestParent();
+		if (leftAncestor == nullptr) {
+
+			leftAncestor = leftChild;
+		}
+		std::string sumName = "sum|" + lRel; 
+		std::string function = "";
+		TreeNode* temp = new SumNode(leftAncestor, function, nodeCount++);
+		tree_nodes[sumName] = temp;
+		rootNode = temp;
+	}
+
+	if (attsToSelect != NULL) {
+
+		std::string lRel = start;	
+		TreeNode* leftChild = tree_nodes.at(lRel);
+		TreeNode* leftAncestor = leftChild->GetOldestParent();
+		if (leftAncestor == nullptr) {
+
+			leftAncestor = leftChild;
+		}
+		std::string projectName = "project|" + lRel; 
+		TreeNode * temp = new ProjectNode(leftAncestor, attsToSelect, nodeCount++);
+		tree_nodes[projectName] = temp;
+		rootNode = temp;
+	}
+
+	
+
+	if (distinctFunc > 0 || distinctAtts > 0) {
+
+		TreeNode* leftChild = tree_nodes.at(start);
+		TreeNode* leftAncestor = leftChild->GetOldestParent();
+		if (leftAncestor == nullptr) {
+
+			leftAncestor = leftChild;
+		}
+		std::string duplicateremovalName = "duplicateremoval|"; 
+		TreeNode * temp = new DuplicateRemovalNode(leftAncestor, nodeCount++);
+		tree_nodes[duplicateremovalName] = temp;
+		rootNode = temp;
+
+	}
+	
+	cout << "Number of selects: " << selects.size() << endl;
+	cout << "Number of joins: " << joins.size() << endl;
+	cout << "Printing Tree in order -- " << endl;
+	rootNode->PrintTree();
 	
 	
 

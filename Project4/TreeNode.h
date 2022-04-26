@@ -37,6 +37,7 @@ public:
     void setRight (TreeNode *right_in) { right = right_in; right->setParent(this); }
     void setParent (TreeNode *p) { parent = p; outputPipeId = parent->ourId; }
     void get_cnf_function (std::string input, Schema *left, Function &fn_pred);
+    TreeNode* GetOldestParent();
     
 };
 
@@ -56,8 +57,9 @@ class JoinNode : public TreeNode {
     private: 
         AndList *andlist;
 		CNF cnf;
+        std::string join;
     public:
-        JoinNode(AndList *al, TreeNode *l, TreeNode *r);
+        JoinNode(AndList *al, TreeNode *l, TreeNode *r, std::string joinCNF, int);
         void Print() override;
 
 };
@@ -68,8 +70,9 @@ class ProjectNode : public TreeNode {
         int* indexLocations;
 		int numInput;
 		int numOutput;
+        OrderMaker ord;
     public:
-        ProjectNode(TreeNode &l, std::vector<std::string> attsToKeep);
+        ProjectNode(TreeNode *l, NameList* attsToKeep, int);
         void Print() override;
 
 };
@@ -78,10 +81,10 @@ class SelectPipeNode : public TreeNode {
 
     private: 
         CNF cnf;
-		// Record lit;
+		std::string select;
         AndList *andlist;
     public:
-        SelectPipeNode(AndList* al, TreeNode &l);
+        SelectPipeNode(AndList* al, TreeNode *l, std::string, int);
         void Print() override;
 
 };
@@ -91,7 +94,7 @@ class DuplicateRemovalNode : public TreeNode {
     private: 
         //Schema& schema;
     public:
-        DuplicateRemovalNode(TreeNode &l);
+        DuplicateRemovalNode(TreeNode *l, int);
         void Print() override;
 
 };
@@ -100,8 +103,9 @@ class SumNode : public TreeNode {
 
     private: 
         Function func;
+        std::string sfun = "";
     public:
-        SumNode(TreeNode &l, std::string fun);
+        SumNode(TreeNode *l, std::string fun, int);
         void Print() override;
 
 };
@@ -111,8 +115,9 @@ class GroupByNode : public TreeNode {
     private: 
         OrderMaker groups;
 		Function func;
+        std::string sfun = "";
     public:
-        GroupByNode(TreeNode &l, std::string fun, std::vector<std::string> groupingAtts);
+        GroupByNode(TreeNode *l, NameList* groupingAtts, Statistics *, FuncOperator* fun, int);
         void Print() override;
 
 };

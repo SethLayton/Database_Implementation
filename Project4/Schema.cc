@@ -108,7 +108,6 @@ Schema :: Schema (const char *fName, const char *relName) {
 	fscanf (foo, "%s", space);
 	totscans++;
 	fileName = strdup (space);
-
 	// count the number of attributes specified
 	numAtts = 0;
 	while (1) {
@@ -120,7 +119,6 @@ Schema :: Schema (const char *fName, const char *relName) {
 			numAtts++;
 		}
 	}
-
 	// now actually load up the schema
 	fclose (foo);
 	foo = fopen (fName, "r");
@@ -137,16 +135,18 @@ Schema :: Schema (const char *fName, const char *relName) {
 		// read in the attribute name
 		fscanf (foo, "%s", space);	
 		myAtts[i].name = strdup (space);
-
 		// read in the attribute type
 		fscanf (foo, "%s", space);
 		if (!strcmp (space, "Int")) {
 			myAtts[i].myType = Int;
-		} else if (!strcmp (space, "Double")) {
+		} 
+		else if (!strcmp (space, "Double")) {
 			myAtts[i].myType = Double;
-		} else if (!strcmp (space, "String")) {
+		} 
+		else if (!strcmp (space, "String")) {
 			myAtts[i].myType = String;
-		} else {
+		} 
+		else {
 			cout << "Bad attribute type for " << myAtts[i].name << "\n";
 			exit (1);
 		}
@@ -163,11 +163,11 @@ Schema :: ~Schema () {
 void Schema::Print() {
  	for(int i = 0; i < numAtts; i++) {
 		cout << "\tAtt " << myAtts[i].name << ": ";
-		if(myAtts[i].myType == INT) {
+		if(myAtts[i].myType == Int) {
 
 			cout<<"INT"<<endl;
 		}
-		else if(myAtts[i].myType == DOUBLE) {
+		else if(myAtts[i].myType == Double) {
 			cout<<"DOUBLE"<<endl;
 		}			
 		else {

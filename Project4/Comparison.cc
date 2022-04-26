@@ -540,8 +540,9 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 				if (mySchema->Find ((char*)leftVal.c_str()) != -1) {
 					cnf.orList[whichAnd][whichOr].operand1 = Left;
 					cnf.orList[whichAnd][whichOr].whichAtt1 =
-						mySchema->Find (myOr->left->left->value);	
-					typeLeft = mySchema->FindType (myOr->left->left->value);
+						mySchema->Find ((char*)leftVal.c_str());	
+					typeLeft = mySchema->FindType ((char*)leftVal.c_str());
+					
 
 				// it is not there!  So there is an error in the query
                                 } else {
@@ -593,8 +594,8 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 				if (mySchema->Find ((char*)rightVal.c_str()) != -1) {
 					cnf.orList[whichAnd][whichOr].operand2 = Left;
 					cnf.orList[whichAnd][whichOr].whichAtt2 =
-						mySchema->Find (myOr->left->right->value);	
-					typeRight = mySchema->FindType (myOr->left->right->value);
+						mySchema->Find ((char*)rightVal.c_str());	
+					typeRight = mySchema->FindType ((char*)rightVal.c_str());
 
 				// it is not there!  So there is an error in the query
                                 } else {
@@ -633,7 +634,6 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 				exit (1);
 			}
 			
-
 			// now we check to make sure that there was not a type mismatch
 			if (typeLeft != typeRight) {
 				cerr << "ERROR! Type mismatch in CNF.  " << myOr->left->left->value << " and "
