@@ -1,35 +1,393 @@
 TC1
-Enter an SQL query: SELECT
-1: syntax error at 
-Number of selects: 0
+Enter an SQL query: ----
+SELECT n.n_nationkey
+FROM nation AS n 
+WHERE (n.n_name = 'UNITED STATES')
+Number of selects: 1
 Number of joins: 0
 Printing Tree in order -- 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 1
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+ ***********
+SELECT PIPE operation
+Input Pipe 1
+Output Pipe 2
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+
+SELECTION CNF: 
+(n_name = UNITED STATES)
+( Att 1 from left record = Att 0 from literal record (String)) 
+ ***********
+PROJECT operation
+Input Pipe 2
+Output Pipe 3
+Output Schema:
+NumAtts =     1
+  0:     0 Int
+	Att n.n_nationkey: INT
 ***************************************************************************************************************************
 TC2
-Enter an SQL query: SELECT
-1: syntax error at 
-Number of selects: 0
-Number of joins: 0
+Enter an SQL query: ----
+SELECT n.n_name
+FROM nation AS n, region AS r
+WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)
+Number of selects: 1
+Number of joins: 1
 Printing Tree in order -- 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 2
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+ ***********
+SELECT PIPE operation
+Input Pipe 2
+Output Pipe 3
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+
+SELECTION CNF: 
+(n_nationkey > 5)
+( Att 0 from left record > Att 0 from literal record (Int)) 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 1
+Output Schema:
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+ ***********
+JOIN operation
+Left Input Pipe 3
+Right Input Pipe 1
+Output Pipe 4
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+
+CNF: 
+(n.n_regionkey = r.r_regionkey)
+( Att 2 from left record = Att 4 from left record (Int)) 
+ ***********
+PROJECT operation
+Input Pipe 4
+Output Pipe 5
+Output Schema:
+NumAtts =     1
+  0:     0 Int
+	Att n.n_name: INT
 ***************************************************************************************************************************
 TC3
-Enter an SQL query: SELECT
-1: syntax error at 
-Number of selects: 0
-Number of joins: 0
+Enter an SQL query: ----
+SELECT SUM (n.n_nationkey) 
+FROM nation AS n, region AS r 
+WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')
+att: n_nationkey
+Number of selects: 1
+Number of joins: 1
 Printing Tree in order -- 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 2
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+ ***********
+SELECT PIPE operation
+Input Pipe 2
+Output Pipe 3
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+
+SELECTION CNF: 
+(n_name = UNITED STATES)
+( Att 1 from left record = Att 0 from literal record (String)) 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 1
+Output Schema:
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+ ***********
+JOIN operation
+Left Input Pipe 3
+Right Input Pipe 1
+Output Pipe 4
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+
+CNF: 
+(n.n_regionkey = r.r_regionkey)
+( Att 2 from left record = Att 4 from left record (Int)) 
+ ***********
+SUM operation
+Input Pipe 4
+Output Pipe 5
+Output Schema:
+	Att sum: INT
+
+SUM FUNCTION: 
+(n.n_nationkey)
 ***************************************************************************************************************************
 TC4
-Enter an SQL query: SELECT
-1: syntax error at 
-Number of selects: 0
-Number of joins: 0
+Enter an SQL query: ----
+SELECT SUM (n.n_regionkey) 
+FROM nation AS n, region AS r 
+WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES') 
+GROUP BY n.n_regionkey
+Number of selects: 1
+Number of joins: 1
 Printing Tree in order -- 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 2
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+ ***********
+SELECT PIPE operation
+Input Pipe 2
+Output Pipe 3
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+
+SELECTION CNF: 
+(n_name = UNITED STATES)
+( Att 1 from left record = Att 0 from literal record (String)) 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 1
+Output Schema:
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+ ***********
+JOIN operation
+Left Input Pipe 3
+Right Input Pipe 1
+Output Pipe 4
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+
+CNF: 
+(n.n_regionkey = r.r_regionkey)
+( Att 2 from left record = Att 4 from left record (Int)) 
+ ***********
+GROUP BY operation
+Input Pipe 4
+Output Pipe 5
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+
+GROUP BY ORDER MAKER: 
+NumAtts =     1
+  0:     2 Int
+
+GROUP ON: 
+(n_regionkey)
+
+GROUP BY FUNCTION: 
+(n.n_regionkey)
 ***************************************************************************************************************************
 TC5
-Enter an SQL query: SELECT
-1: syntax error at 
-Number of selects: 0
-Number of joins: 0
+Enter an SQL query: ----
+SELECT SUM DISTINCT (n.n_nationkey + r.r_regionkey)
+FROM nation AS n, region AS r, customer AS c 
+WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey = c.c_nationkey) AND (n.n_nationkey > 10)
+GROUP BY r.r_regionkey
+Number of selects: 1
+Number of joins: 2
 Printing Tree in order -- 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 3
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+ ***********
+SELECT PIPE operation
+Input Pipe 3
+Output Pipe 4
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+
+SELECTION CNF: 
+(n_nationkey > 10)
+( Att 0 from left record > Att 0 from literal record (Int)) 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 2
+Output Schema:
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+ ***********
+JOIN operation
+Left Input Pipe 4
+Right Input Pipe 2
+Output Pipe 5
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+
+CNF: 
+(n.n_regionkey = r.r_regionkey)
+( Att 2 from left record = Att 4 from left record (Int)) 
+ ***********
+SELECT FILE operation
+Input Pipe 0
+Output Pipe 1
+Output Schema:
+	Att c_custkey: INT
+	Att c_name: STRING
+	Att c_address: STRING
+	Att c_nationkey: INT
+	Att c_phone: STRING
+	Att c_acctbal: DOUBLE
+	Att c_mktsegment: STRING
+	Att c_comment: STRING
+ ***********
+JOIN operation
+Left Input Pipe 5
+Right Input Pipe 1
+Output Pipe 6
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+	Att c_custkey: INT
+	Att c_name: STRING
+	Att c_address: STRING
+	Att c_nationkey: INT
+	Att c_phone: STRING
+	Att c_acctbal: DOUBLE
+	Att c_mktsegment: STRING
+	Att c_comment: STRING
+
+CNF: 
+(n.n_nationkey = c.c_nationkey)
+( Att 0 from left record = Att 10 from left record (Int)) 
+ ***********
+GROUP BY operation
+Input Pipe 6
+Output Pipe 7
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+	Att c_custkey: INT
+	Att c_name: STRING
+	Att c_address: STRING
+	Att c_nationkey: INT
+	Att c_phone: STRING
+	Att c_acctbal: DOUBLE
+	Att c_mktsegment: STRING
+	Att c_comment: STRING
+
+GROUP BY ORDER MAKER: 
+NumAtts =     1
+  0:     4 Int
+
+GROUP ON: 
+(r_regionkey)
+
+GROUP BY FUNCTION: 
+(n.n_nationkey + r.r_regionkey)
+ ***********
+DUPLICATE REMOVAL operation
+Input Pipe 7
+Output Pipe 8
+Output Schema:
+	Att n_nationkey: INT
+	Att n_name: STRING
+	Att n_regionkey: INT
+	Att n_comment: STRING
+	Att r_regionkey: INT
+	Att r_name: STRING
+	Att r_comment: STRING
+	Att c_custkey: INT
+	Att c_name: STRING
+	Att c_address: STRING
+	Att c_nationkey: INT
+	Att c_phone: STRING
+	Att c_acctbal: DOUBLE
+	Att c_mktsegment: STRING
+	Att c_comment: STRING
 ***************************************************************************************************************************

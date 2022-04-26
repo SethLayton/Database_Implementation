@@ -126,15 +126,12 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 int main (int argc, char *argv[]) {
 	std::string cnf = "";
 	cout << "Enter an SQL query: ";
-	cin >> cnf;
-	cout << cnf << endl;
+	std::string tempstring = "";
+	while (std::getline(std::cin, tempstring))
+	{
+		cnf += "\n" + tempstring;
+	}
 	std::string fileName = "Statistics.txt";
-	//std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
-	//std::string cnf = "SELECT SUM DISTINCT (n.n_nationkey + r.r_regionkey)\nFROM nation AS n, region AS r, customer AS c\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey = c.c_nationkey) AND (n.n_nationkey > 10)\nGROUP BY r.r_regionkey";
-	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')\nGROUP BY n.n_regionkey";
-	//std::string cnf = "SELECT SUM (n.n_regionkey)\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')";
-	//std::string cnf = "SELECT n.n_name\nFROM nation AS n, region AS r\nWHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)";
-	//std::string cnf = "SELECT n.n_nationkey\nFROM nation AS n\nWHERE (n.n_name = 'UNITED STATES')";
 	yy_scan_string(cnf.c_str());
 	yyparse();
 	Statistics s;
@@ -309,7 +306,7 @@ int main (int argc, char *argv[]) {
 	
 	cout << "Number of selects: " << selects.size() << endl;
 	cout << "Number of joins: " << joins.size() << endl;
-	cout << "Printing Tree in order -- " << endl;
+	cout << "Printing Tree in order " << endl;
 	rootNode->PrintTree();
 	
 	
