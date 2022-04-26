@@ -1,7 +1,34 @@
 TC1
-./a42.out
-1: LEX_ERROR: invalid character at .
-1: syntax error at /
+Enter an SQL query: SELECT
+1: syntax error at 
+Number of selects: 0
+Number of joins: 0
+Printing Tree in order -- 
+***************************************************************************************************************************
+TC2
+Enter an SQL query: SELECT
+1: syntax error at 
+Number of selects: 0
+Number of joins: 0
+Printing Tree in order -- 
+***************************************************************************************************************************
+TC3
+Enter an SQL query: SELECT
+1: syntax error at 
+Number of selects: 0
+Number of joins: 0
+Printing Tree in order -- 
+***************************************************************************************************************************
+TC4
+Enter an SQL query: SELECT
+1: syntax error at 
+Number of selects: 0
+Number of joins: 0
+Printing Tree in order -- 
+***************************************************************************************************************************
+TC5
+Enter an SQL query: SELECT
+1: syntax error at 
 Number of selects: 0
 Number of joins: 0
 Printing Tree in order -- 

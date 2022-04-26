@@ -124,7 +124,9 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 }
 
 int main (int argc, char *argv[]) {
-	std::string cnf(argv[0]);
+	std::string cnf = "";
+	cout << "Enter an SQL query: ";
+	cin >> cnf;
 	cout << cnf << endl;
 	std::string fileName = "Statistics.txt";
 	//std::string cnf = "SELECT SUM (ps.ps_supplycost), s.s_suppkey\nFROM part AS p, supplier AS s, partsupp AS ps\nWHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)\nGROUP BY s.s_suppkey";
