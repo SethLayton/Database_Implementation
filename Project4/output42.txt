@@ -1,11 +1,8 @@
 TC1
-Enter an SQL query: ----
-SELECT n.n_nationkey
-FROM nation AS n 
-WHERE (n.n_name = 'UNITED STATES')
+Enter an SQL query: 
 Number of selects: 1
 Number of joins: 0
-Printing Tree in order -- 
+Printing Tree in order 
  ***********
 SELECT FILE operation
 Input Pipe 0
@@ -38,13 +35,10 @@ NumAtts =     1
 	Att n.n_nationkey: INT
 ***************************************************************************************************************************
 TC2
-Enter an SQL query: ----
-SELECT n.n_name
-FROM nation AS n, region AS r
-WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)
+Enter an SQL query: 
 Number of selects: 1
 Number of joins: 1
-Printing Tree in order -- 
+Printing Tree in order 
  ***********
 SELECT FILE operation
 Input Pipe 0
@@ -102,14 +96,11 @@ NumAtts =     1
 	Att n.n_name: INT
 ***************************************************************************************************************************
 TC3
-Enter an SQL query: ----
-SELECT SUM (n.n_nationkey) 
-FROM nation AS n, region AS r 
-WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES')
+Enter an SQL query: 
 att: n_nationkey
 Number of selects: 1
 Number of joins: 1
-Printing Tree in order -- 
+Printing Tree in order 
  ***********
 SELECT FILE operation
 Input Pipe 0
@@ -168,14 +159,10 @@ SUM FUNCTION:
 (n.n_nationkey)
 ***************************************************************************************************************************
 TC4
-Enter an SQL query: ----
-SELECT SUM (n.n_regionkey) 
-FROM nation AS n, region AS r 
-WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_name = 'UNITED STATES') 
-GROUP BY n.n_regionkey
+Enter an SQL query: 
 Number of selects: 1
 Number of joins: 1
-Printing Tree in order -- 
+Printing Tree in order 
  ***********
 SELECT FILE operation
 Input Pipe 0
@@ -247,14 +234,10 @@ GROUP BY FUNCTION:
 (n.n_regionkey)
 ***************************************************************************************************************************
 TC5
-Enter an SQL query: ----
-SELECT SUM DISTINCT (n.n_nationkey + r.r_regionkey)
-FROM nation AS n, region AS r, customer AS c 
-WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey = c.c_nationkey) AND (n.n_nationkey > 10)
-GROUP BY r.r_regionkey
+Enter an SQL query: 
 Number of selects: 1
 Number of joins: 2
-Printing Tree in order -- 
+Printing Tree in order 
  ***********
 SELECT FILE operation
 Input Pipe 0

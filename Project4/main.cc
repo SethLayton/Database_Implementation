@@ -125,7 +125,7 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 
 int main (int argc, char *argv[]) {
 	std::string cnf = "";
-	cout << "Enter an SQL query: ";
+	cout << "Enter an SQL query: " << endl;
 	std::string tempstring = "";
 	while (std::getline(std::cin, tempstring))
 	{
