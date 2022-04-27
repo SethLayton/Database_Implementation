@@ -125,7 +125,7 @@ std::vector<AndList*> OptimizeQuery (std::vector<AndList*> joins,  Statistics* s
 
 int main (int argc, char *argv[]) {
 	std::string cnf = "";
-	cout << "Enter an SQL query: " << endl;
+	std::cout << "Enter an SQL query: " << endl;
 	std::string tempstring = "";
 	while (std::getline(std::cin, tempstring))
 	{
@@ -193,8 +193,8 @@ int main (int argc, char *argv[]) {
 		tables = tables->next;
 	}
 
-
 	for (auto select : selects) {
+		
 		std::string lAttrel(select->left->left->left->value); //grab name of the left attribute
 		std::string lAtt = msplit(lAttrel, ".").at(1);
 		std::string lRel = s.GetRelFromAtt(lAtt);
@@ -211,7 +211,6 @@ int main (int argc, char *argv[]) {
 		rootNode = temp;
 		
 	}
-
 	for (auto x : optimized_joins) {
 		std::string lAttrel(x->left->left->left->value); //grab name of the left attribute
 		std::string rAttrel(x->left->left->right->value); //grab name of the right attribute
@@ -240,7 +239,6 @@ int main (int argc, char *argv[]) {
 		tree_nodes[joinName] = temp;
 		rootNode = temp;
 	}
-
 	if (groupingAtts != NULL) {
 
 		std::string lAttrel(groupingAtts->name); //grab name of the left attribute
@@ -257,7 +255,6 @@ int main (int argc, char *argv[]) {
 		tree_nodes[groupbyName] = temp;
 		rootNode = temp;
 	}
-
 	if (groupingAtts == NULL && isSum) { 
 		std::string lRel = start;	
 		TreeNode* leftChild = tree_nodes.at(lRel);
@@ -287,7 +284,6 @@ int main (int argc, char *argv[]) {
 		rootNode = temp;
 	}
 
-	
 
 	if (distinctFunc > 0 || distinctAtts > 0) {
 
@@ -337,6 +333,7 @@ void writeStat (std::string fileName, Statistics s) {
 	s.AddRel(relName[0],10000);
 	s.AddAtt(relName[0], "s_suppkey",10000);
 	s.AddAtt(relName[0], "s_nationkey",25);
+	s.AddAtt(relName[0], "s_acctbal", 10000);
 	
 
 	s.AddRel(relName[1],800000);
